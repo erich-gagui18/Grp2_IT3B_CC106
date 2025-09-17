@@ -10,7 +10,8 @@ import android.util.Log; // for Log.e on Android
 
 public class ConnectionClass {
     String db = "beteranos_db";
-    String ip = "10.0.2.2"; // use 10.0.2.2 for host machine from Android Emulator
+    String ip = "192.168.1.3"; // use 10.0.2.2 for host machine from Android Emulator
+                               // use 192.168.1.3 for physical device
     String username = "root";
     String password = "password";
     String port = "3306";
