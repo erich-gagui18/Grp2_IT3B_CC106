@@ -20,30 +20,21 @@ public class MainActivity extends AppCompatActivity {
         TextView phoneNumberTextView = findViewById(R.id.phone_number_text_view);
 
         // This code opens the ReservationActivity when the button is clicked.
-        reserveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ReservationActivity.class);
-                startActivity(intent);
-            }
+        reserveButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ReservationActivity.class);
+            startActivity(intent);
         });
 
-        adminLoginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AdminLoginActivity.class);
-                startActivity(intent);
-            }
+        adminLoginButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AdminLoginActivity.class);
+            startActivity(intent);
         });
 
-        phoneNumberTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String phoneNumber = phoneNumberTextView.getText().toString();
-                Intent dialIntent = new Intent(Intent.ACTION_DIAL);
-                dialIntent.setData(Uri.parse("tel:" + phoneNumber));
-                startActivity(dialIntent);
-            }
+        phoneNumberTextView.setOnClickListener(v -> {
+            String phoneNumber = phoneNumberTextView.getText().toString();
+            Intent dialIntent = new Intent(Intent.ACTION_DIAL);
+            dialIntent.setData(Uri.parse("tel:" + phoneNumber));
+            startActivity(dialIntent);
         });
     }
 }

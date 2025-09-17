@@ -1,5 +1,7 @@
 package com.example.beteranos;
 
+import static android.content.ContentValues.TAG;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -27,7 +29,7 @@ public class ConnectionClass {
             Class.forName("com.mysql.jdbc.Driver"); // or "com.mysql.cj.jdbc.Driver" for newer drivers
             conn = DriverManager.getConnection(ConnURL, username, password);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error connecting to the database", e);
         }
         return conn;
     }

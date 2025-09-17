@@ -2,8 +2,6 @@ package com.example.beteranos;
 
 import android.os.Bundle;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -11,16 +9,15 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.beteranos.databinding.ActivityReservationBinding;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class ReservationActivity extends AppCompatActivity {
-
-    private ActivityReservationBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityReservationBinding.inflate(getLayoutInflater());
+        ActivityReservationBinding binding = ActivityReservationBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
