@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BeteranosBarberShop</string>
+    <string name="reserve_now">RESERVE NOW!</string>
+    <string name="admin_login">ADMIN LOGIN</string>
+    <string name="call_or_text_us">Call or Text Us!</string>
+    <string name="phone_number">09123456789</string>
+    <string name="beteranos_logo_description">Beteranos Barbershop Logo</string>
+</resources>
