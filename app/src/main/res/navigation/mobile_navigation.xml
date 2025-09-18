@@ -12,6 +12,12 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/navigation_reservation"
+        android:name="com.example.beteranos.ui.reservation.ReservationFragment"
+        android:label="Reservation"
+        tools:layout="@layout/fragment_reservation" />
+
+    <fragment
         android:id="@+id/navigation_dashboard"
         android:name="com.example.beteranos.ui.dashboard.DashboardFragment"
         android:label="@string/title_dashboard"

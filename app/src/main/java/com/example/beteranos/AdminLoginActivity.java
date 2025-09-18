@@ -1,17 +1,17 @@
 package com.example.beteranos;
 
 import android.content.Intent;
-// import android.net.Uri; // No longer needed for the pop-up
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton; // <-- ADD THIS IMPORT
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // <-- ADD THIS IMPORT
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.sql.Connection;
@@ -27,6 +27,7 @@ public class AdminLoginActivity extends AppCompatActivity {
     private EditText passwordEditText;
     private Button continueButton;
     private TextView needHelpTextView;
+    private ImageButton backButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,7 @@ public class AdminLoginActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.password_edit_text);
         continueButton = findViewById(R.id.continue_button);
         needHelpTextView = findViewById(R.id.need_help_text_view);
+        backButton = findViewById(R.id.back_button);
 
         continueButton.setOnClickListener(v -> {
             String username = usernameEditText.getText().toString().trim();
@@ -49,21 +51,18 @@ public class AdminLoginActivity extends AppCompatActivity {
             }
         });
 
-        // ## THIS IS THE MODIFIED CLICK LISTENER ##
         needHelpTextView.setOnClickListener(v -> {
-            // Create a new AlertDialog Builder
             AlertDialog.Builder builder = new AlertDialog.Builder(AdminLoginActivity.this);
             builder.setTitle("Contact Support");
-
-            // Set the message with the contact details
             builder.setMessage("For assistance, please contact IT Solutions:\n\nContact No.: +63 917 123 4567\nEmail: support@itsolutions.ph");
-
-            // Add a button to close the dialog
             builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
-
-            // Create and show the AlertDialog
             AlertDialog dialog = builder.create();
             dialog.show();
+        });
+
+        // Add the click listener for the back button
+        backButton.setOnClickListener(v -> {
+            onBackPressed();
         });
     }
 
