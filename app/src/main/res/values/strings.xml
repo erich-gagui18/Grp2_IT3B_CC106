@@ -1,3 +1,8 @@
 <resources>
+<<<<<<< HEAD
     <string name="app_name">lina-UI</string>
+=======
+    <string name="app_name">lina_ui</string>
+    <string name="product_image_description">Image of the product</string>
+>>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
 </resources>
