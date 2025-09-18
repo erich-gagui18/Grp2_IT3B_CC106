@@ -35,6 +35,12 @@
             android:name=".AdminDashboardActivity"
             android:exported="false" />
 
+        <activity android:name=".ui.reservation.HaircutActivity"/>
+        <activity android:name=".ui.reservation.HairColorActivity"/>
+        <activity android:name=".ui.reservation.HairwashActivity"/>
+        <activity android:name=".ui.reservation.BarbersActivity"/>
+
+
     </application>
 
 </manifest>

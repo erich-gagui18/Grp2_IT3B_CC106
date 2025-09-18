@@ -18,12 +18,22 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/logo_image_view"
+        <androidx.cardview.widget.CardView
             android:layout_width="150dp"
             android:layout_height="150dp"
-            android:src="@mipmap/ic_launcher_foreground"
-            android:contentDescription="@string/beteranos_logo_description" />
+            app:cardCornerRadius="75dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@android:color/black">
+
+            <ImageView
+                android:id="@+id/logo_image_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@mipmap/ic_launcher_foreground"
+                android:contentDescription="@string/beteranos_logo_description" />
+
+        </androidx.cardview.widget.CardView>
 
         <Button
             android:id="@+id/reserve_button"
