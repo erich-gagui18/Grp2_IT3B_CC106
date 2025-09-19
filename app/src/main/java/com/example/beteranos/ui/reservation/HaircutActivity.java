@@ -29,7 +29,7 @@ public class HaircutActivity extends AppCompatActivity {
         selectMullet = findViewById(R.id.select_mullet);
         btnNext = findViewById(R.id.btn_next);
 
-        // 🔙 Handle Back button
+        // Handle Back button
         backButton.setOnClickListener(v -> finish());
 
         // Haircut selections
