@@ -1,5 +1,6 @@
 package com.example.beteranos.ui.reservation;
 
+import android.content.Intent; // Correctly imported
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -19,7 +20,7 @@ public class BarbersActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_barbers); // make sure the file name matches your XML
+        setContentView(R.layout.activity_barbers); // Make sure this XML file exists and is correct
 
         // Find views
         backButton = findViewById(R.id.back_button);
@@ -30,9 +31,9 @@ public class BarbersActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btn_next);
 
         // 🔙 Handle Back button
-        backButton.setOnClickListener(v -> finish());
+        backButton.setOnClickListener(v -> finish()); // This finishes the current activity
 
-        // Barber selections
+        // Barber selections (These are for user feedback, not navigation)
         selectAaron.setOnClickListener(v ->
                 Toast.makeText(this, "Aaron selected", Toast.LENGTH_SHORT).show());
 
@@ -45,8 +46,11 @@ public class BarbersActivity extends AppCompatActivity {
         selectKevin.setOnClickListener(v ->
                 Toast.makeText(this, "Kevin selected", Toast.LENGTH_SHORT).show());
 
-        // Next button
-        btnNext.setOnClickListener(v ->
-                Toast.makeText(this, "Next button clicked", Toast.LENGTH_SHORT).show());
+        // Next button functionality
+        btnNext.setOnClickListener(v -> {
+            // This is the correct way to start PromoActivity
+            Intent intent = new Intent(BarbersActivity.this, PromoActivity.class);
+            startActivity(intent);
+        });
     }
 }
