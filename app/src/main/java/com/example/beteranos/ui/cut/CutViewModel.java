@@ -1,4 +1,4 @@
-package com.example.homescreen.ui.cut;
+package com.example.beteranos.ui.cut;
 
 import androidx.lifecycle.ViewModel;
 
