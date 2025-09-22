@@ -3,14 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui_admin.home.AdminHomeFragment">
+    tools:context=".ui_admin.reservations.AdminReservationsFragment">
 
     <TextView
-        android:id="@+id/text_admin_home"
+        android:id="@+id/text_admin_reservations"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:textAlignment="center"
         android:textSize="24sp"
-        tools:text="Home Fragment" />
+        tools:text="Reservations Fragment" />
 
 </FrameLayout>
