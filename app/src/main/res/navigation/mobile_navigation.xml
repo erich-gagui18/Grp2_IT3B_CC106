@@ -18,15 +18,8 @@
         tools:layout="@layout/fragment_dashboard" />
 
     <fragment
-        android:id="@+id/navigation_cut"
-        android:name="com.example.beteranos.ui.cut.cutFragment"
-        android:label="Cut"
-        tools:layout="@layout/fragment_cut" />
-
-    <fragment
         android:id="@+id/navigation_notifications"
         android:name="com.example.beteranos.ui_reservation.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
-
 </navigation>
