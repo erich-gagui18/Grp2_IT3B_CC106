@@ -10,22 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.beteranos.databinding.FragmentHomeBinding;
+import com.example.beteranos.databinding.FragmentAdminProfileBinding;
 
 public class AdminProfileFragment extends Fragment {
 
-    private FragmentHomeBinding binding;
+    private FragmentAdminProfileBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        AdminProfileViewModel homeViewModel =
+        AdminProfileViewModel profileViewModel =
                 new ViewModelProvider(this).get(AdminProfileViewModel.class);
 
-        binding = FragmentHomeBinding.inflate(inflater, container, false);
+        binding = FragmentAdminProfileBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textHome;
-        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView = binding.textProfile;
+        profileViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 
