@@ -17,7 +17,7 @@
         android:icon="@drawable/ic_dashboard"
         android:title="Dashboard" />
     <item
-        android:id="@+id/admin_nav_logout"
+        android:id="@+id/admin_nav_profile"
         android:icon="@drawable/ic_person"
         android:title="Profile" />
 </menu>

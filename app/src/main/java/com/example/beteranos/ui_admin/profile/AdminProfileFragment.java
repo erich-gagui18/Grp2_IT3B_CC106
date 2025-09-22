@@ -18,14 +18,14 @@ public class AdminProfileFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        AdminProfileViewModel profileViewModel =
+        AdminProfileViewModel calendarViewModel =
                 new ViewModelProvider(this).get(AdminProfileViewModel.class);
 
         binding = FragmentAdminProfileBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textProfile;
-        profileViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView = binding.textAdminProfile;
+        calendarViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 
