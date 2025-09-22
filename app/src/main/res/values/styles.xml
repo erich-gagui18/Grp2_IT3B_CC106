@@ -1,0 +1,10 @@
+<resources>
+    <style name="TimeSlotButton" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_margin">6dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:background">@drawable/timeslot_selector</item>
+    </style>
+</resources>

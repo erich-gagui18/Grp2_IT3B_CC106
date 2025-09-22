@@ -39,7 +39,8 @@
         <activity android:name=".ui.reservation.HairColorActivity"/>
         <activity android:name=".ui.reservation.HairwashActivity"/>
         <activity android:name=".ui.reservation.BarbersActivity"/>
-
+        <activity android:name=".ui.reservation.PromoActivity"/>
+        <activity android:name=".ui.reservation.ScheduleActivity"/>
 
     </application>
 
