@@ -35,12 +35,12 @@
             android:name=".AdminDashboardActivity"
             android:exported="false" />
 
-        <activity android:name=".ui.reservation.HaircutActivity"/>
-        <activity android:name=".ui.reservation.HairColorActivity"/>
-        <activity android:name=".ui.reservation.HairwashActivity"/>
-        <activity android:name=".ui.reservation.BarbersActivity"/>
-        <activity android:name=".ui.reservation.PromoActivity"/>
-        <activity android:name=".ui.reservation.ScheduleActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.HaircutActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.HairColorActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.HairwashActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.BarbersActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.PromoActivity"/>
+        <activity android:name=".ui_reservation.reservation.services.ScheduleActivity"/>
 
     </application>
 

@@ -1,9 +1,7 @@
-package com.example.beteranos.ui.reservation;
+package com.example.beteranos.ui_reservation.reservation.services;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.RadioButton;

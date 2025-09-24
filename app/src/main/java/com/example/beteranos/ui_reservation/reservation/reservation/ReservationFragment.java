@@ -1,4 +1,4 @@
-package com.example.beteranos.ui.reservation;
+package com.example.beteranos.ui_reservation.reservation.reservation;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -14,6 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.beteranos.R;
+import com.example.beteranos.ui_reservation.reservation.services.BarbersActivity;
+import com.example.beteranos.ui_reservation.reservation.services.HairColorActivity;
+import com.example.beteranos.ui_reservation.reservation.services.HaircutActivity;
+import com.example.beteranos.ui_reservation.reservation.services.HairwashActivity;
 
 public class ReservationFragment extends Fragment {
 

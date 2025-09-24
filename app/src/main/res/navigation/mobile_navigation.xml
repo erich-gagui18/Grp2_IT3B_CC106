@@ -13,7 +13,7 @@
 
     <fragment
         android:id="@+id/navigation_reservation"
-        android:name="com.example.beteranos.ui.reservation.ReservationFragment"
+        android:name="com.example.beteranos.ui_reservation.reservation.reservation.ReservationFragment"
         android:label="Reservation"
         tools:layout="@layout/fragment_reservation" />
 

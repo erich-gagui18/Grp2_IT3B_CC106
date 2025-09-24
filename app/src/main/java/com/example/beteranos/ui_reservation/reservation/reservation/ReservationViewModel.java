@@ -1,4 +1,4 @@
-package com.example.beteranos.ui.reservation;
+package com.example.beteranos.ui_reservation.reservation.reservation;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

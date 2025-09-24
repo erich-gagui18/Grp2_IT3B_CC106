@@ -1,4 +1,4 @@
-package com.example.beteranos.ui.reservation;
+package com.example.beteranos.ui_reservation.reservation.services;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
