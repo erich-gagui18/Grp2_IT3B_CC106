@@ -14,6 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Beteranos">
 
+        <!-- Main Activity (launcher) -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -23,6 +24,7 @@
             </intent-filter>
         </activity>
 
+        <!-- Other activities -->
         <activity
             android:name=".ReservationActivity"
             android:exported="false" />
@@ -35,12 +37,12 @@
             android:name=".AdminDashboardActivity"
             android:exported="false" />
 
-        <activity android:name=".ui.reservation.HaircutActivity"/>
-        <activity android:name=".ui.reservation.HairColorActivity"/>
-        <activity android:name=".ui.reservation.HairwashActivity"/>
-        <activity android:name=".ui.reservation.BarbersActivity"/>
-        <activity android:name=".ui.reservation.PromoActivity"/>
-        <activity android:name=".ui.reservation.ScheduleActivity"/>
+        <!-- Keep only real Activities -->
+        <activity android:name=".ui.reservation.HairColorActivity" />
+        <activity android:name=".ui.reservation.HairwashActivity" />
+        <activity android:name=".ui.reservation.BarbersActivity" />
+        <activity android:name=".ui.reservation.PromoActivity" />
+        <activity android:name=".ui.reservation.ScheduleActivity" />
 
     </application>
 

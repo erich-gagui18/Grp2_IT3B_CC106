@@ -39,11 +39,10 @@ public class ReservationFragment extends Fragment {
         Button btnHairwash = root.findViewById(R.id.btn_hairwash);
         Button btnNext = root.findViewById(R.id.btn_next);
 
-
         // Handle button clicks
 
         btnHaircut.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), HaircutActivity.class);
+            Intent intent = new Intent(getContext(), HaircutFragment.class);
             startActivity(intent);
         });
 
