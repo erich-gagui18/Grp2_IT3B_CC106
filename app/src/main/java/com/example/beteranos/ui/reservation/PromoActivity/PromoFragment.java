@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import com.example.beteranos.R;
 import com.example.beteranos.ui.reservation.BarbersActivity.BarbersFragment;
-import com.example.beteranos.ui.reservation.ScheduleActivity;
 import com.example.beteranos.ui.reservation.ServicesActivity.ReservationFragment;
+import com.example.beteranos.ui.reservation.ScheduleActivity.ScheduleFragment;
 
 public class PromoFragment extends AppCompatActivity {
     ImageButton backButton;
@@ -62,11 +62,9 @@ public class PromoFragment extends AppCompatActivity {
         selectPromo3.setOnClickListener(v -> Toast.makeText(PromoFragment.this, "Promo 3 Selected", Toast.LENGTH_SHORT).show());
         selectPromo4.setOnClickListener(v -> Toast.makeText(PromoFragment.this, "Promo 4 Selected", Toast.LENGTH_SHORT).show());
 
-
-        // ▼▼▼ THIS IS THE REVISED "NEXT >" BUTTON FUNCTIONALITY ▼▼▼
+        // Next button functionality
         btnNext.setOnClickListener(v -> {
-            // Replace NextScreenActivity.class with the actual Activity you want to navigate to
-            Intent intent = new Intent(PromoFragment.this, ScheduleActivity.class);
+            Intent intent = new Intent(this, ScheduleFragment.class);
             startActivity(intent);
         });
     }

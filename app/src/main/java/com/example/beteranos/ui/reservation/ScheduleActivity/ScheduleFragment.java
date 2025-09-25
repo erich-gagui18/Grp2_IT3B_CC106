@@ -1,4 +1,4 @@
-package com.example.beteranos.ui.reservation;
+package com.example.beteranos.ui.reservation.ScheduleActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,10 +13,9 @@ import android.widget.Toast;
 // import android.widget.ToggleButton; // Only if you are actually using ToggleButtons elsewhere
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.beteranos.R;
 
-import com.example.beteranos.R; // Ensure this matches your application's package name
-
-public class ScheduleActivity extends AppCompatActivity {
+public class ScheduleFragment extends AppCompatActivity {
 
     private CalendarView calendarView;
     private RadioGroup timeRadioGroup; // For time selection

@@ -27,13 +27,14 @@
         <activity android:name=".AdminLoginActivity" android:exported="false" />
         <activity android:name=".AdminDashboardActivity" android:exported="false" />
 
-        <activity android:name=".ui.reservation.ScheduleActivity" />
-
         <activity android:name=".ui.reservation.ServicesActivity.HaircutActivity.HaircutFragment" />
         <activity android:name=".ui.reservation.ServicesActivity.HaircolorActivity.HaircolorFragment" />
         <activity android:name=".ui.reservation.ServicesActivity.HairwashActivity.HairwashFragment" />
         <activity android:name=".ui.reservation.BarbersActivity.BarbersFragment" />
         <activity android:name=".ui.reservation.PromoActivity.PromoFragment" />
+        <activity android:name=".ui.reservation.ScheduleActivity.ScheduleFragment" />
+
+
 
 
     </application>
