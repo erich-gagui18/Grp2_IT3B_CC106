@@ -23,45 +23,52 @@ public class ReservationFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.fragment_reservation, container, false);
+        return root;
+    }
 
+    @Override
+    public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(root, savedInstanceState);
+
+        // Find all views
         ImageButton backButton = root.findViewById(R.id.back_button);
-        backButton.setOnClickListener(v -> requireActivity().onBackPressed());
-
-        // Top Category Buttons
         Button btnServices = root.findViewById(R.id.btn_services);
         Button btnBarbers = root.findViewById(R.id.btn_barbers);
         Button btnPromo = root.findViewById(R.id.btn_promo);
 
-
-        // Services buttons
         Button btnHaircut = root.findViewById(R.id.btn_haircut);
         Button btnHairColor = root.findViewById(R.id.btn_haircolor);
         Button btnHairwash = root.findViewById(R.id.btn_hairwash);
         Button btnNext = root.findViewById(R.id.btn_next);
 
-        // Handle button clicks
+        // Back button logic
+        backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
+        // ********************************************
+        // ******* HAIRCUT NAVIGATION (THE FINAL FIX) *******
+        // ********************************************
         btnHaircut.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), HaircutFragment.class);
+            // Uses Intent, which is correct because HaircutActivity is now an Activity
+            Intent intent = new Intent(getContext(), HaircutActivity.class);
             startActivity(intent);
         });
 
+        // Navigation for Hair Color (Starts an Activity)
         btnHairColor.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), HairColorActivity.class);
             startActivity(intent);
         });
 
+        // Navigation for Hair Wash (Starts an Activity)
         btnHairwash.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), HairwashActivity.class);
             startActivity(intent);
         });
 
+        // Navigation for Next (Starts BarbersActivity)
         btnNext.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), BarbersActivity.class);
             startActivity(intent);
         });
-
-        return root;
-
     }
 }
