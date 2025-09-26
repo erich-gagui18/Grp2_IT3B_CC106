@@ -3,10 +3,24 @@
 
     <!-- Internet permission -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+
         android:label="@string/app_name"
         android:theme="@style/Theme.Beteranos">
+
+        android:usesCleartextTraffic="true"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Beteranos"
+        tools:targetApi="31">
+
 
         <!-- Main launcher activity -->
         <activity
@@ -17,6 +31,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
 
         <!-- Other activities -->
         <activity android:name=".ReservationActivity" android:exported="false"/>
@@ -32,3 +47,11 @@
     </application>
 
 </manifest>
+
+        <activity android:name=".ReservationActivity" android:exported="false" />
+        <activity android:name=".AdminLoginActivity" android:exported="false" />
+        <activity android:name=".AdminDashboardActivity" android:exported="false" />
+
+        </application>
+</manifest>
+

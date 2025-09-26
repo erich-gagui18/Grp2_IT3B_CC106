@@ -1,28 +1,48 @@
 package com.example.beteranos;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.navigation.NavController;
+import androidx.navigation.NavGraph;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class AdminDashboardActivity extends AppCompatActivity {
-
-    private Button logoutButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
 
-        logoutButton = findViewById(R.id.logout_button);
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation_view);
+        FloatingActionButton fab = findViewById(R.id.fab_add);
 
-        logoutButton.setOnClickListener(v -> {
-            // Create an Intent to go back to the AdminLoginActivity
-            Intent intent = new Intent(AdminDashboardActivity.this, AdminLoginActivity.class);
-            startActivity(intent);
-            // Finish the dashboard activity so the user can't go back to it
-            finish();
+        // 1. Get the username passed from the Login Activity
+        String username = getIntent().getStringExtra("USERNAME_EXTRA");
+        if (username == null || username.isEmpty()) {
+            username = "Admin"; // Provide a default value
+        }
+
+        // 2. Set up NavController and pass the username as a start argument
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        NavController navController = navHostFragment.getNavController();
+
+        NavGraph navGraph = navController.getNavInflater().inflate(R.navigation.admin_nav_graph);
+
+        Bundle startArgs = new Bundle();
+        startArgs.putString("username", username);
+
+        navController.setGraph(navGraph, startArgs);
+
+        // 3. Connect the BottomNavigationView to the NavController
+        NavigationUI.setupWithNavController(bottomNavigationView, navController);
+
+        // FAB listener remains the same
+        fab.setOnClickListener(v -> {
+            navController.navigate(R.id.admin_nav_reservations);
         });
     }
 }
