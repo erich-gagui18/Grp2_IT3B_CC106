@@ -1,6 +1,6 @@
 package com.example.lina_ui;
 
-<<<<<<< HEAD
+
 package com.example.barbershopapp
 
 import android.os.Bundle
@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = ProductAdapter(productList)
         recyclerView.adapter = adapter
-=======
+
 import com.example.lina_ui.Adapter.ProductAdapter;
 import com.example.lina_ui.model.Product;
 import androidx.appcompat.app.AppCompatActivity;
@@ -58,6 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new ProductAdapter(this, productList);
         productsRecyclerView.setAdapter(adapter);
->>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
+
     }
 }

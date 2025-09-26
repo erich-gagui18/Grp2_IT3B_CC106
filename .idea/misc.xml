@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
-=======
->>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
-=======
->>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
+
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK">
@@ -13,8 +8,7 @@
   <component name="ProjectType">
     <option name="id" value="Android" />
   </component>
-<<<<<<< HEAD
-=======
+
   <component name="VisualizationToolProject">
     <option name="state">
       <ProjectState>
@@ -22,5 +16,5 @@
       </ProjectState>
     </option>
   </component>
->>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
+
 </project>
