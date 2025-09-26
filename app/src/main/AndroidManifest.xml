@@ -3,8 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -12,7 +14,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Beteranos">
+        android:theme="@style/Theme.Beteranos"
+        tools:targetApi="31">
 
         <activity
             android:name=".MainActivity"
@@ -23,25 +26,9 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ReservationActivity"
-            android:exported="false" />
+        <activity android:name=".ReservationActivity" android:exported="false" />
+        <activity android:name=".AdminLoginActivity" android:exported="false" />
+        <activity android:name=".AdminDashboardActivity" android:exported="false" />
 
-        <activity
-            android:name=".AdminLoginActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AdminDashboardActivity"
-            android:exported="false" />
-
-        <activity android:name=".ui_reservation.reservation.services.HaircutActivity"/>
-        <activity android:name=".ui_reservation.reservation.services.HairColorActivity"/>
-        <activity android:name=".ui_reservation.reservation.services.HairwashActivity"/>
-        <activity android:name=".ui_reservation.reservation.services.BarbersActivity"/>
-        <activity android:name=".ui_reservation.reservation.services.PromoActivity"/>
-        <activity android:name=".ui_reservation.reservation.services.ScheduleActivity"/>
-
-    </application>
-
+        </application>
 </manifest>
