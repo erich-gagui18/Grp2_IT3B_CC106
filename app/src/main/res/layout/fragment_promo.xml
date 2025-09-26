@@ -11,7 +11,10 @@
         android:layout_height="match_parent"
         android:background="@android:color/white"
         android:layout_above="@id/nav_view">
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+========
 
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
 
     <LinearLayout
         android:orientation="vertical"
@@ -37,7 +40,11 @@
             android:id="@+id/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+            android:text="BETERANO'S BARBERS"
+========
             android:text="BETERANO'S PROMO"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp"
@@ -65,8 +72,8 @@
                 android:layout_height="wrap_content"
                 android:text="BARBERS"
                 android:layout_marginStart="8dp"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
+                android:backgroundTint="#B0B0B0"
+                android:textColor="@android:color/black"/>
 
             <Button
                 android:id="@+id/btn_promo"
@@ -80,7 +87,11 @@
 
         <!-- Barber: Aaron -->
         <LinearLayout
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+            android:id="@+id/select_aaron"
+========
             android:id="@+id/select_promo1"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -100,7 +111,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+                android:text="AARON"
+========
                 android:text="PROMO 1"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
@@ -108,7 +123,11 @@
 
         <!-- Barber: James -->
         <LinearLayout
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+            android:id="@+id/select_james"
+========
             android:id="@+id/select_promo2"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -128,7 +147,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+                android:text="JAMES"
+========
                 android:text="PROMO 2"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
@@ -136,7 +159,11 @@
 
         <!-- Barber: Carl -->
         <LinearLayout
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+            android:id="@+id/select_carl"
+========
             android:id="@+id/select_promo3"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -156,7 +183,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+                android:text="CARL"
+========
                 android:text="PROMO 3"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
@@ -164,7 +195,11 @@
 
         <!-- Barber: Kevin -->
         <LinearLayout
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+            android:id="@+id/select_kevin"
+========
             android:id="@+id/select_promo4"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -184,7 +219,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+                android:text="KEVIN"
+========
                 android:text="PROMO 4"
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
@@ -217,8 +256,12 @@
         android:background="?android:attr/windowBackground"
         app:menu="@menu/bottom_nav_menu" />
 
+<<<<<<<< HEAD:app/src/main/res/layout/fragment_barbers.xml
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+========
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 
 
 
+>>>>>>>> f32b940 (Merge pull request #7 from erich-gagui18/ck):app/src/main/res/layout/fragment_promo.xml
