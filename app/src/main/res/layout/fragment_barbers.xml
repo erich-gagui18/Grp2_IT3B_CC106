@@ -19,17 +19,6 @@
         android:layout_height="wrap_content">
 
         <!-- Back button -->
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="30dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:src="@drawable/ic_arrow_back"
-            android:tint="@android:color/black"
-            tools:ignore="UseAppTint" />
 
         <!-- Title -->
         <TextView
@@ -43,39 +32,6 @@
             android:layout_gravity="center"/>
 
         <!-- Category Buttons (Services / Barbers / Promo) -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
-
-            <Button
-                android:id="@+id/btn_services"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SERVICES"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
-
-            <Button
-                android:id="@+id/btn_barbers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="BARBERS"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#B0B0B0"
-                android:textColor="@android:color/black"/>
-
-            <Button
-                android:id="@+id/btn_promo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="PROMO"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
-        </LinearLayout>
 
         <!-- Barber: Aaron -->
         <LinearLayout
@@ -208,12 +164,5 @@
 </ScrollView>
 
     <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="?android:attr/windowBackground"
-        app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
