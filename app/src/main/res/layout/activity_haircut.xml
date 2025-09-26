@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <!-- Main barbers content -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/white"
-        android:layout_above="@id/nav_view">
-
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:orientation="vertical"
@@ -37,7 +29,7 @@
             android:id="@+id/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BETERANO'S PROMO"
+            android:text="BETERANO'S HAIRCUTS"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp"
@@ -56,8 +48,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="SERVICES"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
+                android:backgroundTint="#B0B0B0"
+                android:textColor="@android:color/black"/>
 
             <Button
                 android:id="@+id/btn_barbers"
@@ -74,13 +66,13 @@
                 android:layout_height="wrap_content"
                 android:text="PROMO"
                 android:layout_marginStart="8dp"
-                android:backgroundTint="#B0B0B0"
-                android:textColor="@android:color/black"/>
+                android:backgroundTint="#000000"
+                android:textColor="@android:color/white"/>
         </LinearLayout>
 
-        <!-- Barber: Aaron -->
+        <!-- Haircut: Buzz Cut -->
         <LinearLayout
-            android:id="@+id/select_promo1"
+            android:id="@+id/select_buzz"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -93,22 +85,22 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
+                android:src="@drawable/buzzcut"
                 android:layout_marginEnd="12dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:text="PROMO 1"
+                android:text="BUZZ CUT"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
         </LinearLayout>
 
-        <!-- Barber: James -->
+        <!-- Haircut: Low Fade -->
         <LinearLayout
-            android:id="@+id/select_promo2"
+            android:id="@+id/select_lowfade"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -121,22 +113,22 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
+                android:src="@drawable/lowfade"
                 android:layout_marginEnd="12dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:text="PROMO 2"
+                android:text="LOW FADE"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
         </LinearLayout>
 
-        <!-- Barber: Carl -->
+        <!-- Haircut: Mid Taper -->
         <LinearLayout
-            android:id="@+id/select_promo3"
+            android:id="@+id/select_midtaper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -149,22 +141,22 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
+                android:src="@drawable/midtaper"
                 android:layout_marginEnd="12dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:text="PROMO 3"
+                android:text="MID TAPER"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
         </LinearLayout>
 
-        <!-- Barber: Kevin -->
+        <!-- Haircut: Mullet -->
         <LinearLayout
-            android:id="@+id/select_promo4"
+            android:id="@+id/select_mullet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -177,20 +169,20 @@
             <ImageView
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
+                android:src="@drawable/mullet"
                 android:layout_marginEnd="12dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:text="PROMO 4"
+                android:text="MULLET"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"/>
-
         </LinearLayout>
 
+        <!-- Next Button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -207,18 +199,3 @@
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
-
-    <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="?android:attr/windowBackground"
-        app:menu="@menu/bottom_nav_menu" />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
-
-

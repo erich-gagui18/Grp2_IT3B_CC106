@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".ui.reservation.ScheduleActivity">
+    tools:context=".ui_reservation.reservation.services.ScheduleActivity">
 
     <TextView
         android:id="@+id/tvSelectedDate"
@@ -28,6 +28,7 @@
         android:text="Selected Time: "
         android:textSize="16sp" />
 
+    <!-- ▼▼▼ THIS IS THE IMPORTANT PART ▼▼▼ -->
     <RadioGroup
         android:id="@+id/timeRadioGroup"
         android:layout_width="match_parent"
@@ -53,6 +54,7 @@
             android:layout_height="wrap_content"
             android:text="11:00 AM" />
 
+        <!-- Add more RadioButtons for other time slots as needed -->
         <RadioButton
             android:id="@+id/radio_1pm"
             android:layout_width="wrap_content"
