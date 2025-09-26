@@ -3,7 +3,6 @@ package com.example.beteranos;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
-import androidx.navigation.NavGraph;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -19,29 +18,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation_view);
         FloatingActionButton fab = findViewById(R.id.fab_add);
 
-        // 1. Get the username passed from the Login Activity
-        String username = getIntent().getStringExtra("USERNAME_EXTRA");
-        if (username == null || username.isEmpty()) {
-            username = "Admin"; // Provide a default value
-        }
-
-        // 2. Set up NavController and pass the username as a start argument
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
 
-        NavGraph navGraph = navController.getNavInflater().inflate(R.navigation.admin_nav_graph);
-
-        Bundle startArgs = new Bundle();
-        startArgs.putString("username", username);
-
-        navController.setGraph(navGraph, startArgs);
-
-        // 3. Connect the BottomNavigationView to the NavController
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
 
-        // FAB listener remains the same
+        // The Toast message has been removed from this listener.
         fab.setOnClickListener(v -> {
+            // It now navigates directly to the reservations fragment.
             navController.navigate(R.id.admin_nav_reservations);
         });
     }

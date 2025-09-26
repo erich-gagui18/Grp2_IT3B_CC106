@@ -7,7 +7,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageButton; // <-- ADD THIS IMPORT
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +60,7 @@ public class AdminLoginActivity extends AppCompatActivity {
             dialog.show();
         });
 
+        // Add the click listener for the back button
         backButton.setOnClickListener(v -> {
             onBackPressed();
         });
@@ -89,7 +90,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                     if (rs.next()) {
                         String storedPassword = rs.getString("password_hash");
                         if (password.equals(storedPassword)) {
-                            resultMessage = "Login Successful";
+                            resultMessage = "I have Logged in";
                             loginSuccess = true;
                         } else {
                             resultMessage = "Invalid credentials.";
@@ -120,11 +121,6 @@ public class AdminLoginActivity extends AppCompatActivity {
                 Toast.makeText(AdminLoginActivity.this, finalResultMessage, Toast.LENGTH_SHORT).show();
                 if (finalLoginSuccess) {
                     Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class);
-
-                    // --- THIS IS THE FIX ---
-                    // This line passes the username to the next activity.
-                    intent.putExtra("USERNAME_EXTRA", username);
-
                     startActivity(intent);
                     finish();
                 }
