@@ -5,104 +5,60 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:context=".ui_reservation.reservation.reservation.ReservationFragment">
+    tools:context=".ui_reservation.reservation.parent_fragments.ReservationFragment">
 
-    <!-- Top Category Buttons -->
+    <!-- Top Category Buttons remain the same -->
     <LinearLayout
         android:id="@+id/category_buttons"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="horizontal"
+        android:layout_marginTop="32dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="50dp">
-
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="0dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:src="@drawable/ic_arrow_back"
-            android:tint="@android:color/black"
-            tools:ignore="UseAppTint" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <Button
             android:id="@+id/btn_services"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SERVICES"
             android:backgroundTint="#B0B0B0"
+            android:text="SERVICES"
             android:textColor="@android:color/black" />
 
         <Button
             android:id="@+id/btn_barbers"
+            style="?android.attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BARBERS"
             android:layout_marginStart="8dp"
             android:backgroundTint="#000000"
+            android:text="BARBERS"
             android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btn_promo"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PROMO"
             android:layout_marginStart="8dp"
             android:backgroundTint="#000000"
+            android:text="PROMO"
             android:textColor="@android:color/white" />
     </LinearLayout>
 
-    <!-- Example Services -->
-    <Button
-        android:id="@+id/btn_haircut"
+    <!-- THIS IS THE NEW CONTAINER -->
+    <!-- The content (Services, Barbers, Promo) will be loaded into this FrameLayout -->
+    <FrameLayout
+        android:id="@+id/child_fragment_container"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:backgroundTint="#000000"
-        android:text="HAIRCUT"
-        android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/category_buttons"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <Button
-        android:id="@+id/btn_haircolor"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:backgroundTint="#000000"
-        android:text="HAIR COLOR"
-        android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/btn_haircut"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <Button
-        android:id="@+id/btn_hairwash"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#000000"
-        android:text="HAIRWASH"
-        android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/btn_haircolor"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <Button
-        android:id="@+id/btn_next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#000000"
-        android:text="NEXT >"
-        android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@id/btn_hairwash"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/category_buttons" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
