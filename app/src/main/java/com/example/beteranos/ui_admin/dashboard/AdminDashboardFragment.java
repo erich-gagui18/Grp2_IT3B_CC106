@@ -1,14 +1,16 @@
-package com.example.beteranos.ui_admin.dashboard; // Or your package
+package com.example.beteranos.ui_admin.dashboard;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import com.example.beteranos.databinding.FragmentAdminDashboardBinding; // Auto-generated
+
+import com.example.beteranos.databinding.FragmentAdminDashboardBinding;
 
 public class AdminDashboardFragment extends Fragment {
 
@@ -16,14 +18,14 @@ public class AdminDashboardFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        AdminDashboardViewModel dashboardViewModel =
+        AdminDashboardViewModel calendarViewModel =
                 new ViewModelProvider(this).get(AdminDashboardViewModel.class);
 
         binding = FragmentAdminDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textDashboard; // Uses ID from layout
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        final TextView textView = binding.textDashboard;
+        calendarViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

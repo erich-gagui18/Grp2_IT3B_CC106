@@ -28,7 +28,6 @@
         android:text="Selected Time: "
         android:textSize="16sp" />
 
-    <!-- ▼▼▼ THIS IS THE IMPORTANT PART ▼▼▼ -->
     <RadioGroup
         android:id="@+id/timeRadioGroup"
         android:layout_width="match_parent"
@@ -54,7 +53,6 @@
             android:layout_height="wrap_content"
             android:text="11:00 AM" />
 
-        <!-- Add more RadioButtons for other time slots as needed -->
         <RadioButton
             android:id="@+id/radio_1pm"
             android:layout_width="wrap_content"
