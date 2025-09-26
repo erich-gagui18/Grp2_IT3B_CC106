@@ -12,200 +12,200 @@
         android:background="@android:color/white"
         android:layout_above="@id/nav_view">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <!-- Back button -->
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="30dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:src="@drawable/ic_arrow_back"
-            android:tint="@android:color/black"
-            tools:ignore="UseAppTint" />
-
-        <!-- Title -->
-        <TextView
-            android:id="@+id/title_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="BETERANO'S PROMO"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"
-            android:layout_gravity="center"/>
-
-        <!-- Category Buttons (Services / Barbers / Promo) -->
         <LinearLayout
-            android:orientation="horizontal"
-            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:layout_height="wrap_content">
 
-            <Button
-                android:id="@+id/btn_services"
+            <!-- Back button -->
+            <ImageButton
+                android:id="@+id/back_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SERVICES"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="30dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="@android:color/black"
+                tools:ignore="UseAppTint" />
 
-            <Button
-                android:id="@+id/btn_barbers"
+            <!-- Title -->
+            <TextView
+                android:id="@+id/title_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="BARBERS"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#000000"
-                android:textColor="@android:color/white"/>
+                android:text="BETERANO'S BARBERS"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_gravity="center"/>
 
-            <Button
-                android:id="@+id/btn_promo"
-                android:layout_width="wrap_content"
+            <!-- Category Buttons (Services / Barbers / Promo) -->
+            <LinearLayout
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="PROMO"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="#B0B0B0"
-                android:textColor="@android:color/black"/>
-        </LinearLayout>
+                android:layout_marginTop="12dp">
 
-        <!-- Barber: Aaron -->
-        <LinearLayout
-            android:id="@+id/select_promo1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#000000"
-            android:padding="12dp"
-            android:layout_marginTop="20dp"
-            android:clickable="true"
-            android:focusable="true">
+                <Button
+                    android:id="@+id/btn_services"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SERVICES"
+                    android:backgroundTint="#000000"
+                    android:textColor="@android:color/white"/>
 
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
-                android:layout_marginEnd="12dp"/>
+                <Button
+                    android:id="@+id/btn_barbers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BARBERS"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="#B0B0B0"
+                    android:textColor="@android:color/black"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="PROMO 1"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-        </LinearLayout>
+                <Button
+                    android:id="@+id/btn_promo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PROMO"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="#000000"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
 
-        <!-- Barber: James -->
-        <LinearLayout
-            android:id="@+id/select_promo2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#000000"
-            android:padding="12dp"
-            android:layout_marginTop="12dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
-                android:layout_marginEnd="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="PROMO 2"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-        </LinearLayout>
-
-        <!-- Barber: Carl -->
-        <LinearLayout
-            android:id="@+id/select_promo3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#000000"
-            android:padding="12dp"
-            android:layout_marginTop="12dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
-                android:layout_marginEnd="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="PROMO 3"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-        </LinearLayout>
-
-        <!-- Barber: Kevin -->
-        <LinearLayout
-            android:id="@+id/select_promo4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#000000"
-            android:padding="12dp"
-            android:layout_marginTop="12dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@drawable/barber_sample"
-                android:layout_marginEnd="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="PROMO 4"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="end"
-            android:layout_marginTop="20dp">
-
-            <Button
-                android:id="@+id/btn_next"
-                android:layout_width="wrap_content"
+            <!-- Barber: Aaron -->
+            <LinearLayout
+                android:id="@+id/select_aaron"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#000000"
-                android:text="NEXT >"
-                android:textColor="@android:color/white"/>
+                android:orientation="horizontal"
+                android:background="#000000"
+                android:padding="12dp"
+                android:layout_marginTop="20dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/barber_sample"
+                    android:layout_marginEnd="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="AARON"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
+
+            <!-- Barber: James -->
+            <LinearLayout
+                android:id="@+id/select_james"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#000000"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/barber_sample"
+                    android:layout_marginEnd="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="JAMES"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
+
+            <!-- Barber: Carl -->
+            <LinearLayout
+                android:id="@+id/select_carl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#000000"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/barber_sample"
+                    android:layout_marginEnd="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="CARL"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
+
+            <!-- Barber: Kevin -->
+            <LinearLayout
+                android:id="@+id/select_kevin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#000000"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/barber_sample"
+                    android:layout_marginEnd="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="KEVIN"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:layout_marginTop="20dp">
+
+                <Button
+                    android:id="@+id/btn_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#000000"
+                    android:text="NEXT >"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
