@@ -1,12 +1,10 @@
 <resources>
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     <string name="app_name">lina-UI</string>
-=======
+
     <string name="app_name">lina_ui</string>
     <string name="product_image_description">Image of the product</string>
->>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
-=======
+
     <string name="app_name">BeteranosBarberShop</string>
     <string name="reserve_now">RESERVE NOW!</string>
     <string name="admin_login">ADMIN LOGIN</string>
@@ -17,5 +15,4 @@
     <string name="title_reservation">Reservation</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
->>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
 </resources>
