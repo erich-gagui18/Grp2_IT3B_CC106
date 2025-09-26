@@ -19,5 +19,9 @@ dependencyResolutionManagement {
     }
 }
 
+<<<<<<< HEAD
 rootProject.name = "lina-UI"
+=======
+rootProject.name = "Beteranos"
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
 include ':app'

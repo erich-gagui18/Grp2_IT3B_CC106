@@ -2,7 +2,10 @@
 plugins {
 alias(libs.plugins.android.application) apply false
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     alias(libs.plugins.kotlin.android) apply false
 >>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
+=======
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
 }

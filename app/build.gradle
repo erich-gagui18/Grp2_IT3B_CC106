@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
 plugins {
     alias(libs.plugins.android.application)
 }
 
+<<<<<<< HEAD
     plugins {
     alias(libs.plugins.android.application)
         alias(libs.plugins.kotlin.android)
@@ -16,6 +20,15 @@ android {
     defaultConfig {
         applicationId "com.example.lina_ui"
         minSdk 36
+=======
+android {
+    namespace 'com.example.beteranos'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.beteranos"
+        minSdk 24
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
         targetSdk 36
         versionCode 1
         versionName "1.0"
@@ -30,6 +43,7 @@ android {
         }
     }
     compileOptions {
+<<<<<<< HEAD
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -42,11 +56,25 @@ android {
 
 dependencies {
 
+=======
+        // Sets the Java version compatibility for the source code
+        sourceCompatibility JavaVersion.VERSION_11
+        // Sets the Java version compatibility for the compiled bytecode
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
 
+<<<<<<< HEAD
        implementation 'androidx.cardview:cardview:1.0.0'
     implementation libs.core.ktx
     implementation libs.play.services.ads.api
@@ -54,4 +82,20 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+=======
+    // Updated lifecycle and navigation dependencies
+    implementation libs.lifecycle.livedata.ktx
+    implementation libs.lifecycle.viewmodel.ktx
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
+
+    // Testing dependencies
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+
+    // The MySQL connector dependency
+    // Important: Network operations, like database connections, must be run off the main UI thread.
+    implementation 'mysql:mysql-connector-java:5.1.49'
+>>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
 }
