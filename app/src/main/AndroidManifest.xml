@@ -23,24 +23,19 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ReservationActivity"
-            android:exported="false" />
+        <activity android:name=".ReservationActivity" android:exported="false" />
+        <activity android:name=".AdminLoginActivity" android:exported="false" />
+        <activity android:name=".AdminDashboardActivity" android:exported="false" />
 
-        <activity
-            android:name=".AdminLoginActivity"
-            android:exported="false" />
+        <activity android:name=".ui.reservation.ServicesActivity.HaircutActivity.HaircutFragment" />
+        <activity android:name=".ui.reservation.ServicesActivity.HaircolorActivity.HaircolorFragment" />
+        <activity android:name=".ui.reservation.ServicesActivity.HairwashActivity.HairwashFragment" />
+        <activity android:name=".ui.reservation.BarbersActivity.BarbersFragment" />
+        <activity android:name=".ui.reservation.PromoActivity.PromoFragment" />
+        <activity android:name=".ui.reservation.ScheduleActivity.ScheduleFragment" />
 
-        <activity
-            android:name=".AdminDashboardActivity"
-            android:exported="false" />
 
-        <activity android:name=".ui.reservation.HaircutActivity"/>
-        <activity android:name=".ui.reservation.HairColorActivity"/>
-        <activity android:name=".ui.reservation.HairwashActivity"/>
-        <activity android:name=".ui.reservation.BarbersActivity"/>
 
 
     </application>
-
 </manifest>
