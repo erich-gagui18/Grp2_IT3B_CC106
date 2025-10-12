@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     android:background="@android:color/black"
     tools:context=".MainActivity">
 
@@ -432,8 +431,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 </androidx.constraintlayout.widget.ConstraintLayout>
->>>>>>> 9c8abb4 (ADD PRODUCT PAGE!!!)
-=======
     android:background="@android:color/black"
     tools:context=".MainActivity">
 
@@ -509,4 +506,3 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
->>>>>>> 8c06c27c3114e17849729444ce6dfeba24246d78
