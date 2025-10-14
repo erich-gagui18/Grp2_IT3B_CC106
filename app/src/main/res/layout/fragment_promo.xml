@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    android:background="@android:color/white">
+    android:background="?android:attr/colorBackground">
 
     <TextView
         android:id="@+id/title_text"
@@ -13,7 +13,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="16dp"
         android:text="BETERANO'S PROMOS"
-        android:textColor="@android:color/black"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="22sp"
         android:textStyle="bold" />
 

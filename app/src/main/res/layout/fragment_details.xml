@@ -13,7 +13,8 @@
         android:text="Enter Your Details"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:textColor="?android:attr/textColorPrimary"/>
 
     <EditText
         android:id="@+id/edit_text_first_name"
