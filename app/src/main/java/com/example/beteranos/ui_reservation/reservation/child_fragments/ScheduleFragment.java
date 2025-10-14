@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_reservation.reservation.parent_fragments; // Make sure package is correct
+package com.example.beteranos.ui_reservation.reservation.child_fragments; // Make sure package is correct
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

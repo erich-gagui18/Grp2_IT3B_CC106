@@ -1,33 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingTop="16dp">
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"
+        android:text="BETERANO'S SERVICES"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/title_text"
+        android:layout_above="@+id/btn_next"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/services_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
 
     <Button
-        android:id="@+id/btn_haircut"
-        android:layout_width="match_parent"
+        android:id="@+id/btn_next"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="#000000"
-        android:text="HAIRCUT"
-        android:textColor="@android:color/white" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="50dp"
+        android:backgroundTint="@color/button_inactive_black"
+        android:text="NEXT"
+        android:textColor="@color/white" />
 
-    <Button
-        android:id="@+id/btn_haircolor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#000000"
-        android:text="HAIR COLOR"
-        android:textColor="@android:color/white" />
-
-    <Button
-        android:id="@+id/btn_hairwash"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#000000"
-        android:text="HAIRWASH"
-        android:textColor="@android:color/white" />
-</LinearLayout>
+</RelativeLayout>
