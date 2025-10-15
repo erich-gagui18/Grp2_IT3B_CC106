@@ -28,4 +28,9 @@
         android:name="com.example.beteranos.ui_reservation.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
+    <fragment
+        android:id="@+id/navigation_gallery"
+        android:name="com.example.beteranos.ui.Gallery.GalleryFragment"
+        android:label="Gallery"
+        tools:layout="@layout/fragment_gallery" />
 </navigation>
