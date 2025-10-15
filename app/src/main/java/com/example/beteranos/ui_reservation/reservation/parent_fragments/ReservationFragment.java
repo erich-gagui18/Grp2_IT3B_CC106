@@ -15,43 +15,72 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentReservationBinding;
 
-// --- THIS IS THE FIX ---
-// These imports now correctly point to the child fragments' location.
 import com.example.beteranos.ui_reservation.reservation.child_fragments.ServicesFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.BarbersFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.PromoFragment;
+import com.example.beteranos.ui_reservation.reservation.child_fragments.DetailsFragment;
+import com.example.beteranos.ui_reservation.reservation.child_fragments.ScheduleFragment;
 
 public class ReservationFragment extends Fragment {
 
-    private FragmentReservationBinding binding;
+    public FragmentReservationBinding binding;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReservationBinding.inflate(inflater, container, false);
 
-        // Load the default fragment and set initial button state
         if (savedInstanceState == null) {
-            replaceFragment(new ServicesFragment());
-            updateButtonStyles(binding.btnServices);
+            replaceFragment(new DetailsFragment());
+            updateButtonStyles(binding.btnReserve);
         }
 
+        binding.btnReserve.setOnClickListener(v -> {
+            replaceFragment(new DetailsFragment());
+            updateButtonStyles(v);
+        });
         binding.btnServices.setOnClickListener(v -> {
             replaceFragment(new ServicesFragment());
             updateButtonStyles(v);
         });
-
         binding.btnBarbers.setOnClickListener(v -> {
             replaceFragment(new BarbersFragment());
             updateButtonStyles(v);
         });
-
         binding.btnPromo.setOnClickListener(v -> {
             replaceFragment(new PromoFragment());
             updateButtonStyles(v);
         });
 
         return binding.getRoot();
+    }
+
+    public void navigateToServices() {
+        if (binding != null) {
+            binding.btnServices.performClick();
+        }
+    }
+
+    public void navigateToBarbers() {
+        if (binding != null) {
+            binding.btnBarbers.performClick();
+        }
+    }
+
+    // --- ADD THIS PUBLIC METHOD ---
+    public void navigateToPromo() {
+        if (binding != null) {
+            binding.btnPromo.performClick();
+        }
+    }
+
+    // --- ADD THIS PUBLIC METHOD ---
+    public void navigateToSchedule() {
+        // This navigates to the full-screen schedule fragment
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.nav_host_fragment_activity_main, new ScheduleFragment()) // Use your main activity's container ID
+                .addToBackStack(null)
+                .commit();
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -67,6 +96,8 @@ public class ReservationFragment extends Fragment {
         int activeTextColor = ContextCompat.getColor(requireContext(), R.color.black);
         int inactiveTextColor = ContextCompat.getColor(requireContext(), R.color.white);
 
+        binding.btnReserve.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
+        binding.btnReserve.setTextColor(inactiveTextColor);
         binding.btnServices.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
         binding.btnServices.setTextColor(inactiveTextColor);
         binding.btnBarbers.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/button_selector_black_gray"> <TextView
+    android:id="@+id/service_name_text"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:text="Service Name - ₱00.00"
+    android:textColor="@color/white"
+    android:textSize="18sp"
+    android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/check_mark_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="12dp"
+        android:src="@drawable/ic_check_circle"
+        android:visibility="gone"
+        android:tint="@color/white"/>
+
+</FrameLayout>
