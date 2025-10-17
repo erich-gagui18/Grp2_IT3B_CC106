@@ -39,6 +39,12 @@ public class ScheduleFragment extends Fragment {
 
         binding.btnBookNow.setOnClickListener(v -> {
             if (isReservationDataValid()) {
+                // --- THIS IS THE INTEGRATION ---
+                // Show the loading overlay AND hide the button
+                binding.loadingOverlay.setVisibility(View.VISIBLE);
+                binding.btnBookNow.setVisibility(View.GONE);
+
+                // Start the save operation
                 sharedViewModel.saveReservation();
             }
         });
@@ -111,7 +117,7 @@ public class ScheduleFragment extends Fragment {
                     hour, minute, false
             );
 
-            timePickerDialog.setTitle("Select Time");
+            timePickerDialog.setTitle("Set Time");
             timePickerDialog.show();
         });
     }
@@ -119,6 +125,8 @@ public class ScheduleFragment extends Fragment {
     private void observeReservationStatus() {
         sharedViewModel.reservationStatus.observe(getViewLifecycleOwner(), success -> {
             if (success != null) {
+                // Hide the loading overlay
+                binding.loadingOverlay.setVisibility(View.GONE);
                 if (success) {
                     Toast.makeText(getContext(), "Booking Successful!", Toast.LENGTH_SHORT).show();
                     getParentFragmentManager().beginTransaction()
@@ -127,6 +135,9 @@ public class ScheduleFragment extends Fragment {
                             .commit();
                 } else {
                     Toast.makeText(getContext(), "Booking Failed. Please try again.", Toast.LENGTH_LONG).show();
+                    // --- THIS IS THE FIX ---
+                    // Show the button again if the booking fails
+                    binding.btnBookNow.setVisibility(View.VISIBLE);
                 }
                 sharedViewModel.reservationStatus.setValue(null); // Reset status
             }
