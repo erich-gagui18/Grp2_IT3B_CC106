@@ -19,6 +19,7 @@ public class SharedReservationViewModel extends ViewModel {
 
     // Customer Details
     public final MutableLiveData<String> firstName = new MutableLiveData<>();
+    public final MutableLiveData<String> middleName = new MutableLiveData<>();
     public final MutableLiveData<String> lastName = new MutableLiveData<>();
     public final MutableLiveData<String> phone = new MutableLiveData<>();
 
@@ -50,8 +51,9 @@ public class SharedReservationViewModel extends ViewModel {
         fetchPromosFromDB();
     }
 
-    public void setCustomerDetails(String fName, String lName, String pNum) {
+    public void setCustomerDetails(String fName, String mName, String lName, String pNum) {
         firstName.setValue(fName);
+        middleName.setValue(mName);
         lastName.setValue(lName);
         phone.setValue(pNum);
     }
@@ -190,6 +192,7 @@ public class SharedReservationViewModel extends ViewModel {
 
     public void saveReservation() {
         String fName = firstName.getValue();
+        String mName = middleName.getValue();
         String lName = lastName.getValue();
         String phoneNum = phone.getValue();
         List<Service> services = selectedServices.getValue();
@@ -208,7 +211,7 @@ public class SharedReservationViewModel extends ViewModel {
             try {
                 conn = new ConnectionClass().CONN();
                 if (conn != null) {
-                    int customerId = getOrCreateCustomer(conn, fName, lName, phoneNum);
+                    int customerId = getOrCreateCustomer(conn, fName, mName, lName, phoneNum);
                     if (customerId == -1) {
                         reservationStatus.postValue(false);
                         return;
@@ -242,23 +245,24 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
-    private int getOrCreateCustomer(Connection conn, String fName, String lName, String phoneNum) throws SQLException {
+    private int getOrCreateCustomer(Connection conn, String fName, String mName, String lName, String phoneNum) throws SQLException {
         int customerId = -1;
-        String customerQuery = "SELECT customer_id FROM customers WHERE first_name = ? AND last_name = ? AND phone_number = ?";
-        PreparedStatement stmt = conn.prepareStatement(customerQuery);
+        String query = "SELECT customer_id FROM customers WHERE first_name = ? AND middle_name = ? AND last_name = ? AND phone_number = ?";
+        PreparedStatement stmt = conn.prepareStatement(query);
         stmt.setString(1, fName);
-        stmt.setString(2, lName);
-        stmt.setString(3, phoneNum);
+        stmt.setString(2, mName);
+        stmt.setString(3, lName);
+        stmt.setString(4, phoneNum);
         ResultSet rs = stmt.executeQuery();
-
         if (rs.next()) {
             customerId = rs.getInt("customer_id");
         } else {
-            String insertCustomer = "INSERT INTO customers (first_name, last_name, phone_number) VALUES (?, ?, ?)";
-            stmt = conn.prepareStatement(insertCustomer, Statement.RETURN_GENERATED_KEYS);
+            String insertQuery = "INSERT INTO customers (first_name, middle_name, last_name, phone_number) VALUES (?, ?, ?, ?)";
+            stmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, fName);
-            stmt.setString(2, lName);
-            stmt.setString(3, phoneNum);
+            stmt.setString(2, mName);
+            stmt.setString(3, lName);
+            stmt.setString(4, phoneNum);
             stmt.executeUpdate();
             ResultSet generatedKeys = stmt.getGeneratedKeys();
             if (generatedKeys.next()) {
@@ -270,6 +274,7 @@ public class SharedReservationViewModel extends ViewModel {
 
     public void clearReservationDetails() {
         firstName.setValue(null);
+        middleName.setValue(null);
         lastName.setValue(null);
         phone.setValue(null);
         selectedServices.setValue(new ArrayList<>());
