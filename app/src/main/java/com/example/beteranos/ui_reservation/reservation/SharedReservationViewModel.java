@@ -25,23 +25,26 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> lastName = new MutableLiveData<>();
     public final MutableLiveData<String> phone = new MutableLiveData<>();
 
-    // --- THIS IS THE FIX ---
-    // Variables and methods for handling services were missing.
+    // Service Selection (Multi-select)
     public final MutableLiveData<List<Service>> allServices = new MutableLiveData<>();
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
 
-    // --- Barber Selection ---
+    // Barber Selection (Single-select)
     public final MutableLiveData<List<Barber>> allBarbers = new MutableLiveData<>();
     public final MutableLiveData<Barber> selectedBarber = new MutableLiveData<>();
 
-    // --- Promo Selection ---
+    // Promo Selection (Single-select)
     public final MutableLiveData<List<Promo>> allPromos = new MutableLiveData<>();
-    public final MutableLiveData<List<Promo>> selectedPromos = new MutableLiveData<>(new ArrayList<>());
+    public final MutableLiveData<Promo> selectedPromo = new MutableLiveData<>();
+
+    // Schedule Selection
+    public final MutableLiveData<String> selectedDate = new MutableLiveData<>();
+    public final MutableLiveData<String> selectedTime = new MutableLiveData<>();
 
     public SharedReservationViewModel() {
         fetchServicesFromDB();
         fetchBarbersFromDB();
-        fetchPromosFromDB(); // Call the new method
+        fetchPromosFromDB();
     }
 
     public void setCustomerDetails(String fName, String lName, String pNum) {
@@ -50,23 +53,21 @@ public class SharedReservationViewModel extends ViewModel {
         phone.setValue(pNum);
     }
 
+    // --- Database Fetching Methods ---
+
     private void fetchServicesFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             Connection conn = null;
             List<Service> fetchedServices = new ArrayList<>();
             try {
-                ConnectionClass connectionClass = new ConnectionClass();
-                conn = connectionClass.CONN();
+                conn = new ConnectionClass().CONN();
                 if (conn != null) {
                     String query = "SELECT service_id, service_name, price FROM services";
                     PreparedStatement stmt = conn.prepareStatement(query);
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
-                        int id = rs.getInt("service_id");
-                        String name = rs.getString("service_name");
-                        double price = rs.getDouble("price");
-                        fetchedServices.add(new Service(id, name, price));
+                        fetchedServices.add(new Service(rs.getInt("service_id"), rs.getString("service_name"), rs.getDouble("price")));
                     }
                     allServices.postValue(fetchedServices);
                 }
@@ -84,16 +85,13 @@ public class SharedReservationViewModel extends ViewModel {
             Connection conn = null;
             List<Barber> fetchedBarbers = new ArrayList<>();
             try {
-                ConnectionClass connectionClass = new ConnectionClass();
-                conn = connectionClass.CONN();
+                conn = new ConnectionClass().CONN();
                 if (conn != null) {
                     String query = "SELECT barber_id, name FROM barbers";
                     PreparedStatement stmt = conn.prepareStatement(query);
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
-                        int id = rs.getInt("barber_id");
-                        String name = rs.getString("name");
-                        fetchedBarbers.add(new Barber(id, name));
+                        fetchedBarbers.add(new Barber(rs.getInt("barber_id"), rs.getString("name")));
                     }
                     allBarbers.postValue(fetchedBarbers);
                 }
@@ -111,17 +109,13 @@ public class SharedReservationViewModel extends ViewModel {
             Connection conn = null;
             List<Promo> fetchedPromos = new ArrayList<>();
             try {
-                ConnectionClass connectionClass = new ConnectionClass();
-                conn = connectionClass.CONN();
+                conn = new ConnectionClass().CONN();
                 if (conn != null) {
-                    String query = "SELECT promo_id, promo_name, description FROM promos WHERE is_active = 1";
+                    String query = "SELECT promo_id, promo_name, description, image_name FROM promos WHERE is_active = 1";
                     PreparedStatement stmt = conn.prepareStatement(query);
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
-                        int id = rs.getInt("promo_id");
-                        String name = rs.getString("promo_name");
-                        String description = rs.getString("description");
-                        fetchedPromos.add(new Promo(id, name, description));
+                        fetchedPromos.add(new Promo(rs.getInt("promo_id"), rs.getString("promo_name"), rs.getString("description"), rs.getString("image_name")));
                     }
                     allPromos.postValue(fetchedPromos);
                 }
@@ -133,22 +127,7 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
-    // Methods to manage promo checklist selection
-    public void addPromo(Promo promo) {
-        List<Promo> currentList = selectedPromos.getValue();
-        if (currentList != null && !currentList.contains(promo)) {
-            currentList.add(promo);
-            selectedPromos.setValue(currentList);
-        }
-    }
-
-    public void removePromo(Promo promo) {
-        List<Promo> currentList = selectedPromos.getValue();
-        if (currentList != null) {
-            currentList.remove(promo);
-            selectedPromos.setValue(currentList);
-        }
-    }
+    // --- Selection Management Methods ---
 
     public void addService(Service service) {
         List<Service> currentList = selectedServices.getValue();

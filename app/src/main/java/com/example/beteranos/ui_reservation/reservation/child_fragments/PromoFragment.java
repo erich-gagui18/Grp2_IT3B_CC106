@@ -48,22 +48,38 @@ public class PromoFragment extends Fragment {
             TextView nameText = promoView.findViewById(R.id.promo_name_text);
             TextView descText = promoView.findViewById(R.id.promo_description_text);
             ImageView checkMark = promoView.findViewById(R.id.check_mark_icon);
+            ImageView promoImage = promoView.findViewById(R.id.promo_image);
 
             nameText.setText(promo.getName());
             descText.setText(promo.getDescription());
 
-            List<Promo> selectedList = sharedViewModel.selectedPromos.getValue();
-            boolean isSelected = selectedList != null && selectedList.stream().anyMatch(p -> p.getId() == promo.getId());
-            checkMark.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+            String imageName = promo.getImageName();
+            if (imageName != null && !imageName.isEmpty()) {
+                int imageResId = getContext().getResources().getIdentifier(imageName, "drawable", getContext().getPackageName());
+                if (imageResId != 0) {
+                    promoImage.setImageResource(imageResId);
+                } else {
+                    // --- THIS IS THE FIX ---
+                    // Changed to an existing drawable to prevent the crash
+                    promoImage.setImageResource(R.drawable.barber_sample);
+                }
+            } else {
+                // --- THIS IS THE FIX ---
+                // Changed to an existing drawable to prevent the crash
+                promoImage.setImageResource(R.drawable.barber_sample);
+            }
+
+            sharedViewModel.selectedPromo.observe(getViewLifecycleOwner(), selected -> {
+                boolean isThisOneSelected = selected != null && selected.getId() == promo.getId();
+                checkMark.setVisibility(isThisOneSelected ? View.VISIBLE : View.GONE);
+            });
 
             promoView.setOnClickListener(v -> {
-                boolean currentlySelected = checkMark.getVisibility() == View.VISIBLE;
-                if (currentlySelected) {
-                    checkMark.setVisibility(View.GONE);
-                    sharedViewModel.removePromo(promo);
+                Promo currentSelection = sharedViewModel.selectedPromo.getValue();
+                if (currentSelection != null && currentSelection.getId() == promo.getId()) {
+                    sharedViewModel.selectedPromo.setValue(null);
                 } else {
-                    checkMark.setVisibility(View.VISIBLE);
-                    sharedViewModel.addPromo(promo);
+                    sharedViewModel.selectedPromo.setValue(promo);
                 }
             });
             binding.promosContainer.addView(promoView);
