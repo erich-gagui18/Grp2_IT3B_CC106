@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_admin.home;
+package com.example.beteranos.ui_admin.reservation;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,22 +10,26 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.beteranos.R;
-import com.example.beteranos.databinding.FragmentAdminHomeBinding;
+import com.example.beteranos.databinding.FragmentAdminReservationBinding;
 import com.example.beteranos.models.Appointment;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-public class AdminHomeFragment extends Fragment {
+public class AdminReservationFragment extends Fragment {
 
-    private FragmentAdminHomeBinding binding;
-    private AdminHomeViewModel adminViewModel;
+    // --- THIS IS THE FIX ---
+    // Use the correct binding class type
+    private FragmentAdminReservationBinding binding;
+    private AdminReservationViewModel adminViewModel;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
-        adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
+        // --- THIS IS THE FIX ---
+        // Inflate the layout using the correct binding class
+        binding = FragmentAdminReservationBinding.inflate(inflater, container, false);
+        adminViewModel = new ViewModelProvider(this).get(AdminReservationViewModel.class);
 
         setupCalendarListener();
         observeViewModel();
@@ -36,17 +40,6 @@ public class AdminHomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // --- THIS IS THE FIX ---
-        // 1. Retrieve the username from the fragment's arguments.
-        String username = "Admin"; // Default value
-        if (getArguments() != null && getArguments().containsKey("ADMIN_USERNAME")) {
-            username = getArguments().getString("ADMIN_USERNAME");
-        }
-
-        // 2. Set the personalized welcome message.
-        binding.textWelcome.setText("Welcome Back " + username + "!");
-
         // Fetch appointments for today's date when the fragment is first created
         long today = binding.calendarView.getDate();
         updateLabelAndFetchAppointments(today);
@@ -72,7 +65,6 @@ public class AdminHomeFragment extends Fragment {
     }
 
     private void populateAppointments(List<Appointment> appointments) {
-        // ... (this method remains the same)
         binding.reservationsContainer.removeAllViews();
         if (appointments == null || appointments.isEmpty()) {
             TextView noAppointmentsView = new TextView(getContext());

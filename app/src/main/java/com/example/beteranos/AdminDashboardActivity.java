@@ -30,6 +30,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 .findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
 
+        // --- THIS IS THE FIX ---
+        // Pass the intent's extras (which includes the username) to the navigation graph
+        navController.setGraph(navController.getGraph(), getIntent().getExtras());
+
         NavGraph navGraph = navController.getNavInflater().inflate(R.navigation.admin_nav_graph);
 
         Bundle startArgs = new Bundle();
