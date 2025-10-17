@@ -7,14 +7,17 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentReservationConfirmationBinding;
 import com.example.beteranos.models.Promo;
 import com.example.beteranos.models.Service;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
+
+import java.util.List;
 
 public class ReservationConfirmationFragment extends Fragment {
 
@@ -34,32 +37,42 @@ public class ReservationConfirmationFragment extends Fragment {
         populateDetails();
 
         binding.btnDone.setOnClickListener(v -> {
-            // Clear the ViewModel for the next reservation
             sharedViewModel.clearReservationDetails();
-            // Clear the back stack and return to the reservation home
-            getParentFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+            // --- THIS IS THE FIX ---
+            // Find the NavController and pop back to the home screen defined in mobile_navigation.xml
+            NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment_activity_reservation);
+            navController.popBackStack(R.id.navigation_home, false);
         });
     }
 
     private void populateDetails() {
-        // Set Customer Name and Phone
-        String fullName = sharedViewModel.firstName.getValue() + " " + sharedViewModel.lastName.getValue();
-        binding.tvCustomerName.setText(fullName);
-        binding.tvCustomerPhone.setText(sharedViewModel.phone.getValue());
+        // ... (your existing populateDetails method remains the same)
+        String firstName = sharedViewModel.firstName.getValue();
+        String middleName = sharedViewModel.middleName.getValue();
+        String lastName = sharedViewModel.lastName.getValue();
+        String phone = sharedViewModel.phone.getValue();
 
-        // Set Schedule
-        String schedule = sharedViewModel.selectedDate.getValue() + " at " + sharedViewModel.selectedTime.getValue();
-        binding.tvSchedule.setText(schedule);
+        String fullName = (firstName != null ? firstName : "") +
+                (middleName != null && !middleName.isEmpty() ? " " + middleName : "") +
+                (lastName != null ? " " + lastName : "");
+        binding.tvCustomerName.setText(fullName.trim());
+        binding.tvCustomerPhone.setText(phone != null ? phone : "");
 
-        // Set Barber
+        String date = sharedViewModel.selectedDate.getValue();
+        String time = sharedViewModel.selectedTime.getValue();
+        if (date != null && time != null) {
+            binding.tvSchedule.setText(date + " at " + time);
+        }
+
         if (sharedViewModel.selectedBarber.getValue() != null) {
             binding.tvBarberName.setText(sharedViewModel.selectedBarber.getValue().getName());
         }
 
-        // Set Services
-        if (sharedViewModel.selectedServices.getValue() != null) {
+        List<Service> services = sharedViewModel.selectedServices.getValue();
+        if (services != null && !services.isEmpty()) {
             StringBuilder servicesText = new StringBuilder();
-            for (Service service : sharedViewModel.selectedServices.getValue()) {
+            for (Service service : services) {
                 servicesText.append("- ")
                         .append(service.getName())
                         .append(String.format(" (₱%.2f)", service.getPrice()))
@@ -68,7 +81,6 @@ public class ReservationConfirmationFragment extends Fragment {
             binding.tvServicesList.setText(servicesText.toString().trim());
         }
 
-        // Set Promo
         Promo selectedPromo = sharedViewModel.selectedPromo.getValue();
         if (selectedPromo != null) {
             binding.tvPromoName.setText(selectedPromo.getName());
