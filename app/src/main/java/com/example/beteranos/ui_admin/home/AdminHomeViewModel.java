@@ -1,86 +1,62 @@
 package com.example.beteranos.ui_admin.home;
 
-import androidx.lifecycle.LiveData;
+import android.util.Log;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
-import java.text.SimpleDateFormat;
+import com.example.beteranos.ConnectionClass;
+import com.example.beteranos.models.Appointment;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AdminHomeViewModel extends ViewModel {
 
-    private final MutableLiveData<String> welcomeMessage;
-    private final MutableLiveData<String> reservationsLabel;
-    private final MutableLiveData<List<String>> selectedDateReservations;
-    private final Map<String, List<String>> allReservations;
+    public final MutableLiveData<List<Appointment>> appointments = new MutableLiveData<>();
+    public final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
 
-    public AdminHomeViewModel() {
-        welcomeMessage = new MutableLiveData<>();
-        welcomeMessage.setValue("Welcome Back!");
+    public void fetchAppointmentsForDate(long dateInMillis) {
+        isLoading.setValue(true);
+        appointments.setValue(new ArrayList<>()); // Clear previous results
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            List<Appointment> fetchedAppointments = new ArrayList<>();
+            Connection conn = null;
+            try {
+                conn = new ConnectionClass().CONN();
+                String query = "SELECT r.reservation_id, CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
+                        "s.service_name, b.name AS barber_name, r.reservation_time, r.status " +
+                        "FROM reservations r " +
+                        "JOIN customers c ON r.customer_id = c.customer_id " +
+                        "JOIN services s ON r.service_id = s.service_id " +
+                        "JOIN barbers b ON r.barber_id = b.barber_id " +
+                        "WHERE DATE(r.reservation_time) = ? " +
+                        "ORDER BY r.reservation_time ASC";
 
-        reservationsLabel = new MutableLiveData<>();
-        selectedDateReservations = new MutableLiveData<>();
-        allReservations = new HashMap<>();
+                PreparedStatement stmt = conn.prepareStatement(query);
+                stmt.setDate(1, new java.sql.Date(dateInMillis));
+                ResultSet rs = stmt.executeQuery();
 
-        loadSampleReservations();
-        // Initially load today's reservations
-        loadReservationsForDate(Calendar.getInstance().getTimeInMillis());
-    }
-
-    public void setUsername(String username) {
-        if (username != null && !username.isEmpty()) {
-            welcomeMessage.setValue("Welcome Back " + username);
-        }
-    }
-
-    public void loadReservationsForDate(long dateInMillis) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String selectedDateKey = sdf.format(dateInMillis);
-
-        reservationsLabel.setValue("Reservations for " + selectedDateKey);
-
-        if (allReservations.containsKey(selectedDateKey)) {
-            selectedDateReservations.setValue(allReservations.get(selectedDateKey));
-        } else {
-            selectedDateReservations.setValue(new ArrayList<>());
-        }
-    }
-
-    public LiveData<String> getWelcomeMessage() {
-        return welcomeMessage;
-    }
-
-    public LiveData<String> getReservationsLabel() {
-        return reservationsLabel;
-    }
-
-    public LiveData<List<String>> getSelectedDateReservations() {
-        return selectedDateReservations;
-    }
-
-    private void loadSampleReservations() {
-        // In a real app, this data would come from your database
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String today = sdf.format(cal.getTime());
-
-        cal.add(Calendar.DAY_OF_YEAR, 1);
-        String tomorrow = sdf.format(cal.getTime());
-
-        List<String> todayReservations = new ArrayList<>();
-        todayReservations.add("10:00 AM - Haircut with Nico");
-        todayReservations.add("11:30 AM - Shaving with Jonel");
-        todayReservations.add("2:00 PM - Haircoloring with Daryl");
-        allReservations.put(today, todayReservations);
-
-        List<String> tomorrowReservations = new ArrayList<>();
-        tomorrowReservations.add("9:00 AM - Haircut with Jimboy");
-        tomorrowReservations.add("1:00 PM - Shaving with John");
-        allReservations.put(tomorrow, tomorrowReservations);
+                while (rs.next()) {
+                    fetchedAppointments.add(new Appointment(
+                            rs.getInt("reservation_id"),
+                            rs.getString("customer_name"),
+                            rs.getString("service_name"),
+                            rs.getString("barber_name"),
+                            rs.getTimestamp("reservation_time"),
+                            rs.getString("status")
+                    ));
+                }
+                appointments.postValue(fetchedAppointments);
+            } catch (Exception e) {
+                Log.e("AdminHomeViewModel", "DB Error: " + e.getMessage());
+            } finally {
+                if (conn != null) try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
+                isLoading.postValue(false);
+            }
+        });
     }
 }
