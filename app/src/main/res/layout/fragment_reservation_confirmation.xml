@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="?android:attr/colorBackground">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="Reservation Confirmed!"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_title"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical">
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Name:" />
+        <TextView
+            android:id="@+id/tv_customer_name"
+            style="@style/ConfirmationValue"
+            android:text="Customer Name" />
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Phone Number:" />
+        <TextView
+            android:id="@+id/tv_customer_phone"
+            style="@style/ConfirmationValue"
+            android:text="09123456789" />
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Schedule:" />
+        <TextView
+            android:id="@+id/tv_schedule"
+            style="@style/ConfirmationValue"
+            android:text="October 17, 2025 at 09:00 AM" />
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Barber:" />
+        <TextView
+            android:id="@+id/tv_barber_name"
+            style="@style/ConfirmationValue"
+            android:text="Barber Name" />
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Services:" />
+        <TextView
+            android:id="@+id/tv_services_list"
+            style="@style/ConfirmationValue"
+            android:text="- Haircut (₱150.00)\n- Beard Trim (₱100.00)" />
+
+        <TextView
+            style="@style/ConfirmationLabel"
+            android:text="Promo:" />
+        <TextView
+            android:id="@+id/tv_promo_name"
+            style="@style/ConfirmationValue"
+            android:text="No promo selected" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_done"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Done"
+        android:padding="16dp"/>
+
+</RelativeLayout>

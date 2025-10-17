@@ -15,10 +15,11 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentReservationBinding;
 
+// Import all necessary child fragments
+import com.example.beteranos.ui_reservation.reservation.child_fragments.DetailsFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.ServicesFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.BarbersFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.PromoFragment;
-import com.example.beteranos.ui_reservation.reservation.child_fragments.DetailsFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.ScheduleFragment;
 
 public class ReservationFragment extends Fragment {
@@ -30,11 +31,14 @@ public class ReservationFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReservationBinding.inflate(inflater, container, false);
 
+        // Load the DetailsFragment by default
         if (savedInstanceState == null) {
             replaceFragment(new DetailsFragment());
             updateButtonStyles(binding.btnReserve);
         }
 
+        // --- THIS IS THE FIX ---
+        // Click listeners are now set for all five buttons
         binding.btnReserve.setOnClickListener(v -> {
             replaceFragment(new DetailsFragment());
             updateButtonStyles(v);
@@ -49,6 +53,10 @@ public class ReservationFragment extends Fragment {
         });
         binding.btnPromo.setOnClickListener(v -> {
             replaceFragment(new PromoFragment());
+            updateButtonStyles(v);
+        });
+        binding.btnSchedule.setOnClickListener(v -> {
+            replaceFragment(new ScheduleFragment());
             updateButtonStyles(v);
         });
 
@@ -67,20 +75,16 @@ public class ReservationFragment extends Fragment {
         }
     }
 
-    // --- ADD THIS PUBLIC METHOD ---
     public void navigateToPromo() {
         if (binding != null) {
             binding.btnPromo.performClick();
         }
     }
 
-    // --- ADD THIS PUBLIC METHOD ---
     public void navigateToSchedule() {
-        // This navigates to the full-screen schedule fragment
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.nav_host_fragment_activity_main, new ScheduleFragment()) // Use your main activity's container ID
-                .addToBackStack(null)
-                .commit();
+        if (binding != null) {
+            binding.btnSchedule.performClick();
+        }
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -96,15 +100,14 @@ public class ReservationFragment extends Fragment {
         int activeTextColor = ContextCompat.getColor(requireContext(), R.color.black);
         int inactiveTextColor = ContextCompat.getColor(requireContext(), R.color.white);
 
-        binding.btnReserve.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
-        binding.btnReserve.setTextColor(inactiveTextColor);
-        binding.btnServices.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
-        binding.btnServices.setTextColor(inactiveTextColor);
-        binding.btnBarbers.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
-        binding.btnBarbers.setTextColor(inactiveTextColor);
-        binding.btnPromo.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
-        binding.btnPromo.setTextColor(inactiveTextColor);
+        // Reset all five buttons to the inactive state
+        Button[] buttons = {binding.btnReserve, binding.btnServices, binding.btnBarbers, binding.btnPromo, binding.btnSchedule};
+        for (Button button : buttons) {
+            button.setBackgroundTintList(ColorStateList.valueOf(inactiveColor));
+            button.setTextColor(inactiveTextColor);
+        }
 
+        // Set the selected button to the active state
         if (selectedButton instanceof Button) {
             Button clickedButton = (Button) selectedButton;
             clickedButton.setBackgroundTintList(ColorStateList.valueOf(activeColor));
