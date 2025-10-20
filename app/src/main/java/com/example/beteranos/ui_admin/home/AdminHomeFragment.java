@@ -92,12 +92,30 @@ public class AdminHomeFragment extends Fragment {
             TextView customerText = appointmentView.findViewById(R.id.customer_name_text);
             TextView serviceText = appointmentView.findViewById(R.id.service_name_text);
             TextView barberText = appointmentView.findViewById(R.id.barber_name_text);
+            TextView statusText = appointmentView.findViewById(R.id.appointment_status_text);
 
             timeText.setText(timeFormat.format(appointment.getReservationTime()));
             customerText.setText(appointment.getCustomerName());
             serviceText.setText("Service: " + appointment.getServiceName());
             barberText.setText("Barber: " + appointment.getBarberName());
 
+            // Set the status text and color
+            statusText.setText(appointment.getStatus());
+            switch (appointment.getStatus().toLowerCase()) {
+                case "pending":
+                    statusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                    break;
+                case "scheduled":
+                case "confirmed":
+                    statusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                    break;
+                case "cancelled":
+                    statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                    break;
+                default:
+                    statusText.setTextColor(getResources().getColor(android.R.color.darker_gray));
+                    break;
+            }
             binding.reservationsContainer.addView(appointmentView);
         }
     }

@@ -39,13 +39,12 @@ public class ScheduleFragment extends Fragment {
 
         binding.btnBookNow.setOnClickListener(v -> {
             if (isReservationDataValid()) {
-                // --- THIS IS THE INTEGRATION ---
-                // Show the loading overlay AND hide the button
-                binding.loadingOverlay.setVisibility(View.VISIBLE);
-                binding.btnBookNow.setVisibility(View.GONE);
-
-                // Start the save operation
-                sharedViewModel.saveReservation();
+                // Instead of showing a loading screen and saving,
+                // navigate to the new PaymentFragment.
+                if (getParentFragment() instanceof com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment) {
+                    ((com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment) getParentFragment())
+                            .navigateToPayment(); // You will need to create this method in ReservationFragment
+                }
             }
         });
 

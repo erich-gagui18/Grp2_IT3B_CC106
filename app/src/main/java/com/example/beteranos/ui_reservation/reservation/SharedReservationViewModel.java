@@ -1,10 +1,13 @@
 package com.example.beteranos.ui_reservation.reservation;
 
 import android.util.Log;
+
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
 import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.models.*;
+
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,7 +42,9 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> selectedDate = new MutableLiveData<>();
     public final MutableLiveData<String> selectedTime = new MutableLiveData<>();
 
-    // --- INTEGRATED CODE ---
+    // Receipt Image
+    public final MutableLiveData<byte[]> paymentReceiptImage = new MutableLiveData<>();
+
     // LiveData for dynamic scheduling data
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
     public final MutableLiveData<Boolean> reservationStatus = new MutableLiveData<>();
@@ -57,8 +62,6 @@ public class SharedReservationViewModel extends ViewModel {
         lastName.setValue(lName);
         phone.setValue(pNum);
     }
-
-    // --- Database Fetching Methods (Your existing code) ---
 
     private void fetchServicesFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -79,7 +82,11 @@ public class SharedReservationViewModel extends ViewModel {
             } catch (SQLException e) {
                 Log.e("SharedViewModel", "DB Error (Services): " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -103,7 +110,11 @@ public class SharedReservationViewModel extends ViewModel {
             } catch (SQLException e) {
                 Log.e("SharedViewModel", "DB Error (Barbers): " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -127,12 +138,14 @@ public class SharedReservationViewModel extends ViewModel {
             } catch (SQLException e) {
                 Log.e("SharedViewModel", "DB Error (Promos): " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
-
-    // --- Selection Management Methods (Your existing code) ---
 
     public void addService(Service service) {
         List<Service> currentList = selectedServices.getValue();
@@ -150,13 +163,10 @@ public class SharedReservationViewModel extends ViewModel {
         }
     }
 
-    // --- INTEGRATED CODE ---
-    // Methods for fetching available slots and saving the reservation.
-
     public void fetchAvailableSlots(long dateInMillis) {
         Barber barber = selectedBarber.getValue();
         if (barber == null) {
-            availableTimeSlots.postValue(new ArrayList<>()); // No barber selected, no slots available
+            availableTimeSlots.postValue(new ArrayList<>());
             return;
         }
 
@@ -175,7 +185,7 @@ public class SharedReservationViewModel extends ViewModel {
                     ResultSet rs = stmt.executeQuery();
 
                     SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.US);
-                    while(rs.next()) {
+                    while (rs.next()) {
                         bookedSlots.add(timeFormat.format(rs.getTimestamp("reservation_time")));
                     }
 
@@ -185,7 +195,11 @@ public class SharedReservationViewModel extends ViewModel {
             } catch (SQLException e) {
                 Log.e("ViewModel", "DB Error fetching slots: " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -197,10 +211,12 @@ public class SharedReservationViewModel extends ViewModel {
         String phoneNum = phone.getValue();
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
+        Promo promo = selectedPromo.getValue(); // Get the selected promo
         String date = selectedDate.getValue();
         String time = selectedTime.getValue();
+        byte[] receiptImage = paymentReceiptImage.getValue();
 
-        if (fName == null || services == null || services.isEmpty() || barber == null || date == null || time == null) {
+        if (fName == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null) {
             reservationStatus.postValue(false);
             return;
         }
@@ -221,14 +237,21 @@ public class SharedReservationViewModel extends ViewModel {
                     Date reservationDate = parser.parse(date + " " + time);
                     Timestamp reservationTimestamp = new Timestamp(reservationDate.getTime());
 
-                    String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, service_id, reservation_time, status) VALUES (?, ?, ?, ?, 'Scheduled')";
+                    String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt) VALUES (?, ?, ?, ?, ?, ?, ?)";
                     PreparedStatement reservationStmt = conn.prepareStatement(reservationQuery);
 
-                    for(Service service : services) {
+                    for (Service service : services) {
                         reservationStmt.setInt(1, customerId);
                         reservationStmt.setInt(2, barber.getId());
                         reservationStmt.setInt(3, service.getId());
-                        reservationStmt.setTimestamp(4, reservationTimestamp);
+                        if (promo != null) {
+                            reservationStmt.setInt(4, promo.getId());
+                        } else {
+                            reservationStmt.setNull(4, Types.INTEGER);
+                        }
+                        reservationStmt.setTimestamp(5, reservationTimestamp);
+                        reservationStmt.setString(6, "Pending"); // Set the status
+                        reservationStmt.setBytes(7, receiptImage); // This now correctly sets the 7th parameter
                         reservationStmt.addBatch();
                     }
                     reservationStmt.executeBatch();
@@ -237,10 +260,13 @@ public class SharedReservationViewModel extends ViewModel {
                     reservationStatus.postValue(false);
                 }
             } catch (Exception e) {
-                Log.e("ViewModel", "Error saving reservation: " + e.getMessage());
-                reservationStatus.postValue(false);
+                Log.e("ViewModel", "Error saving reservation: " + e.getMessage(), e);
             } finally {
-                if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -282,6 +308,7 @@ public class SharedReservationViewModel extends ViewModel {
         selectedPromo.setValue(null);
         selectedDate.setValue(null);
         selectedTime.setValue(null);
-        reservationStatus.setValue(null); // Reset status to avoid re-triggering observer
+        paymentReceiptImage.setValue(null); // Clear the receipt image
+        reservationStatus.setValue(null);
     }
 }

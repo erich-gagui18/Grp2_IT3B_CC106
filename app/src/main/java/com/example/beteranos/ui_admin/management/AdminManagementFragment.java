@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_admin.reservations;
+package com.example.beteranos.ui_admin.management;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,14 +12,14 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.beteranos.databinding.FragmentAdminReservationsBinding;
 
-public class AdminReservationsFragment extends Fragment {
+public class AdminManagementFragment extends Fragment {
 
     private FragmentAdminReservationsBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        AdminReservationsViewModel calendarViewModel =
-                new ViewModelProvider(this).get(AdminReservationsViewModel.class);
+        AdminManagementViewModel calendarViewModel =
+                new ViewModelProvider(this).get(AdminManagementViewModel.class);
 
         binding = FragmentAdminReservationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();

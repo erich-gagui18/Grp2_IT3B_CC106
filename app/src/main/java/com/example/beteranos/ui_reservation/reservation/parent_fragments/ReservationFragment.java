@@ -22,13 +22,15 @@ import com.example.beteranos.ui_reservation.reservation.child_fragments.BarbersF
 import com.example.beteranos.ui_reservation.reservation.child_fragments.PromoFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.ScheduleFragment;
 
+import com.example.beteranos.ui_reservation.reservation.child_fragments.PaymentFragment;
+import com.example.beteranos.ui_reservation.reservation.child_fragments.*;
+
 public class ReservationFragment extends Fragment {
 
     public FragmentReservationBinding binding;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReservationBinding.inflate(inflater, container, false);
 
         // Load the DetailsFragment by default
@@ -85,6 +87,13 @@ public class ReservationFragment extends Fragment {
         if (binding != null) {
             binding.btnSchedule.performClick();
         }
+    }
+
+    public void navigateToPayment() {
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        transaction.replace(R.id.child_fragment_container, new PaymentFragment());
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 
     private void replaceFragment(Fragment fragment) {
