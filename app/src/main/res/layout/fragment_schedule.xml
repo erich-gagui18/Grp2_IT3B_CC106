@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".ui_reservation.reservation.child_fragments.ScheduleFragment">
 
     <TextView
         android:id="@+id/title_text"
@@ -52,6 +53,24 @@
                 android:clickable="true"
                 android:focusable="false" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/guest_code_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="Guest Code"
+            android:visibility="gone"
+            app:startIconDrawable="@drawable/ic_key"
+            tools:visibility="visible">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/guest_code_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
     </LinearLayout>
 
     <Button
@@ -60,7 +79,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:padding="16dp"
-        android:text="BOOK NOW" />
+        android:text="Proceed to Payment" />
 
     <RelativeLayout
         android:id="@+id/loading_overlay"
@@ -69,15 +88,12 @@
         android:background="#FFFFFFFF"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone"
-        tools:visibility="visible">
-
+        android:visibility="gone">
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

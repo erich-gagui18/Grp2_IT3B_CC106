@@ -49,6 +49,8 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
     public final MutableLiveData<Boolean> reservationStatus = new MutableLiveData<>();
 
+    // LiveData for guest code
+    public final MutableLiveData<Boolean> isGuestCodeValid = new MutableLiveData<>();
 
     public SharedReservationViewModel() {
         fetchServicesFromDB();
@@ -310,5 +312,27 @@ public class SharedReservationViewModel extends ViewModel {
         selectedTime.setValue(null);
         paymentReceiptImage.setValue(null); // Clear the receipt image
         reservationStatus.setValue(null);
+    }
+
+    public void validateGuestCode(String code) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            boolean isValid = false;
+            try (Connection conn = new ConnectionClass().CONN()) {
+                String query = "SELECT is_used FROM guest_codes WHERE code_value = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setString(1, code);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        // Check if a code was found AND it has not been used yet
+                        if (rs.next() && !rs.getBoolean("is_used")) {
+                            isValid = true;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("ViewModel", "DB Error validating guest code: " + e.getMessage());
+            }
+            isGuestCodeValid.postValue(isValid);
+        });
     }
 }
