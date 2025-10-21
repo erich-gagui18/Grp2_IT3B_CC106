@@ -61,4 +61,7 @@ dependencies {
     implementation 'mysql:mysql-connector-java:5.1.49'
 
     implementation("com.google.android.material:material:1.12.0")
+
+    // A reliable BCrypt library from Maven Central
+    implementation 'at.favre.lib:bcrypt:0.9.0'
 }

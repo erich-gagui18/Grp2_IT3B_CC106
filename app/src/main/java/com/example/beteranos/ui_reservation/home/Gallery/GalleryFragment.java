@@ -1,4 +1,4 @@
-package com.example.beteranos.ui.Gallery;
+package com.example.beteranos.ui_reservation.home.Gallery;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

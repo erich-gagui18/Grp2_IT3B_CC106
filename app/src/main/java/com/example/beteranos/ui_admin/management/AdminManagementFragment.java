@@ -10,18 +10,18 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.beteranos.databinding.FragmentAdminReservationsBinding;
+import com.example.beteranos.databinding.FragmentAdminManagementBinding;
 
 public class AdminManagementFragment extends Fragment {
 
-    private FragmentAdminReservationsBinding binding;
+    private FragmentAdminManagementBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         AdminManagementViewModel calendarViewModel =
                 new ViewModelProvider(this).get(AdminManagementViewModel.class);
 
-        binding = FragmentAdminReservationsBinding.inflate(inflater, container, false);
+        binding = FragmentAdminManagementBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         final TextView textView = binding.textAdminReservations;

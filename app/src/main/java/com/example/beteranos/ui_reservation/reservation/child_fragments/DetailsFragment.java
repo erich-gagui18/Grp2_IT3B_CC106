@@ -24,10 +24,6 @@ public class DetailsFragment extends Fragment {
         binding = FragmentDetailsBinding.inflate(inflater, container, false);
         sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedReservationViewModel.class);
 
-        // --- THIS IS THE FIX ---
-        // Populate the fields with any existing data from the ViewModel
-        populateFieldsFromViewModel();
-
         binding.btnNext.setOnClickListener(v -> {
             String firstName = binding.firstNameEditText.getText().toString().trim();
             String middleName = binding.middleNameEditText.getText().toString().trim();
@@ -37,9 +33,7 @@ public class DetailsFragment extends Fragment {
             if (firstName.isEmpty() || lastName.isEmpty() || phone.isEmpty()) {
                 Toast.makeText(getContext(), "Please fill out all required fields", Toast.LENGTH_SHORT).show();
             } else {
-                // Save the details to the ViewModel
                 sharedViewModel.setCustomerDetails(firstName, middleName, lastName, phone);
-
                 if (getParentFragment() instanceof ReservationFragment) {
                     ((ReservationFragment) getParentFragment()).navigateToServices();
                 }
@@ -49,25 +43,40 @@ public class DetailsFragment extends Fragment {
         return binding.getRoot();
     }
 
-    private void populateFieldsFromViewModel() {
-        // Get data from the ViewModel's LiveData
-        String firstName = sharedViewModel.firstName.getValue();
-        String middleName = sharedViewModel.middleName.getValue();
-        String lastName = sharedViewModel.lastName.getValue();
-        String phone = sharedViewModel.phone.getValue();
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        // Set the text if the data is not null
-        if (firstName != null) {
-            binding.firstNameEditText.setText(firstName);
+        // --- THIS IS THE INTEGRATION ---
+        // Get the arguments passed from the login activity.
+        Bundle activityArgs = requireActivity().getIntent().getExtras();
+
+        // Check if the arguments exist and if the ViewModel is currently empty.
+        if (activityArgs != null && sharedViewModel.firstName.getValue() == null) {
+            // Pre-fill the ViewModel with data from the logged-in user.
+            String fName = activityArgs.getString("FIRST_NAME");
+            String mName = activityArgs.getString("MIDDLE_NAME");
+            String lName = activityArgs.getString("LAST_NAME");
+            String phone = activityArgs.getString("PHONE_NUMBER");
+            sharedViewModel.setCustomerDetails(fName, mName, lName, phone);
         }
-        if (middleName != null) {
-            binding.middleNameEditText.setText(middleName);
+
+        // Populate the fields from the ViewModel.
+        populateFieldsFromViewModel();
+    }
+
+    private void populateFieldsFromViewModel() {
+        if (sharedViewModel.firstName.getValue() != null) {
+            binding.firstNameEditText.setText(sharedViewModel.firstName.getValue());
         }
-        if (lastName != null) {
-            binding.lastNameEditText.setText(lastName);
+        if (sharedViewModel.middleName.getValue() != null) {
+            binding.middleNameEditText.setText(sharedViewModel.middleName.getValue());
         }
-        if (phone != null) {
-            binding.phoneEditText.setText(phone);
+        if (sharedViewModel.lastName.getValue() != null) {
+            binding.lastNameEditText.setText(sharedViewModel.lastName.getValue());
+        }
+        if (sharedViewModel.phone.getValue() != null) {
+            binding.phoneEditText.setText(sharedViewModel.phone.getValue());
         }
     }
 

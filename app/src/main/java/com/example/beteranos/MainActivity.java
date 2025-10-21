@@ -3,35 +3,33 @@ package com.example.beteranos;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.beteranos.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        Button reserveButton = findViewById(R.id.reserve_button);
-        Button adminLoginButton = findViewById(R.id.admin_login_button);
-        TextView phoneNumberTextView = findViewById(R.id.phone_number_text_view);
-
-        // This code opens the ReservationActivity when the button is clicked.
-        reserveButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, ReservationActivity.class);
+        // --- THIS IS THE FIX ---
+        // The "Reserve Now" button now opens the CustomerLoginActivity
+        binding.reserveButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CustomerLoginActivity.class);
             startActivity(intent);
         });
 
-        adminLoginButton.setOnClickListener(v -> {
+        binding.adminLoginButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AdminLoginActivity.class);
             startActivity(intent);
         });
 
-        phoneNumberTextView.setOnClickListener(v -> {
-            String phoneNumber = phoneNumberTextView.getText().toString();
+        binding.phoneNumberTextView.setOnClickListener(v -> {
+            String phoneNumber = binding.phoneNumberTextView.getText().toString();
             Intent dialIntent = new Intent(Intent.ACTION_DIAL);
             dialIntent.setData(Uri.parse("tel:" + phoneNumber));
             startActivity(dialIntent);

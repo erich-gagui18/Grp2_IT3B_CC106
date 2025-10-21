@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_reservation.Gallery;
+package com.example.beteranos.ui_reservation.home.Gallery;
 
 import androidx.lifecycle.ViewModel;
 
