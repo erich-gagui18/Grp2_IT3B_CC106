@@ -37,18 +37,34 @@ public class CustomerProfileFragment extends Fragment {
         int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
 
         if (customerId != -1) {
-            // Tell the ViewModel to load data from the database
+            // User is logged in
+            binding.loggedInView.setVisibility(View.VISIBLE);
+            binding.guestView.setVisibility(View.GONE);
+
+            setupRecyclerView();
             mViewModel.loadCustomerData(customerId);
             mViewModel.loadAppointmentHistory(customerId);
+
+            mViewModel.getCustomerData().observe(getViewLifecycleOwner(), this::updateProfileUI);
+            mViewModel.getAppointmentHistory().observe(getViewLifecycleOwner(), appointments -> {
+                adapter.setAppointments(appointments);
+            });
+
+            binding.btnLogout.setOnClickListener(v -> logout());
+
+        } else {
+            // User is a guest
+            binding.loggedInView.setVisibility(View.GONE);
+            binding.guestView.setVisibility(View.VISIBLE);
+
+            binding.btnGoToLogin.setOnClickListener(v -> {
+                // Send the guest back to the login screen
+                Intent intent = new Intent(getActivity(), CustomerLoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                requireActivity().finish();
+            });
         }
-
-        // Observe data changes from the ViewModel
-        mViewModel.getCustomerData().observe(getViewLifecycleOwner(), this::updateProfileUI);
-        mViewModel.getAppointmentHistory().observe(getViewLifecycleOwner(), appointments -> {
-            adapter.setAppointments(appointments);
-        });
-
-        binding.btnLogout.setOnClickListener(v -> logout());
 
         return binding.getRoot();
     }

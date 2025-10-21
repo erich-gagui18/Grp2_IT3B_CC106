@@ -115,5 +115,13 @@ public class CustomerLoginActivity extends AppCompatActivity {
             Intent intent = new Intent(CustomerLoginActivity.this, ForgotPasswordActivity.class);
             startActivity(intent);
         });
+
+        // --- THIS IS THE INTEGRATED CODE ---
+        binding.guestText.setOnClickListener(v -> {
+            // Go to the main reservation screen without any user data
+            Intent intent = new Intent(CustomerLoginActivity.this, ReservationActivity.class);
+            startActivity(intent);
+            finish(); // Close the login screen
+        });
     }
 }

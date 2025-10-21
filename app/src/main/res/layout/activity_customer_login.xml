@@ -75,6 +75,16 @@
         android:layout_marginTop="16dp"
         android:text="Don't have an account? Sign Up" />
 
+    <TextView
+        android:id="@+id/guest_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/signup_text"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Or Continue as Guest"
+        android:padding="8dp"/>
+
     <RelativeLayout
         android:id="@+id/loading_overlay"
         android:layout_width="match_parent"
