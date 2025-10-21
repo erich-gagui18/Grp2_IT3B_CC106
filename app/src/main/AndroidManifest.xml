@@ -36,12 +36,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".CustomerLoginActivity" android:exported="false" />
-        <activity android:name=".CustomerSignupActivity" android:exported="false" />
-        <activity android:name=".ForgotPasswordActivity" android:exported="false" />
-        <activity android:name=".ReservationActivity" android:exported="false" />
-        <activity android:name=".AdminLoginActivity" android:exported="false" />
-        <activity android:name=".AdminDashboardActivity" android:exported="false" />
+        <activity android:name=".ui_customer_login.CustomerLoginActivity" android:exported="false" />
+        <activity android:name=".ui_customer_login.CustomerSignupActivity" android:exported="false" />
+        <activity android:name=".ui_customer_login.ForgotPasswordActivity" android:exported="false" />
+        <activity android:name=".ui_reservation.ReservationActivity" android:exported="false" />
+        <activity android:name=".ui_admin_login.AdminLoginActivity" android:exported="false" />
+        <activity android:name=".ui_admin.AdminDashboardActivity" android:exported="false" />
 
         </application>
 </manifest>

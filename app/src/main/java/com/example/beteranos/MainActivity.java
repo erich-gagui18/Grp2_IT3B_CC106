@@ -5,6 +5,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.beteranos.databinding.ActivityMainBinding;
+import com.example.beteranos.ui_admin_login.AdminLoginActivity;
+import com.example.beteranos.ui_customer_login.CustomerLoginActivity;
 
 public class MainActivity extends AppCompatActivity {
 

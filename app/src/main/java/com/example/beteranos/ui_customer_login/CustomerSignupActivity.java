@@ -1,9 +1,11 @@
-package com.example.beteranos;
+package com.example.beteranos.ui_customer_login;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.databinding.ActivityCustomerSignupBinding;
 // --- ADD THIS IMPORT ---
 import at.favre.lib.crypto.bcrypt.BCrypt;

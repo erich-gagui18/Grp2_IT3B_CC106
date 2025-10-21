@@ -1,4 +1,4 @@
-package com.example.beteranos;
+package com.example.beteranos.ui_admin_login;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.beteranos.ConnectionClass;
+import com.example.beteranos.R;
+import com.example.beteranos.ui_admin.AdminDashboardActivity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

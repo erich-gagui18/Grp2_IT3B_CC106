@@ -11,11 +11,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import com.example.beteranos.CustomerLoginActivity;
+import com.example.beteranos.ui_customer_login.CustomerLoginActivity;
 import com.example.beteranos.MainActivity;
 import com.example.beteranos.databinding.FragmentCustomerProfileBinding;
 import com.example.beteranos.models.Customer;
-import android.content.SharedPreferences;
+
 import static android.content.Context.MODE_PRIVATE;
 
 public class CustomerProfileFragment extends Fragment {

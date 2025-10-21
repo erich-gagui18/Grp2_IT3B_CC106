@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.beteranos.ui_reservation.ReservationActivity;
+
 public class SplashActivity extends AppCompatActivity {
 
     @Override

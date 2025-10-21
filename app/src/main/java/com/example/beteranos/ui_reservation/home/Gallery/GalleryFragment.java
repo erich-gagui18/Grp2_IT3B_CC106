@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.beteranos.GalleryAdapter; // The adapter created previously
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentGalleryBinding; // Assuming you set up View Binding for this fragment
 

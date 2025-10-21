@@ -1,4 +1,4 @@
-package com.example.beteranos;
+package com.example.beteranos.ui_customer_login;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,6 +8,9 @@ import android.view.View;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import at.favre.lib.crypto.bcrypt.BCrypt;
+
+import com.example.beteranos.ConnectionClass;
+import com.example.beteranos.ui_reservation.ReservationActivity;
 import com.example.beteranos.databinding.ActivityCustomerLoginBinding;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
