@@ -49,6 +49,9 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
     public final MutableLiveData<Boolean> reservationStatus = new MutableLiveData<>();
 
+    // LiveData for guest email
+    public final MutableLiveData<String> email = new MutableLiveData<>();
+
     // LiveData for guest code
     public final MutableLiveData<Boolean> isGuestCodeValid = new MutableLiveData<>();
 
@@ -58,11 +61,12 @@ public class SharedReservationViewModel extends ViewModel {
         fetchPromosFromDB();
     }
 
-    public void setCustomerDetails(String fName, String mName, String lName, String pNum) {
+    public void setCustomerDetails(String fName, String mName, String lName, String pNum, String emailAddr) {
         firstName.setValue(fName);
         middleName.setValue(mName);
         lastName.setValue(lName);
         phone.setValue(pNum);
+        email.setValue(emailAddr);
     }
 
     private void fetchServicesFromDB() {
@@ -211,14 +215,15 @@ public class SharedReservationViewModel extends ViewModel {
         String mName = middleName.getValue();
         String lName = lastName.getValue();
         String phoneNum = phone.getValue();
+        String emailAddr = email.getValue();
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
-        Promo promo = selectedPromo.getValue(); // Get the selected promo
+        Promo promo = selectedPromo.getValue();
         String date = selectedDate.getValue();
         String time = selectedTime.getValue();
         byte[] receiptImage = paymentReceiptImage.getValue();
 
-        if (fName == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null) {
+        if (fName == null || lName == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null || emailAddr == null) {
             reservationStatus.postValue(false);
             return;
         }
@@ -229,7 +234,8 @@ public class SharedReservationViewModel extends ViewModel {
             try {
                 conn = new ConnectionClass().CONN();
                 if (conn != null) {
-                    int customerId = getOrCreateCustomer(conn, fName, mName, lName, phoneNum);
+                    // Use the updated method signature that includes email
+                    int customerId = getOrCreateCustomer(conn, fName, mName, lName, phoneNum, emailAddr);
                     if (customerId == -1) {
                         reservationStatus.postValue(false);
                         return;
@@ -252,8 +258,8 @@ public class SharedReservationViewModel extends ViewModel {
                             reservationStmt.setNull(4, Types.INTEGER);
                         }
                         reservationStmt.setTimestamp(5, reservationTimestamp);
-                        reservationStmt.setString(6, "Pending"); // Set the status
-                        reservationStmt.setBytes(7, receiptImage); // This now correctly sets the 7th parameter
+                        reservationStmt.setString(6, "Pending");
+                        reservationStmt.setBytes(7, receiptImage);
                         reservationStmt.addBatch();
                     }
                     reservationStmt.executeBatch();
@@ -263,6 +269,7 @@ public class SharedReservationViewModel extends ViewModel {
                 }
             } catch (Exception e) {
                 Log.e("ViewModel", "Error saving reservation: " + e.getMessage(), e);
+                reservationStatus.postValue(false);
             } finally {
                 if (conn != null) try {
                     conn.close();
@@ -273,28 +280,32 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
-    private int getOrCreateCustomer(Connection conn, String fName, String mName, String lName, String phoneNum) throws SQLException {
+    private int getOrCreateCustomer(Connection conn, String fName, String mName, String lName, String phoneNum, String email) throws SQLException {
         int customerId = -1;
-        String query = "SELECT customer_id FROM customers WHERE first_name = ? AND middle_name = ? AND last_name = ? AND phone_number = ?";
-        PreparedStatement stmt = conn.prepareStatement(query);
-        stmt.setString(1, fName);
-        stmt.setString(2, mName);
-        stmt.setString(3, lName);
-        stmt.setString(4, phoneNum);
-        ResultSet rs = stmt.executeQuery();
-        if (rs.next()) {
-            customerId = rs.getInt("customer_id");
-        } else {
-            String insertQuery = "INSERT INTO customers (first_name, middle_name, last_name, phone_number) VALUES (?, ?, ?, ?)";
-            stmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-            stmt.setString(1, fName);
-            stmt.setString(2, mName);
-            stmt.setString(3, lName);
-            stmt.setString(4, phoneNum);
-            stmt.executeUpdate();
-            ResultSet generatedKeys = stmt.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                customerId = generatedKeys.getInt(1);
+        // First, try to find an existing customer by email, as it should be unique
+        String query = "SELECT customer_id FROM customers WHERE email = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    customerId = rs.getInt("customer_id");
+                } else {
+                    // If not found, create a new customer record
+                    String insertQuery = "INSERT INTO customers (first_name, middle_name, last_name, phone_number, email) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                        insertStmt.setString(1, fName);
+                        insertStmt.setString(2, mName != null ? mName : "");
+                        insertStmt.setString(3, lName);
+                        insertStmt.setString(4, phoneNum != null ? phoneNum : "");
+                        insertStmt.setString(5, email);
+                        insertStmt.executeUpdate();
+                        try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                customerId = generatedKeys.getInt(1);
+                            }
+                        }
+                    }
+                }
             }
         }
         return customerId;
@@ -305,32 +316,44 @@ public class SharedReservationViewModel extends ViewModel {
         middleName.setValue(null);
         lastName.setValue(null);
         phone.setValue(null);
+        email.setValue(null);
         selectedServices.setValue(new ArrayList<>());
         selectedBarber.setValue(null);
         selectedPromo.setValue(null);
         selectedDate.setValue(null);
         selectedTime.setValue(null);
-        paymentReceiptImage.setValue(null); // Clear the receipt image
+        paymentReceiptImage.setValue(null);
         reservationStatus.setValue(null);
+        isGuestCodeValid.setValue(null);
     }
 
     public void validateGuestCode(String code) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             boolean isValid = false;
-            try (Connection conn = new ConnectionClass().CONN()) {
-                String query = "SELECT is_used FROM guest_codes WHERE code_value = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                    stmt.setString(1, code);
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        // Check if a code was found AND it has not been used yet
-                        if (rs.next() && !rs.getBoolean("is_used")) {
-                            isValid = true;
+            Connection conn = null;
+            try {
+                conn = new ConnectionClass().CONN();
+                if (conn != null) {
+                    String query = "SELECT is_used FROM guest_codes WHERE code_value = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                        stmt.setString(1, code);
+                        try (ResultSet rs = stmt.executeQuery()) {
+                            // Check if a code was found AND it has not been used yet
+                            if (rs.next() && !rs.getBoolean("is_used")) {
+                                isValid = true;
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
                 Log.e("ViewModel", "DB Error validating guest code: " + e.getMessage());
+            } finally {
+                if (conn != null) try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
             isGuestCodeValid.postValue(isValid);
         });
