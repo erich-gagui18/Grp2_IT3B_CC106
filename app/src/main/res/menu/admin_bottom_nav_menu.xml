@@ -5,13 +5,13 @@
     <item
         android:id="@+id/admin_nav_home"
         android:icon="@drawable/ic_home"
-        android:title="" />
+        android:title="Home" />
 
     <!-- 🗓️ Calendar -->
     <item
         android:id="@+id/admin_nav_calendar"
         android:icon="@drawable/ic_calendar"
-        android:title="" />
+        android:title="Calendar" />
 
     <!-- 🔹 Empty space for FAB (no icon or title) -->
     <item
@@ -25,12 +25,12 @@
     <item
         android:id="@+id/admin_nav_dashboard"
         android:icon="@drawable/ic_dashboard"
-        android:title="" />
+        android:title="Dashboard" />
 
     <!-- 👤 Profile -->
     <item
         android:id="@+id/admin_nav_profile"
         android:icon="@drawable/ic_person"
-        android:title="" />
+        android:title="Profile" />
 
 </menu>
