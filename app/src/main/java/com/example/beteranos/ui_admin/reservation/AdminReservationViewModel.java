@@ -29,14 +29,22 @@ public class AdminReservationViewModel extends ViewModel {
             Connection conn = null;
             try {
                 conn = new ConnectionClass().CONN();
-                String query = "SELECT r.reservation_id, CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
-                        "s.service_name, b.name AS barber_name, r.reservation_time, r.status " +
-                        "FROM reservations r " +
-                        "JOIN customers c ON r.customer_id = c.customer_id " +
-                        "JOIN services s ON r.service_id = s.service_id " +
-                        "JOIN barbers b ON r.barber_id = b.barber_id " +
-                        "WHERE DATE(r.reservation_time) = ? " +
-                        "ORDER BY r.reservation_time ASC";
+
+                // ✅ Updated query for many-to-many services
+                String query =
+                        "SELECT r.reservation_id, " +
+                                "       CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
+                                "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
+                                "       b.name AS barber_name, " +
+                                "       r.reservation_time, r.status " +
+                                "FROM reservations r " +
+                                "JOIN customers c ON r.customer_id = c.customer_id " +
+                                "JOIN barbers b ON r.barber_id = b.barber_id " +
+                                "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
+                                "JOIN services s ON rs.service_id = s.service_id " +
+                                "WHERE DATE(r.reservation_time) = ? " +
+                                "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
+                                "ORDER BY r.reservation_time ASC";
 
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setDate(1, new java.sql.Date(dateInMillis));
@@ -46,21 +54,29 @@ public class AdminReservationViewModel extends ViewModel {
                     fetchedAppointments.add(new Appointment(
                             rs.getInt("reservation_id"),
                             rs.getString("customer_name"),
-                            rs.getString("service_name"),
+                            rs.getString("service_names"), // ✅ merged service list
                             rs.getString("barber_name"),
                             rs.getTimestamp("reservation_time"),
                             rs.getString("status")
                     ));
                 }
+
                 appointments.postValue(fetchedAppointments);
             } catch (Exception e) {
                 Log.e("AdminResViewModel", "DB Error: " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 isLoading.postValue(false);
             }
         });
     }
+
     public void updateAppointmentStatus(int reservationId, String newStatus) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -75,8 +91,14 @@ public class AdminReservationViewModel extends ViewModel {
             } catch (Exception e) {
                 Log.e("AdminViewModel", "DB Error updating status: " + e.getMessage());
             } finally {
-                if (conn != null) try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
-                // After updating, refresh the list for the currently selected date
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                // ✅ Refresh list after status update
                 fetchAppointmentsForDate(lastFetchedDateInMillis);
             }
         });
