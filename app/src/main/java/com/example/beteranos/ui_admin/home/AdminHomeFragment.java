@@ -5,13 +5,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentAdminHomeBinding;
 import com.example.beteranos.models.Appointment;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -23,7 +27,9 @@ public class AdminHomeFragment extends Fragment {
     private AdminHomeViewModel adminViewModel;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
         adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
 
@@ -34,20 +40,20 @@ public class AdminHomeFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- THIS IS THE FIX ---
-        // 1. Retrieve the username from the fragment's arguments.
-        String username = "Admin"; // Default value
-        if (getArguments() != null && getArguments().containsKey("ADMIN_USERNAME")) {
-            username = getArguments().getString("ADMIN_USERNAME");
+        // ✅ Retrieve username (consistent with nav_graph argument)
+        String username = "Admin";
+        if (getArguments() != null && getArguments().containsKey("username")) {
+            username = getArguments().getString("username");
         }
 
-        // 2. Set the personalized welcome message.
-        binding.textWelcome.setText("Welcome Back " + username + "!");
+        // ✅ Use string resource for better localization
+        binding.textWelcome.setText(getString(R.string.welcome_message, username));
 
-        // Fetch appointments for today's date when the fragment is first created
+        // ✅ Fetch appointments for today
         long today = binding.calendarView.getDate();
         updateLabelAndFetchAppointments(today);
     }
@@ -63,7 +69,9 @@ public class AdminHomeFragment extends Fragment {
 
     private void updateLabelAndFetchAppointments(long dateInMillis) {
         SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
-        binding.reservationsLabel.setText("Reservations for " + sdf.format(dateInMillis));
+        binding.reservationsLabel.setText(
+                getString(R.string.reservations_for_date, sdf.format(dateInMillis))
+        );
         adminViewModel.fetchAppointmentsForDate(dateInMillis);
     }
 
@@ -72,11 +80,11 @@ public class AdminHomeFragment extends Fragment {
     }
 
     private void populateAppointments(List<Appointment> appointments) {
-        // ... (this method remains the same)
         binding.reservationsContainer.removeAllViews();
+
         if (appointments == null || appointments.isEmpty()) {
             TextView noAppointmentsView = new TextView(getContext());
-            noAppointmentsView.setText("No appointments scheduled for this day.");
+            noAppointmentsView.setText(R.string.no_appointments);
             noAppointmentsView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             noAppointmentsView.setPadding(0, 64, 0, 0);
             binding.reservationsContainer.addView(noAppointmentsView);
@@ -88,6 +96,7 @@ public class AdminHomeFragment extends Fragment {
 
         for (Appointment appointment : appointments) {
             View appointmentView = inflater.inflate(R.layout.item_appointment, binding.reservationsContainer, false);
+
             TextView timeText = appointmentView.findViewById(R.id.appointment_time_text);
             TextView customerText = appointmentView.findViewById(R.id.customer_name_text);
             TextView serviceText = appointmentView.findViewById(R.id.service_name_text);
@@ -99,23 +108,26 @@ public class AdminHomeFragment extends Fragment {
             serviceText.setText("Service: " + appointment.getServiceName());
             barberText.setText("Barber: " + appointment.getBarberName());
 
-            // Set the status text and color
-            statusText.setText(appointment.getStatus());
+            // ✅ Improved color handling
+            int colorRes;
             switch (appointment.getStatus().toLowerCase()) {
                 case "pending":
-                    statusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                    colorRes = android.R.color.holo_orange_dark;
                     break;
                 case "scheduled":
                 case "confirmed":
-                    statusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                    colorRes = android.R.color.holo_green_dark;
                     break;
                 case "cancelled":
-                    statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                    colorRes = android.R.color.holo_red_dark;
                     break;
                 default:
-                    statusText.setTextColor(getResources().getColor(android.R.color.darker_gray));
+                    colorRes = android.R.color.darker_gray;
                     break;
             }
+            statusText.setText(appointment.getStatus());
+            statusText.setTextColor(ContextCompat.getColor(requireContext(), colorRes));
+
             binding.reservationsContainer.addView(appointmentView);
         }
     }

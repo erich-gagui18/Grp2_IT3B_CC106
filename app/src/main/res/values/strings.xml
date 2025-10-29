@@ -15,4 +15,18 @@
     <string name="title_gallery">Gallery</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="welcome_message">Welcome Back %1$s!</string>
+    <string name="reservations_for_date">Reservations for %1$s</string>
+    <string name="no_appointments">No appointments scheduled for this day.</string>
+    <string name="no_date_selected">No date selected</string>
+
+
+        <!-- 🏠 Admin Navigation Titles -->
+        <string name="title_admin_home">Home</string>
+        <string name="title_admin_reservation">Reservation</string>
+        <string name="title_admin_management">Management</string>
+        <string name="title_admin_dashboard">Dashboard</string>
+        <string name="title_admin_profile">Profile</string>
+
 </resources>

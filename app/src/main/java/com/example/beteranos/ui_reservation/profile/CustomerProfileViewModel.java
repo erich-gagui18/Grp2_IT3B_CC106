@@ -60,20 +60,26 @@ public class CustomerProfileViewModel extends ViewModel {
         executor.execute(() -> {
             List<Appointment> history = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
-                String query = "SELECT r.reservation_time, r.status, b.name AS barber_name, s.service_name " +
-                        "FROM reservations r " +
-                        "JOIN barbers b ON r.barber_id = b.barber_id " +
-                        "JOIN services s ON r.service_id = s.service_id " +
-                        "WHERE r.customer_id = ? " +
-                        "ORDER BY r.reservation_time DESC";
+                // ✅ Updated query for many-to-many relationship using reservation_services
+                String query =
+                        "SELECT r.reservation_time, r.status, b.name AS barber_name, " +
+                                "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names " +
+                                "FROM reservations r " +
+                                "JOIN barbers b ON r.barber_id = b.barber_id " +
+                                "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
+                                "JOIN services s ON rs.service_id = s.service_id " +
+                                "WHERE r.customer_id = ? " +
+                                "GROUP BY r.reservation_time, r.status, b.name " +
+                                "ORDER BY r.reservation_time DESC";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setInt(1, customerId);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             history.add(new Appointment(
-                                    0, // No ID needed for display
-                                    null, // No customer name needed
-                                    rs.getString("service_name"),
+                                    0, // reservation_id not needed for display
+                                    null, // no customer name needed
+                                    rs.getString("service_names"), // now concatenated list
                                     rs.getString("barber_name"),
                                     rs.getTimestamp("reservation_time"),
                                     rs.getString("status")

@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.models.*;
+import com.example.beteranos.ui_reservation.reservation.child_fragments.ServicesFragment;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -225,11 +226,6 @@ public class SharedReservationViewModel extends ViewModel {
         setCustomerDetails(fName, mName, lName, phone, emailAddr); // Ensure details are stored in LiveData
         Log.d("ViewModel", "checkAndProcessDetails: Starting. isGuest=" + isGuest);
 
-        if (!isGuest) {
-            // Post the message to the LiveData
-            toastMessage.postValue("DEBUG: handleNextClick thinks user is NOT a guest!");
-        }
-
         // --- Guest Flow ---
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -263,9 +259,8 @@ public class SharedReservationViewModel extends ViewModel {
                                     ", HasPassword=" + (existingPassword != null && !existingPassword.isEmpty()));
 
                             if (existingPassword != null && !existingPassword.isEmpty()) {
-                                // Email already registered with a password - Error!
-                                customerCheckError.postValue("This email is already registered. Please log in.");
-                                return; // Stop the process
+                                // Email exists with password - navigate to ServicesFragment
+                                navigateToServicesSignal.postValue(true);
                             } else {
                                 // Email exists without password (guest or incomplete signup)
                                 updateCustomerDetails(conn, customerId, fName, mName, lName, phone);
@@ -373,9 +368,11 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     // --- UPDATED saveReservation METHOD ---
+    // Inside SharedReservationViewModel.java
+
     public void saveReservation(int customerIdFromSession) {
-        // Get values from LiveData needed for saving
-        String emailAddr = email.getValue(); // Need email to find guest ID if needed
+        // --- Get all necessary values from LiveData ---
+        String emailAddr = email.getValue(); // Needed to find guest ID if needed
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
         Promo promo = selectedPromo.getValue();
@@ -385,7 +382,7 @@ public class SharedReservationViewModel extends ViewModel {
         String chosenLocation = serviceLocation.getValue();
         String chosenHaircut = haircutChoice.getValue();
 
-        // Basic validation for essential reservation data
+        // --- Basic validation ---
         if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null || chosenLocation == null) {
             reservationStatus.postValue(false);
             Log.e("ViewModel", "Validation failed: Missing essential reservation data for save.");
@@ -394,15 +391,24 @@ public class SharedReservationViewModel extends ViewModel {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            String claimCode = null; // Default to null, generate only if truly a guest
-            boolean isTrulyGuest = false; // Assume registered unless proven otherwise
-            int finalCustomerId = customerIdFromSession; // Start with the ID passed in
+            String claimCode = null;
+            boolean isTrulyGuest = false;
+            int finalCustomerId = customerIdFromSession;
+            int newReservationId = -1; // To store the ID of the main reservation record
+            Connection conn = null; // Declare connection outside try-with-resources for manual transaction control
+            boolean reservationSuccess = false;
 
-            try (Connection conn = new ConnectionClass().CONN()) {
+            try {
+                // --- Step 0: Get Connection and Start Transaction ---
+                conn = new ConnectionClass().CONN();
+                if (conn == null) {
+                    throw new SQLException("Database connection failed.");
+                }
+                conn.setAutoCommit(false); // Start transaction
 
-                // If customerIdFromSession is -1, it implies a guest who might have skipped password.
-                // We MUST find their ID using the email stored in the ViewModel.
+                // --- Step 1: Determine finalCustomerId ---
                 if (finalCustomerId == -1) {
+                    // Find guest ID using email (logic remains the same)
                     Log.d("ViewModel", "customerIdFromSession is -1, finding guest ID via email: " + emailAddr);
                     String findIdQuery = "SELECT customer_id FROM customers WHERE email = ?";
                     try (PreparedStatement findStmt = conn.prepareStatement(findIdQuery)) {
@@ -412,18 +418,15 @@ public class SharedReservationViewModel extends ViewModel {
                                 finalCustomerId = rs.getInt("customer_id");
                                 Log.d("ViewModel", "Found guest customer ID: " + finalCustomerId);
                             } else {
-                                // This indicates a problem - checkAndProcessDetails should have created them.
                                 Log.e("ViewModel", "SAVE FAILED: Cannot find customer ID for email: " + emailAddr);
-                                customerCheckError.postValue("Could not find customer record. Please restart booking."); // Use error signal
-                                reservationStatus.postValue(false); // Also signal general failure
-                                return; // Stop execution
+                                throw new SQLException("Customer record not found for email."); // Throw to trigger rollback
                             }
                         }
                     }
                 }
 
-                // Now we have a finalCustomerId (either from session or found via email).
-                // Check if this customer actually has a password set.
+                // --- Step 2: Check if guest needs a claim code ---
+                // (Logic remains the same - check if password is null/empty for finalCustomerId)
                 String checkPassQuery = "SELECT password FROM customers WHERE customer_id = ?";
                 try (PreparedStatement checkStmt = conn.prepareStatement(checkPassQuery)) {
                     checkStmt.setInt(1, finalCustomerId);
@@ -431,68 +434,114 @@ public class SharedReservationViewModel extends ViewModel {
                         if (rs.next()) {
                             String pass = rs.getString("password");
                             if (pass == null || pass.isEmpty()) {
-                                isTrulyGuest = true; // No password found, they are booking as guest
+                                isTrulyGuest = true;
                             }
                         } else {
-                            // Customer ID doesn't exist? Should have been caught earlier.
-                            Log.e("ViewModel", "SAVE FAILED: Customer ID " + finalCustomerId + " not found during final password check!");
-                            customerCheckError.postValue("Customer record inconsistency. Please restart booking.");
-                            reservationStatus.postValue(false);
-                            return; // Stop execution
+                            throw new SQLException("Customer ID " + finalCustomerId + " not found during password check!");
                         }
                     }
                 }
-
-                // Generate claim code ONLY if they completed as a guest (no password)
                 if (isTrulyGuest) {
                     claimCode = String.format("%06d", new Random().nextInt(999999));
-                    Log.d("ViewModel", "Generating claim code (" + claimCode + ") for guest customer ID: " + finalCustomerId);
-                } else {
-                    Log.d("ViewModel", "Booking for registered customer ID: " + finalCustomerId + " (no claim code needed)");
+                    Log.d("ViewModel", "Generating claim code (" + claimCode + ") for guest ID: " + finalCustomerId);
                 }
 
-                // Parse Date/Time
+
+                // --- Step 3: Parse Date/Time ---
                 Timestamp reservationTimestamp =
                         new Timestamp(new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US).parse(date + " " + time).getTime());
 
-                // Prepare Insert Statement
-                String query = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                    boolean haircutSavedForBatch = false;
-                    for (Service service : services) {
-                        stmt.setInt(1, finalCustomerId);
-                        stmt.setInt(2, barber.getId());
-                        stmt.setInt(3, service.getId());
-                        if (promo != null) stmt.setInt(4, promo.getId()); else stmt.setNull(4, Types.INTEGER);
-                        stmt.setTimestamp(5, reservationTimestamp);
-                        stmt.setString(6, "Pending"); // Default status
-                        stmt.setBytes(7, receiptImage);
-                        stmt.setString(8, claimCode); // Will be NULL if not isTrulyGuest
-                        // Haircut Choice (Parameter 9)
-                        if (!haircutSavedForBatch && chosenHaircut != null && !chosenHaircut.isEmpty()) {
-                            stmt.setString(9, chosenHaircut); haircutSavedForBatch = true;
-                        } else { stmt.setNull(9, Types.VARCHAR); }
-                        // Service Location (Parameter 10)
-                        stmt.setString(10, chosenLocation);
+                // --- Step 4: Insert ONE row into reservations table (WITHOUT service_id) ---
+                String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(reservationQuery, Statement.RETURN_GENERATED_KEYS)) {
+                    stmt.setInt(1, finalCustomerId);
+                    stmt.setInt(2, barber.getId());
+                    if (promo != null) stmt.setInt(3, promo.getId()); else stmt.setNull(3, Types.INTEGER);
+                    stmt.setTimestamp(4, reservationTimestamp);
+                    stmt.setString(5, "Pending");
+                    stmt.setBytes(6, receiptImage);
+                    stmt.setString(7, claimCode); // NULL if not guest
+                    if (chosenHaircut != null && !chosenHaircut.isEmpty()) stmt.setString(8, chosenHaircut); else stmt.setNull(8, Types.VARCHAR);
+                    stmt.setString(9, chosenLocation);
 
-                        stmt.addBatch();
+                    int affectedRows = stmt.executeUpdate();
+
+                    if (affectedRows == 0) {
+                        throw new SQLException("Creating reservation failed, no rows affected.");
                     }
-                    // Execute Batch Insert
-                    int[] rowsAffected = stmt.executeBatch();
-                    if (rowsAffected.length > 0) {
-                        Log.d("ViewModel", "Reservation saved successfully for customer ID: " + finalCustomerId);
-                        reservationStatus.postValue(true); // Signal success
-                        if (claimCode != null) { // Only post claim code if generated
-                            newClaimCode.postValue(claimCode);
+
+                    // Get the generated reservation_id for the linking table
+                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            newReservationId = generatedKeys.getInt(1);
+                            Log.d("ViewModel", "Main reservation inserted with ID: " + newReservationId);
+                        } else {
+                            throw new SQLException("Creating reservation failed, no ID obtained.");
                         }
-                    } else {
-                        Log.w("ViewModel", "Reservation save failed (0 rows affected) for customer ID: " + finalCustomerId);
-                        reservationStatus.postValue(false); // Signal failure
                     }
                 }
+
+                // --- Step 5: Insert multiple rows into reservation_services table ---
+                if (newReservationId != -1 && services != null && !services.isEmpty()) {
+                    String serviceLinkQuery = "INSERT INTO reservation_services (reservation_id, service_id) VALUES (?, ?)";
+                    try (PreparedStatement serviceStmt = conn.prepareStatement(serviceLinkQuery)) {
+                        for (Service service : services) {
+                            serviceStmt.setInt(1, newReservationId); // Link to the main reservation ID
+                            serviceStmt.setInt(2, service.getId());  // Link to the specific service ID
+                            serviceStmt.addBatch();
+                        }
+                        int[] serviceRowsAffected = serviceStmt.executeBatch(); // Execute batch insert for services
+                        Log.d("ViewModel", "Inserted " + serviceRowsAffected.length + " rows into reservation_services for reservation ID: " + newReservationId);
+                        // Optional: Check if serviceRowsAffected.length matches services.size()
+                        if (serviceRowsAffected.length != services.size()) {
+                            Log.w("ViewModel", "Warning: Service link insert count mismatch. Expected=" + services.size() + ", Actual=" + serviceRowsAffected.length);
+                            // Consider if this requires a rollback depending on your business logic
+                        }
+                    }
+                } else {
+                    // Handle case where services list might be empty or newReservationId is invalid
+                    if (newReservationId == -1) {
+                        throw new SQLException("Cannot link services, main reservation ID is invalid.");
+                    }
+                    // If services is empty, maybe log a warning but don't necessarily fail
+                    Log.w("ViewModel", "No services selected to link for reservation ID: " + newReservationId);
+                }
+
+                // --- Step 6: Commit transaction ---
+                conn.commit();
+                reservationSuccess = true;
+                Log.d("ViewModel", "Reservation transaction committed successfully.");
+
             } catch (Exception e) {
-                Log.e("ViewModel", "Error during saveReservation background task: " + e.getMessage(), e);
-                reservationStatus.postValue(false); // Signal failure on exception
+                Log.e("ViewModel", "Error during saveReservation transaction: " + e.getMessage(), e);
+                // --- Step 7: Rollback on error ---
+                if (conn != null) {
+                    try {
+                        Log.w("ViewModel", "Rolling back transaction due to error.");
+                        conn.rollback();
+                    } catch (SQLException rollbackEx) {
+                        Log.e("ViewModel", "Error rolling back transaction: " + rollbackEx.getMessage());
+                    }
+                }
+                // Ensure status reflects failure
+                reservationSuccess = false; // Explicitly set to false on any exception
+
+            } finally {
+                // --- Step 8: Close connection and reset autocommit ---
+                if (conn != null) {
+                    try {
+                        conn.setAutoCommit(true); // Reset autocommit before closing
+                        conn.close();
+                    } catch (SQLException closeEx) {
+                        Log.e("ViewModel", "Error closing connection: " + closeEx.getMessage());
+                    }
+                }
+            }
+
+            // --- Step 9: Post final status outside the try/catch/finally ---
+            reservationStatus.postValue(reservationSuccess);
+            if (reservationSuccess && claimCode != null) {
+                newClaimCode.postValue(claimCode);
             }
         });
     }

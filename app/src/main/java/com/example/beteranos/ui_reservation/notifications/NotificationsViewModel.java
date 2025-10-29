@@ -5,7 +5,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.example.beteranos.ConnectionClass;
-import com.example.beteranos.models.Appointment; // We can reuse this model
+import com.example.beteranos.models.Appointment;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,13 +34,22 @@ public class NotificationsViewModel extends ViewModel {
         executor.execute(() -> {
             List<Appointment> fetchedNotifications = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
-                String query = "SELECT r.reservation_id, r.status, r.reservation_time, " +
-                        "s.service_name, b.name as barber_name " +
-                        "FROM reservations r " +
-                        "JOIN services s ON r.service_id = s.service_id " +
-                        "JOIN barbers b ON r.barber_id = b.barber_id " +
-                        "WHERE r.customer_id = ? " +
-                        "ORDER BY r.reservation_time DESC";
+
+                // ✅ Updated query for new schema (uses reservation_services)
+                String query =
+                        "SELECT r.reservation_id, " +
+                                "       r.status, " +
+                                "       r.reservation_time, " +
+                                "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
+                                "       b.name AS barber_name " +
+                                "FROM reservations r " +
+                                "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
+                                "JOIN services s ON rs.service_id = s.service_id " +
+                                "JOIN barbers b ON r.barber_id = b.barber_id " +
+                                "WHERE r.customer_id = ? " +
+                                "GROUP BY r.reservation_id, r.status, r.reservation_time, b.name " +
+                                "ORDER BY r.reservation_time DESC";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setInt(1, customerId);
                     try (ResultSet rs = stmt.executeQuery()) {
@@ -47,7 +57,7 @@ public class NotificationsViewModel extends ViewModel {
                             fetchedNotifications.add(new Appointment(
                                     rs.getInt("reservation_id"),
                                     null, // No customer name needed for their own notifications
-                                    rs.getString("service_name"),
+                                    rs.getString("service_names"), // ✅ Multiple services concatenated
                                     rs.getString("barber_name"),
                                     rs.getTimestamp("reservation_time"),
                                     rs.getString("status")
@@ -57,7 +67,7 @@ public class NotificationsViewModel extends ViewModel {
                     }
                 }
             } catch (Exception e) {
-                Log.e("NotificationsViewModel", "DB Error: " + e.getMessage());
+                Log.e("NotificationsViewModel", "DB Error: " + e.getMessage(), e);
             } finally {
                 isLoading.postValue(false);
             }

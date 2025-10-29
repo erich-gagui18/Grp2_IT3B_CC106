@@ -10,7 +10,7 @@ public class AdminManagementViewModel extends ViewModel {
 
     public AdminManagementViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("This is the Admin Reservations fragment");
+        mText.setValue("This is the Admin Management fragment");
     }
 
     public LiveData<String> getText() {
