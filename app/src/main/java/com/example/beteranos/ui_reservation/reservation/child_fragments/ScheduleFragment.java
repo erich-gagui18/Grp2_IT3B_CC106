@@ -40,12 +40,6 @@ public class ScheduleFragment extends Fragment {
         setupTimePicker();
 
         // --- THIS IS THE INTEGRATED GUEST LOGIC ---
-        // 1. Check if the user is a guest and show the code field if they are.
-        int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
-        if (customerId == -1) {
-            isGuest = true;
-            binding.guestCodeLayout.setVisibility(View.VISIBLE);
-        }
 
         // 2. The button now calls a new method to handle the guest/user branching logic.
         binding.btnBookNow.setOnClickListener(v -> handleBookingProceed());
@@ -68,17 +62,7 @@ public class ScheduleFragment extends Fragment {
         // First, validate that all previous steps are complete.
         if (!isReservationDataValid()) {
             return;
-        }
-
-        if (isGuest) {
-            // If it's a guest, get the code and ask the ViewModel to validate it.
-            String guestCode = binding.guestCodeEditText.getText().toString().trim();
-            if (guestCode.isEmpty()) {
-                Toast.makeText(getContext(), "Please enter a Guest Code to proceed", Toast.LENGTH_SHORT).show();
-            } else {
-                sharedViewModel.validateGuestCode(guestCode);
-            }
-        } else {
+        }else {
             // If it's a logged-in user, they don't need a code, so proceed directly.
             navigateToPayment();
         }

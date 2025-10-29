@@ -6,16 +6,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentReservationBinding;
 
 // Import all necessary child fragments
+import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.DetailsFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.ServicesFragment;
 import com.example.beteranos.ui_reservation.reservation.child_fragments.BarbersFragment;
@@ -32,6 +36,7 @@ public class ReservationFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentReservationBinding.inflate(inflater, container, false);
+        SharedReservationViewModel viewModel = new ViewModelProvider(requireActivity()).get(SharedReservationViewModel.class);
 
         // Load the DetailsFragment by default
         if (savedInstanceState == null) {
@@ -41,6 +46,16 @@ public class ReservationFragment extends Fragment {
 
         // --- THIS IS THE FIX ---
         // Click listeners are now set for all five buttons
+
+        // Observe the toastMessage LiveData
+        viewModel.toastMessage.observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                // Optional: Reset the LiveData value to prevent the toast from re-appearing on configuration changes
+                viewModel.toastMessage.setValue(null);
+            }
+        });
+
         binding.btnReserve.setOnClickListener(v -> {
             replaceFragment(new DetailsFragment());
             updateButtonStyles(v);

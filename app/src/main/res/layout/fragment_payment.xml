@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -15,16 +16,35 @@
         android:textSize="22sp"
         android:textStyle="bold" />
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/guest_code_layout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title_text"
+        android:layout_marginTop="24dp"
+        android:hint="Guest Code"
+        android:visibility="gone"
+        app:startIconDrawable="@drawable/ic_key"
+        tools:visibility="visible">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/guest_code_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <ImageView
         android:id="@+id/receipt_image_view"
         android:layout_width="match_parent"
         android:layout_height="250dp"
-        android:layout_below="@id/title_text"
-        android:layout_marginTop="24dp"
+        android:layout_below="@id/guest_code_layout"
+        android:layout_marginTop="16dp"
         android:background="#E0E0E0"
         android:scaleType="centerInside"
-        android:src="@drawable/ic_upload" />
-
+        android:src="@drawable/ic_upload"
+        android:contentDescription="Payment Receipt Preview"/>
     <Button
         android:id="@+id/btn_select_image"
         android:layout_width="wrap_content"
@@ -46,10 +66,11 @@
         android:id="@+id/loading_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFFFF"
+        android:background="#B3FFFFFF"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="gone">
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
