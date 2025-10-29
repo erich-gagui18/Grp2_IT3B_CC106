@@ -124,6 +124,15 @@ public class ReservationFragment extends Fragment {
         }
     }
 
+    // --- ADD THIS METHOD ---
+    public void navigateToConfirmation() {
+        // Replace the current child fragment with the confirmation screen
+        getChildFragmentManager().beginTransaction()
+                .replace(R.id.child_fragment_container, new ReservationConfirmationFragment()) // Use your container ID
+                // Don't add to back stack usually, so back goes out of reservation flow
+                .commit();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();

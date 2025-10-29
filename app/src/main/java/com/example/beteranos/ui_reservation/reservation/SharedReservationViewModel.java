@@ -17,6 +17,8 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.Date;
+import java.sql.Types; // Ensure this is imported
+import java.util.Random; // Ensure this is imported
 
 public class SharedReservationViewModel extends ViewModel {
 
@@ -26,35 +28,25 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> lastName = new MutableLiveData<>();
     public final MutableLiveData<String> phone = new MutableLiveData<>();
 
-    // Service Selection (Multi-select)
+    public final MutableLiveData<String> email = new MutableLiveData<>(); // Email LiveData
+
+    // Selections
     public final MutableLiveData<List<Service>> allServices = new MutableLiveData<>();
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
-
-    // Barber Selection (Single-select)
-    public final MutableLiveData<List<Barber>> allBarbers = new MutableLiveData<>();
     public final MutableLiveData<Barber> selectedBarber = new MutableLiveData<>();
-
-    // Promo Selection (Single-select)
-    public final MutableLiveData<List<Promo>> allPromos = new MutableLiveData<>();
+    public final MutableLiveData<List<Barber>> allBarbers = new MutableLiveData<>();
     public final MutableLiveData<Promo> selectedPromo = new MutableLiveData<>();
-
-    // Schedule Selection
+    public final MutableLiveData<List<Promo>> allPromos = new MutableLiveData<>();
     public final MutableLiveData<String> selectedDate = new MutableLiveData<>();
     public final MutableLiveData<String> selectedTime = new MutableLiveData<>();
-
-    // Receipt Image
     public final MutableLiveData<byte[]> paymentReceiptImage = new MutableLiveData<>();
+    public final MutableLiveData<String> haircutChoice = new MutableLiveData<>(); // <<< KEEP THIS ONE
 
-    // LiveData for dynamic scheduling data
+    // Dynamic Data & Status
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
     public final MutableLiveData<Boolean> reservationStatus = new MutableLiveData<>();
-
-    // LiveData for guest email
-    public final MutableLiveData<String> email = new MutableLiveData<>();
-
-    // LiveData for guest code
-    public final MutableLiveData<Boolean> isGuestCodeValid = new MutableLiveData<>();
-
+    public final MutableLiveData<Boolean> isGuestCodeValid = new MutableLiveData<>(); // <<< KEEP THIS ONE
+    public final MutableLiveData<String> newClaimCode = new MutableLiveData<>();
     public SharedReservationViewModel() {
         fetchServicesFromDB();
         fetchBarbersFromDB();
@@ -210,7 +202,7 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
-    public void saveReservation() {
+    public void saveReservation(int customerIdFromSession) { // Added customerIdFromSession parameter
         String fName = firstName.getValue();
         String mName = middleName.getValue();
         String lName = lastName.getValue();
@@ -222,95 +214,132 @@ public class SharedReservationViewModel extends ViewModel {
         String date = selectedDate.getValue();
         String time = selectedTime.getValue();
         byte[] receiptImage = paymentReceiptImage.getValue();
+        String chosenHaircut = haircutChoice.getValue(); // Get the chosen haircut
 
-        if (fName == null || lName == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null || emailAddr == null) {
+        // Basic validation
+        if (fName == null || lName == null || emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null) {
             reservationStatus.postValue(false);
+            Log.e("ViewModel", "Validation failed: Missing required reservation data.");
             return;
         }
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Connection conn = null;
-            try {
-                conn = new ConnectionClass().CONN();
-                if (conn != null) {
-                    // Use the updated method signature that includes email
-                    int customerId = getOrCreateCustomer(conn, fName, mName, lName, phoneNum, emailAddr);
-                    if (customerId == -1) {
-                        reservationStatus.postValue(false);
-                        return;
-                    }
+            String claimCode = null; // Initialize claimCode
+            try (Connection conn = new ConnectionClass().CONN()) {
+                int finalCustomerId = (customerIdFromSession != -1) ? customerIdFromSession : getOrCreateCustomer(conn, fName, mName, lName, phoneNum, emailAddr);
 
-                    SimpleDateFormat parser = new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US);
-                    Date reservationDate = parser.parse(date + " " + time);
-                    Timestamp reservationTimestamp = new Timestamp(reservationDate.getTime());
-
-                    String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                    PreparedStatement reservationStmt = conn.prepareStatement(reservationQuery);
-
-                    for (Service service : services) {
-                        reservationStmt.setInt(1, customerId);
-                        reservationStmt.setInt(2, barber.getId());
-                        reservationStmt.setInt(3, service.getId());
-                        if (promo != null) {
-                            reservationStmt.setInt(4, promo.getId());
-                        } else {
-                            reservationStmt.setNull(4, Types.INTEGER);
-                        }
-                        reservationStmt.setTimestamp(5, reservationTimestamp);
-                        reservationStmt.setString(6, "Pending");
-                        reservationStmt.setBytes(7, receiptImage);
-                        reservationStmt.addBatch();
-                    }
-                    reservationStmt.executeBatch();
-                    reservationStatus.postValue(true);
-                } else {
+                if (finalCustomerId == -1) {
+                    Log.e("ViewModel", "Failed to get or create customer ID.");
                     reservationStatus.postValue(false);
+                    return; // Stop if customer ID is invalid
+                }
+
+                // Generate claim code only for guests
+                if (customerIdFromSession == -1) {
+                    claimCode = String.format("%06d", new Random().nextInt(999999));
+                }
+
+                SimpleDateFormat parser = new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US);
+                Date reservationDate = parser.parse(date + " " + time);
+                Timestamp reservationTimestamp = new Timestamp(reservationDate.getTime());
+
+                // Updated SQL query to include claim_code and haircut_choice
+                String query = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    boolean haircutSavedForBatch = false; // Flag to save haircut only once per batch
+                    for (Service service : services) {
+                        stmt.setInt(1, finalCustomerId);
+                        stmt.setInt(2, barber.getId());
+                        stmt.setInt(3, service.getId());
+                        if (promo != null) stmt.setInt(4, promo.getId());
+                        else stmt.setNull(4, Types.INTEGER);
+                        stmt.setTimestamp(5, reservationTimestamp);
+                        stmt.setString(6, "Pending");
+                        stmt.setBytes(7, receiptImage);
+                        stmt.setString(8, claimCode); // Set claim code (will be null for logged-in users)
+
+                        // Set haircut choice (only once per reservation batch if provided)
+                        if (!haircutSavedForBatch && chosenHaircut != null && !chosenHaircut.isEmpty()) {
+                            stmt.setString(9, chosenHaircut);
+                            haircutSavedForBatch = true;
+                        } else {
+                            stmt.setNull(9, Types.VARCHAR); // Set null otherwise
+                        }
+
+                        stmt.addBatch();
+                    }
+                    int[] rowsAffected = stmt.executeBatch(); // Execute the batch insert
+                    if (rowsAffected.length > 0) {
+                        reservationStatus.postValue(true); // Signal success
+                        if (claimCode != null) {
+                            newClaimCode.postValue(claimCode); // Post claim code if it was a guest
+                        }
+                    } else {
+                        reservationStatus.postValue(false); // Signal failure if no rows affected
+                    }
                 }
             } catch (Exception e) {
                 Log.e("ViewModel", "Error saving reservation: " + e.getMessage(), e);
-                reservationStatus.postValue(false);
-            } finally {
-                if (conn != null) try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                reservationStatus.postValue(false); // Signal failure on exception
             }
+            // No finally block needed here for connection closing due to try-with-resources
         });
     }
 
-    private int getOrCreateCustomer(Connection conn, String fName, String mName, String lName, String phoneNum, String email) throws SQLException {
+    private int getOrCreateCustomer(Connection conn, String fName, String mName, String lName, String phoneNum, String emailAddr) throws SQLException {
         int customerId = -1;
-        // First, try to find an existing customer by email, as it should be unique
-        String query = "SELECT customer_id FROM customers WHERE email = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, email);
-            try (ResultSet rs = stmt.executeQuery()) {
+        // 1. Check if user exists by email (unique identifier)
+        String emailQuery = "SELECT customer_id FROM customers WHERE email = ?";
+        try (PreparedStatement emailStmt = conn.prepareStatement(emailQuery)) {
+            emailStmt.setString(1, emailAddr);
+            try (ResultSet rs = emailStmt.executeQuery()) {
                 if (rs.next()) {
-                    customerId = rs.getInt("customer_id");
-                } else {
-                    // If not found, create a new customer record
-                    String insertQuery = "INSERT INTO customers (first_name, middle_name, last_name, phone_number, email) VALUES (?, ?, ?, ?, ?)";
-                    try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                        insertStmt.setString(1, fName);
-                        insertStmt.setString(2, mName != null ? mName : "");
-                        insertStmt.setString(3, lName);
-                        insertStmt.setString(4, phoneNum != null ? phoneNum : "");
-                        insertStmt.setString(5, email);
-                        insertStmt.executeUpdate();
-                        try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                customerId = generatedKeys.getInt(1);
-                            }
-                        }
-                    }
+                    return rs.getInt("customer_id"); // Return existing customer ID
                 }
             }
         }
-        return customerId;
+
+        // 2. If no user by email, check if a guest record might exist (less reliable check)
+        String guestQuery = "SELECT customer_id FROM customers WHERE first_name = ? AND last_name = ? AND phone_number = ? AND email IS NULL"; // Check for existing guests without email
+        try (PreparedStatement guestStmt = conn.prepareStatement(guestQuery)) {
+            guestStmt.setString(1, fName);
+            guestStmt.setString(2, lName);
+            guestStmt.setString(3, phoneNum);
+            try (ResultSet rs = guestStmt.executeQuery()) {
+                if (rs.next()) {
+                    customerId = rs.getInt("customer_id");
+                    // Update the existing guest record with the email
+                    String updateEmailSql = "UPDATE customers SET email = ? WHERE customer_id = ?";
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updateEmailSql)) {
+                        updateStmt.setString(1, emailAddr);
+                        updateStmt.setInt(2, customerId);
+                        updateStmt.executeUpdate();
+                    }
+                    return customerId; // Return the updated guest customer ID
+                }
+            }
+        }
+
+        // 3. If no matching record found, create a new customer
+        String insertQuery = "INSERT INTO customers (first_name, middle_name, last_name, phone_number, email) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+            insertStmt.setString(1, fName);
+            insertStmt.setString(2, (mName != null && !mName.isEmpty()) ? mName : null); // Handle optional middle name
+            insertStmt.setString(3, lName);
+            insertStmt.setString(4, phoneNum);
+            insertStmt.setString(5, emailAddr);
+            insertStmt.executeUpdate();
+            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    customerId = generatedKeys.getInt(1); // Get the new customer ID
+                }
+            }
+        }
+        return customerId; // Return the newly created customer ID
     }
 
+    // --- UPDATED clearReservationDetails METHOD ---
     public void clearReservationDetails() {
         firstName.setValue(null);
         middleName.setValue(null);
@@ -325,6 +354,8 @@ public class SharedReservationViewModel extends ViewModel {
         paymentReceiptImage.setValue(null);
         reservationStatus.setValue(null);
         isGuestCodeValid.setValue(null);
+        newClaimCode.setValue(null); // Clear claim code
+        haircutChoice.setValue(null); // Clear haircut choice
     }
 
     public void validateGuestCode(String code) {

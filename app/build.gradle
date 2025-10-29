@@ -64,4 +64,6 @@ dependencies {
 
     // A reliable BCrypt library from Maven Central
     implementation 'at.favre.lib:bcrypt:0.9.0'
+
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0' // Add this line
 }
