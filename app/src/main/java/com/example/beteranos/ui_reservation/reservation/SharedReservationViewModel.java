@@ -28,9 +28,10 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> lastName = new MutableLiveData<>();
     public final MutableLiveData<String> phone = new MutableLiveData<>();
 
-    public final MutableLiveData<String> email = new MutableLiveData<>(); // Email LiveData
+    public final MutableLiveData<String> email = new MutableLiveData<>();
 
     // Selections
+    public final MutableLiveData<String> serviceLocation = new MutableLiveData<>("Barbershop");
     public final MutableLiveData<List<Service>> allServices = new MutableLiveData<>();
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
     public final MutableLiveData<Barber> selectedBarber = new MutableLiveData<>();
@@ -40,7 +41,7 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> selectedDate = new MutableLiveData<>();
     public final MutableLiveData<String> selectedTime = new MutableLiveData<>();
     public final MutableLiveData<byte[]> paymentReceiptImage = new MutableLiveData<>();
-    public final MutableLiveData<String> haircutChoice = new MutableLiveData<>(); // <<< KEEP THIS ONE
+    public final MutableLiveData<String> haircutChoice = new MutableLiveData<>();
 
     // Dynamic Data & Status
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
@@ -208,6 +209,7 @@ public class SharedReservationViewModel extends ViewModel {
         String lName = lastName.getValue();
         String phoneNum = phone.getValue();
         String emailAddr = email.getValue();
+        String chosenLocation = serviceLocation.getValue();
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
         Promo promo = selectedPromo.getValue();
@@ -245,12 +247,13 @@ public class SharedReservationViewModel extends ViewModel {
                 Timestamp reservationTimestamp = new Timestamp(reservationDate.getTime());
 
                 // Updated SQL query to include claim_code and haircut_choice
-                String query = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                String query = "INSERT INTO reservations (customer_id, barber_id, service_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     boolean haircutSavedForBatch = false; // Flag to save haircut only once per batch
                     for (Service service : services) {
                         stmt.setInt(1, finalCustomerId);
                         stmt.setInt(2, barber.getId());
+                        stmt.setString(10, chosenLocation);
                         stmt.setInt(3, service.getId());
                         if (promo != null) stmt.setInt(4, promo.getId());
                         else stmt.setNull(4, Types.INTEGER);
@@ -339,13 +342,14 @@ public class SharedReservationViewModel extends ViewModel {
         return customerId; // Return the newly created customer ID
     }
 
-    // --- UPDATED clearReservationDetails METHOD ---
+    //clearReservationDetails
     public void clearReservationDetails() {
         firstName.setValue(null);
         middleName.setValue(null);
         lastName.setValue(null);
         phone.setValue(null);
         email.setValue(null);
+        serviceLocation.setValue("Barbershop");
         selectedServices.setValue(new ArrayList<>());
         selectedBarber.setValue(null);
         selectedPromo.setValue(null);

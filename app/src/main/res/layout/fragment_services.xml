@@ -17,12 +17,28 @@
         android:textSize="22sp"
         android:textStyle="bold" />
 
+    <TextView
+        android:id="@+id/location_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title_text"
+        android:text="Service Location:"
+        android:layout_marginBottom="8dp"
+        android:textStyle="bold"/>
+
+    <LinearLayout
+        android:id="@+id/location_selector_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/location_label"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp"/>
     <ScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/btn_next"
-        android:layout_below="@id/title_text">
+        android:layout_below="@id/location_selector_container">
 
         <LinearLayout
             android:id="@+id/main_content_container"
@@ -51,14 +67,13 @@
         android:hint="Select Haircut Style"
         android:visibility="gone"
         tools:visibility="visible">
-
         <AutoCompleteTextView
             android:id="@+id/haircut_choice_dropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="none" />
-
     </com.google.android.material.textfield.TextInputLayout>
+
     <Button
         android:id="@+id/btn_next"
         android:layout_width="match_parent"
