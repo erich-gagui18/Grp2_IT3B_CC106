@@ -34,9 +34,6 @@ public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel;
-    // Remove adapter instances:
-    // private HaircutRankingAdapter haircutRankingAdapter;
-    // private BarberRankingAdapter barberRankingAdapter;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

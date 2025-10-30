@@ -18,7 +18,6 @@
 
     <string name="welcome_message">Welcome Back %1$s!</string>
     <string name="reservations_for_date">Reservations for %1$s</string>
-    <string name="no_appointments">No appointments scheduled for this day.</string>
     <string name="no_date_selected">No date selected</string>
 
 
@@ -28,5 +27,12 @@
         <string name="title_admin_management">Management</string>
         <string name="title_admin_dashboard">Dashboard</string>
         <string name="title_admin_profile">Profile</string>
+
+    <!-- AdminReservationFragment labels -->
+    <string name="reservations_for">Reservations for %1$s</string>
+    <string name="service_label">Service: %1$s</string>
+    <string name="barber_label">Barber: %1$s</string>
+    <string name="status_label">Status: %1$s</string>
+    <string name="no_appointments">No appointments scheduled for this day.</string>
 
 </resources>

@@ -1,10 +1,13 @@
 package com.example.beteranos.ui_admin.reservation;
 
 import android.util.Log;
+
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
 import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.models.Appointment;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,32 +22,31 @@ public class AdminReservationViewModel extends ViewModel {
     public final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private long lastFetchedDateInMillis;
 
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     public void fetchAppointmentsForDate(long dateInMillis) {
         this.lastFetchedDateInMillis = dateInMillis;
-        isLoading.setValue(true);
-        appointments.setValue(new ArrayList<>());
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        isLoading.postValue(true);
+
         executor.execute(() -> {
             List<Appointment> fetchedAppointments = new ArrayList<>();
             Connection conn = null;
             try {
                 conn = new ConnectionClass().CONN();
 
-                // ✅ Updated query for many-to-many services
-                String query =
-                        "SELECT r.reservation_id, " +
-                                "       CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
-                                "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
-                                "       b.name AS barber_name, " +
-                                "       r.reservation_time, r.status " +
-                                "FROM reservations r " +
-                                "JOIN customers c ON r.customer_id = c.customer_id " +
-                                "JOIN barbers b ON r.barber_id = b.barber_id " +
-                                "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
-                                "JOIN services s ON rs.service_id = s.service_id " +
-                                "WHERE DATE(r.reservation_time) = ? " +
-                                "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
-                                "ORDER BY r.reservation_time ASC";
+                String query = "SELECT r.reservation_id, " +
+                        "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
+                        "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
+                        "b.name AS barber_name, " +
+                        "r.reservation_time, r.status " +
+                        "FROM reservations r " +
+                        "JOIN customers c ON r.customer_id = c.customer_id " +
+                        "JOIN barbers b ON r.barber_id = b.barber_id " +
+                        "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
+                        "JOIN services s ON rs.service_id = s.service_id " +
+                        "WHERE DATE(r.reservation_time) = ? " +
+                        "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
+                        "ORDER BY r.reservation_time ASC";
 
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setDate(1, new java.sql.Date(dateInMillis));
@@ -54,7 +56,7 @@ public class AdminReservationViewModel extends ViewModel {
                     fetchedAppointments.add(new Appointment(
                             rs.getInt("reservation_id"),
                             rs.getString("customer_name"),
-                            rs.getString("service_names"), // ✅ merged service list
+                            rs.getString("service_names"),
                             rs.getString("barber_name"),
                             rs.getTimestamp("reservation_time"),
                             rs.getString("status")
@@ -62,15 +64,12 @@ public class AdminReservationViewModel extends ViewModel {
                 }
 
                 appointments.postValue(fetchedAppointments);
+
             } catch (Exception e) {
                 Log.e("AdminResViewModel", "DB Error: " + e.getMessage());
             } finally {
                 if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    try { conn.close(); } catch (Exception ignored) {}
                 }
                 isLoading.postValue(false);
             }
@@ -78,7 +77,6 @@ public class AdminReservationViewModel extends ViewModel {
     }
 
     public void updateAppointmentStatus(int reservationId, String newStatus) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             Connection conn = null;
             try {
@@ -87,20 +85,46 @@ public class AdminReservationViewModel extends ViewModel {
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setString(1, newStatus);
                 stmt.setInt(2, reservationId);
-                stmt.executeUpdate();
+                int updated = stmt.executeUpdate();
+
+                if (updated > 0) {
+                    // Update the LiveData list locally to avoid full refresh
+                    List<Appointment> currentList = appointments.getValue();
+                    if (currentList != null) {
+                        List<Appointment> updatedList = new ArrayList<>(currentList.size());
+                        for (Appointment appt : currentList) {
+                            if (appt.getReservationId() == reservationId) {
+                                // Create a new Appointment object with updated status
+                                Appointment updatedAppt = new Appointment(
+                                        appt.getReservationId(),
+                                        appt.getCustomerName(),
+                                        appt.getServiceName(),
+                                        appt.getBarberName(),
+                                        appt.getReservationTime(),
+                                        newStatus
+                                );
+                                updatedList.add(updatedAppt);
+                            } else {
+                                updatedList.add(appt);
+                            }
+                        }
+                        appointments.postValue(updatedList); // New list triggers DiffUtil
+                    }
+                }
+
             } catch (Exception e) {
                 Log.e("AdminViewModel", "DB Error updating status: " + e.getMessage());
             } finally {
                 if (conn != null) {
-                    try {
-                        conn.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    try { conn.close(); } catch (Exception ignored) {}
                 }
-                // ✅ Refresh list after status update
-                fetchAppointmentsForDate(lastFetchedDateInMillis);
             }
         });
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdownNow();
     }
 }

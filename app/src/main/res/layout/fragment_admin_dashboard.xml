@@ -1,16 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/admin_reservation_fragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui_admin.dashboard.AdminDashboardFragment">
+    android:orientation="vertical"
+    android:padding="16dp">
 
+    <!-- Title -->
     <TextView
-        android:id="@+id/text_dashboard"
+        android:id="@+id/tv_appointments_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:text="Appointments"
         android:textSize="24sp"
-        tools:text="Dashboard Fragment" />
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
 
-</FrameLayout>
+    <!-- RecyclerView for appointments -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_appointments"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+
+    <!-- Optional: No appointments message -->
+    <TextView
+        android:id="@+id/tv_no_appointments"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No appointments yet"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/textDashboard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dashboard" />
+
+    <com.github.mikephil.charting.charts.HorizontalBarChart
+        android:id="@+id/chartHaircutRanking"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+
+    <com.github.mikephil.charting.charts.HorizontalBarChart
+        android:id="@+id/chartBarberRanking"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+
+</LinearLayout>

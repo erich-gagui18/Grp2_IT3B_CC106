@@ -1,16 +1,18 @@
 package com.example.beteranos.models;
 
-import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Objects;
 
 public class Appointment {
-    private final int reservationId;
-    private final String customerName;
-    private final String serviceName;
-    private final String barberName;
-    private final Timestamp reservationTime;
-    private final String status;
+    private int reservationId;
+    private String customerName;
+    private String serviceName;
+    private String barberName;
+    private Date reservationTime;
+    private String status;
 
-    public Appointment(int reservationId, String customerName, String serviceName, String barberName, Timestamp reservationTime, String status) {
+    public Appointment(int reservationId, String customerName, String serviceName,
+                       String barberName, Date reservationTime, String status) {
         this.reservationId = reservationId;
         this.customerName = customerName;
         this.serviceName = serviceName;
@@ -19,11 +21,29 @@ public class Appointment {
         this.status = status;
     }
 
-    // Getters for all fields
     public int getReservationId() { return reservationId; }
     public String getCustomerName() { return customerName; }
     public String getServiceName() { return serviceName; }
     public String getBarberName() { return barberName; }
-    public Timestamp getReservationTime() { return reservationTime; }
+    public Date getReservationTime() { return reservationTime; }
     public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Appointment)) return false;
+        Appointment that = (Appointment) o;
+        return reservationId == that.reservationId &&
+                Objects.equals(customerName, that.customerName) &&
+                Objects.equals(serviceName, that.serviceName) &&
+                Objects.equals(barberName, that.barberName) &&
+                Objects.equals(reservationTime, that.reservationTime) &&
+                Objects.equals(status, that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reservationId, customerName, serviceName, barberName, reservationTime, status);
+    }
 }
