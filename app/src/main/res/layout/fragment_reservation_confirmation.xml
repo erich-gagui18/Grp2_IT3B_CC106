@@ -1,83 +1,364 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="?android:attr/colorBackground">
+    android:background="#F5F5F5"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="Reservation Confirmed!"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary" />
-
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tv_title"
-        android:layout_marginTop="24dp"
-        android:orientation="vertical">
+        android:padding="24dp">
+
+
+        <ImageView
+            android:id="@+id/iv_success_icon"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_check_circle"
+            android:contentDescription="Success"
+            app:tint="#1B5E20" />
+
 
         <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Name:" />
-        <TextView
-            android:id="@+id/tv_customer_name"
-            style="@style/ConfirmationValue"
-            android:text="Customer Name" />
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_success_icon"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:text="Reservation Confirmed!"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A"
+            android:letterSpacing="0.02" />
+
 
         <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Phone Number:" />
-        <TextView
-            android:id="@+id/tv_customer_phone"
-            style="@style/ConfirmationValue"
-            android:text="09123456789" />
+            android:id="@+id/tv_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_title"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="8dp"
+            android:text="Your appointment has been successfully booked"
+            android:textSize="14sp"
+            android:textColor="#666666" />
 
-        <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Schedule:" />
-        <TextView
-            android:id="@+id/tv_schedule"
-            style="@style/ConfirmationValue"
-            android:text="October 17, 2025 at 09:00 AM" />
 
-        <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Barber:" />
-        <TextView
-            android:id="@+id/tv_barber_name"
-            style="@style/ConfirmationValue"
-            android:text="Barber Name" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_subtitle"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:backgroundTint="#FFFFFF">
 
-        <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Services:" />
-        <TextView
-            android:id="@+id/tv_services_list"
-            style="@style/ConfirmationValue"
-            android:text="- Haircut (₱150.00)\n- Beard Trim (₱100.00)" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
 
-        <TextView
-            style="@style/ConfirmationLabel"
-            android:text="Promo:" />
-        <TextView
-            android:id="@+id/tv_promo_name"
-            style="@style/ConfirmationValue"
-            android:text="No promo selected" />
 
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
 
-    <Button
-        android:id="@+id/btn_done"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:text="Done"
-        android:padding="16dp"/>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_person"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Person"
+                        app:tint="#2C3E50" />
 
-</RelativeLayout>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:text="Name"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/tv_customer_name"
+                            style="@style/ConfirmationValue"
+                            android:text="Customer Name"
+                            android:textSize="16sp"
+                            android:textColor="#2C3E50"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_phone"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Phone"
+                        app:tint="#2C3E50" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:text="Phone Number"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/tv_customer_phone"
+                            style="@style/ConfirmationValue"
+                            android:text="09123456789"
+                            android:textSize="16sp"
+                            android:textColor="#2C3E50"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_calendar"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Calendar"
+                        app:tint="#2C3E50" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:letterSpacing="0.05"
+                            android:text="Schedule"
+                            android:textAllCaps="true"
+                            android:textColor="#7F8C8D"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tv_schedule"
+                            style="@style/ConfirmationValue"
+                            android:layout_marginTop="4dp"
+                            android:text="October 17, 2025 at 09:00 AM"
+                            android:textColor="#2C3E50"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_scissor"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Barber"
+                        app:tint="#2C3E50" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:text="Barber"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/tv_barber_name"
+                            style="@style/ConfirmationValue"
+                            android:text="Barber Name"
+                            android:textSize="16sp"
+                            android:textColor="#2C3E50"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_list"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Services"
+                        app:tint="#2C3E50" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:text="Services"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/tv_services_list"
+                            style="@style/ConfirmationValue"
+                            android:text="- Haircut (₱150.00)\n- Beard Trim (₱100.00)"
+                            android:textSize="15sp"
+                            android:textColor="#2C3E50"
+                            android:lineSpacingExtra="4dp"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_local_offer"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="Promo"
+                        app:tint="#2C3E50" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/ConfirmationLabel"
+                            android:text="Promo"
+                            android:textSize="12sp"
+                            android:textColor="#7F8C8D"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/tv_promo_name"
+                            style="@style/ConfirmationValue"
+                            android:text="No promo selected"
+                            android:textSize="15sp"
+                            android:textColor="#95A5A6"
+                            android:textStyle="italic"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+
+        <Button
+            android:id="@+id/btn_done"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_below="@id/card_details"
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="16dp"
+            android:text="Done"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:letterSpacing="0.05"
+            android:background="@drawable/button_background"
+            android:textColor="#FFFFFF"
+            android:elevation="2dp"/>
+
+    </RelativeLayout>
+</ScrollView>
