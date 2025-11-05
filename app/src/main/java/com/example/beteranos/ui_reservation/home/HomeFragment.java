@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout; // ⭐️ ADDED: Import for the LinearLayout container ⭐️
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -37,25 +38,34 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- THIS IS THE FIX ---
-        // This callback handles the back button press.
+        // --- Back Button Callback (Existing Code) ---
         OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
             @Override
             public void handleOnBackPressed() {
-                // When the back button is pressed on the Home screen, exit the app
-                // instead of going back to the MainActivity.
                 requireActivity().finishAffinity();
             }
         };
-        // Add the callback to the dispatcher
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
 
 
-        // It's best practice to set click listeners in onViewCreated.
+        // --- Click Listener for Gallery (Existing Code) ---
         binding.galleryContainer.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.navigation_gallery);
         });
+
+        // ⭐️ NEW CODE: Click Listener for Barber Icon ⭐️
+        // Access the LinearLayout using its ID
+        LinearLayout barberContainer = view.findViewById(R.id.barber_container);
+
+        if (barberContainer != null) {
+            barberContainer.setOnClickListener(v -> {
+                NavController navController = Navigation.findNavController(v);
+
+                // Navigate using the action defined in mobile_navigation.xml
+                navController.navigate(R.id.action_home_to_barber_profile);
+            });
+        }
     }
 
     @Override
