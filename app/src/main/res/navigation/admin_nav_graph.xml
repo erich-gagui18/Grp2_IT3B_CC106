@@ -64,4 +64,21 @@
         android:label="Manage Promos"
         tools:layout="@layout/fragment_manage_promos" />
 
+    <fragment
+        android:id="@+id/admin_nav_management"
+        android:name="com.example.beteranos.ui_admin.management.AdminManagementFragment"
+        android:label="Content Management"
+        tools:layout="@layout/fragment_admin_management" >
+
+        <action
+            android:id="@+id/action_admin_nav_management_to_transactionReportFragment"
+            app:destination="@id/transactionReportFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/transactionReportFragment"
+        android:name="com.example.beteranos.ui_admin.management.transactions.TransactionReportFragment"
+        android:label="Transaction Report"
+        tools:layout="@layout/fragment_transaction_report" />
+
 </navigation>

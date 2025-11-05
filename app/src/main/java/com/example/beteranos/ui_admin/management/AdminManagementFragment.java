@@ -16,7 +16,6 @@ import com.example.beteranos.databinding.FragmentAdminManagementBinding;
 public class AdminManagementFragment extends Fragment {
 
     private FragmentAdminManagementBinding binding;
-    // private AdminManagementViewModel managementViewModel; // Not needed for a simple menu
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -30,25 +29,26 @@ public class AdminManagementFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Get the NavController
         final NavController navController = Navigation.findNavController(view);
 
         // Set click listener for Manage Services
         binding.cardManageServices.setOnClickListener(v -> {
-            // Navigate using the action ID from your nav graph
             navController.navigate(R.id.action_admin_nav_management_to_manageServicesFragment);
         });
 
         // Set click listener for Manage Barbers
         binding.cardManageBarbers.setOnClickListener(v -> {
-            // Navigate using the action ID from your nav graph
             navController.navigate(R.id.action_admin_nav_management_to_manageBarbersFragment);
         });
 
         // Set click listener for Manage Promos
         binding.cardManagePromos.setOnClickListener(v -> {
-            // Navigate using the action ID from your nav graph
             navController.navigate(R.id.action_admin_nav_management_to_managePromosFragment);
+        });
+
+        // --- ADD THIS CLICK LISTENER ---
+        binding.cardTransactionReport.setOnClickListener(v -> {
+            navController.navigate(R.id.action_admin_nav_management_to_transactionReportFragment);
         });
     }
 
