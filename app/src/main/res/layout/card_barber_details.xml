@@ -20,7 +20,8 @@
             android:layout_width="80dp"
             android:layout_height="100dp"
             android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"  android:contentDescription="Barber Profile Picture" />
+            android:src="@android:drawable/ic_menu_gallery"
+            android:contentDescription="Barber Profile Picture" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -36,6 +37,19 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white" />
+
+            <RatingBar
+                android:id="@+id/barber_rating"
+                style="?android:attr/ratingBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="4.0"
+                android:stepSize="0.5"
+                android:isIndicator="true"
+                android:progressTint="@android:color/holo_orange_light"
+                android:layout_marginTop="4dp"
+                />
 
             <TextView
                 android:id="@+id/barber_description"
