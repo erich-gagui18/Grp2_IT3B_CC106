@@ -16,6 +16,29 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_manage_barber" />
 
+    <TextView
+        android:id="@+id/empty_list_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No barbers found. Add one!"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible" />
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_barber"
         android:layout_width="wrap_content"
