@@ -3,14 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="16dp"
-    android:gravity="center_vertical">
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
 
     <ImageView
         android:id="@+id/iv_status_icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="12dp"
         android:src="@drawable/ic_notifications" />
 
     <LinearLayout
@@ -25,6 +28,7 @@
             android:layout_height="wrap_content"
             android:text="Appointment Confirmed"
             android:textStyle="bold"
+            android:textSize="14sp"
             android:textColor="?android:attr/textColorPrimary"/>
 
         <TextView
@@ -32,6 +36,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Your booking for Oct 21 at 10:00 AM is confirmed."
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end"
             android:textColor="?android:attr/textColorSecondary"/>
     </LinearLayout>
 
@@ -39,7 +46,9 @@
         android:id="@+id/tv_notification_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:text="1h ago"
-        android:textSize="12sp"/>
+        android:textSize="11sp"
+        android:textColor="?android:attr/textColorTertiary"/>
 
 </LinearLayout>

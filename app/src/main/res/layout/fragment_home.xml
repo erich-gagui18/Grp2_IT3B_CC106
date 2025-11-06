@@ -52,11 +52,15 @@
                         android:textSize="16sp" />
 
                     <ImageView
+                        android:id="@+id/iv_notifications"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_alignParentEnd="true"
                         android:contentDescription="Notifications"
                         android:src="@drawable/ic_notifications"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
                         app:tint="@android:color/white" />
                 </RelativeLayout>
 
