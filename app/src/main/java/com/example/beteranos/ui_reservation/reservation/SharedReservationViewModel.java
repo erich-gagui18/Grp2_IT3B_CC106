@@ -83,27 +83,28 @@ public class SharedReservationViewModel extends ViewModel {
     private void fetchServicesFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Connection conn = null;
             List<Service> fetchedServices = new ArrayList<>();
-            try {
-                conn = new ConnectionClass().CONN();
-                if (conn != null) {
-                    String query = "SELECT service_id, service_name, price FROM services";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    ResultSet rs = stmt.executeQuery();
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("DB Connection Failed");
+
+                // --- FIX: Query now matches your schema ---
+                String query = "SELECT service_id, service_name, price FROM services";
+
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
+
                     while (rs.next()) {
-                        fetchedServices.add(new Service(rs.getInt("service_id"), rs.getString("service_name"), rs.getDouble("price")));
+                        // --- FIX: Use the new, correct constructor ---
+                        fetchedServices.add(new Service(
+                                rs.getInt("service_id"),
+                                rs.getString("service_name"),
+                                rs.getDouble("price")
+                        ));
                     }
-                    allServices.postValue(fetchedServices);
                 }
-            } catch (SQLException e) {
-                Log.e("SharedViewModel", "DB Error (Services): " + e.getMessage());
-            } finally {
-                if (conn != null) try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                allServices.postValue(fetchedServices);
+            } catch (Exception e) {
+                Log.e("ViewModel", "Error fetching services: " + e.getMessage(), e);
             }
         });
     }
