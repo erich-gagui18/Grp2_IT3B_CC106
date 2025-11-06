@@ -67,16 +67,16 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
             switch (status.toLowerCase()) {
                 case "pending":
-                    iconRes = R.drawable.ic_time;
+                    iconRes = R.drawable.ic_time_notif;
                     colorRes = android.R.color.holo_orange_dark;
                     break;
                 case "scheduled":
                 case "confirmed":
-                    iconRes = R.drawable.ic_check;
+                    iconRes = R.drawable.ic_check_notif;
                     colorRes = android.R.color.holo_green_dark;
                     break;
                 case "cancelled":
-                    iconRes = R.drawable.ic_close;
+                    iconRes = R.drawable.ic_close_notif;
                     colorRes = android.R.color.holo_red_dark;
                     break;
                 default: // "Completed" etc.
