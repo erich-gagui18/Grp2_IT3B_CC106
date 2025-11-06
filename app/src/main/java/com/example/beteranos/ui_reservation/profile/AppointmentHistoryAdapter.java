@@ -45,7 +45,7 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
 
     static class AppointmentViewHolder extends RecyclerView.ViewHolder {
         private final TextView dateText;
-        private final TextView timeText; // ⭐️ NEW: TextView for the time
+        private final TextView timeText;
         private final TextView statusText;
         private final TextView barberText;
         private final TextView serviceText;
@@ -53,57 +53,62 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
         public AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
             dateText = itemView.findViewById(R.id.tv_appointment_date);
-            timeText = itemView.findViewById(R.id.tv_appointment_time); // ⭐️ NEW: Find the time TextView
+            timeText = itemView.findViewById(R.id.tv_appointment_time);
             statusText = itemView.findViewById(R.id.tv_appointment_status);
             barberText = itemView.findViewById(R.id.tv_barber_name);
             serviceText = itemView.findViewById(R.id.tv_service_name);
         }
 
         public void bind(Appointment appointment) {
-            // 1. Format the Date part (e.g., November 07, 2025)
+            // 1. Set Date and Time (Split for vertical display)
             SimpleDateFormat sdfDate = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
             dateText.setText(sdfDate.format(appointment.getReservationTime()));
-
-            // 2. Format the Time part (e.g., 03:23 AM)
             SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.US);
-            timeText.setText(sdfTime.format(appointment.getReservationTime())); // ⭐️ Set the time ⭐️
+            timeText.setText(sdfTime.format(appointment.getReservationTime()));
 
+            // 2. Set Details
             barberText.setText("Barber: " + appointment.getBarberName());
             serviceText.setText("Service: " + appointment.getServiceName());
+
+            // ⭐️ IMPORTANT: Use the status string exactly as it comes from the model.
             statusText.setText(appointment.getStatus());
 
-            // ⭐️ UPDATED Status Logic: Uses custom R.color resources ⭐️
-            // We set the status text color dynamically, relying on the XML drawable for the background.
+            // 3. Dynamic Status Styling (Background Badge and Text Color)
+            int backgroundDrawableResId;
             int textColorResId;
-            int defaultColor = android.R.color.darker_gray;
 
-            // Note: Since the SCHEDULED background is light green, its text color should be black.
+            // Default to Scheduled style (Light Green background / Black text)
+            backgroundDrawableResId = R.drawable.rounded_status_scheduled;
+            textColorResId = R.color.black;
+
+            // Use lowercase status for reliable comparison in the switch statement
             switch (appointment.getStatus().toLowerCase()) {
                 case "pending":
-                    textColorResId = R.color.status_pending; // Use custom color
-                    break;
-                case "scheduled":
-                case "confirmed":
-                    // Use black text for the light status_scheduled background for contrast
+                    // ⭐️ PENDING: Yellow Background / Black Text ⭐️
+                    backgroundDrawableResId = R.drawable.rounded_status_pending;
                     textColorResId = R.color.black;
                     break;
                 case "cancelled":
-                    textColorResId = R.color.status_cancelled; // Use custom color
+                    backgroundDrawableResId = R.drawable.rounded_status_cancelled;
+                    textColorResId = R.color.white; // White text on Red background
                     break;
                 case "completed":
-                    textColorResId = R.color.status_completed; // Use custom color
+                    backgroundDrawableResId = R.drawable.rounded_status_completed;
+                    textColorResId = R.color.white; // White text on Blue/Gray background
+                    break;
+                case "scheduled":
+                case "confirmed":
+                    // Uses the defaults (Green background / Black text)
                     break;
                 default:
-                    textColorResId = defaultColor;
+                    backgroundDrawableResId = R.drawable.rounded_status_scheduled; // Fallback
+                    textColorResId = R.color.black;
                     break;
             }
 
-            // Set the final status text color
-            if (textColorResId == defaultColor) {
-                statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), defaultColor));
-            } else {
-                statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), textColorResId));
-            }
+            // Apply the chosen background and text color
+            statusText.setBackgroundResource(backgroundDrawableResId);
+            statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), textColorResId));
         }
     }
 }
