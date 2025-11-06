@@ -7,9 +7,9 @@ public class Promo {
     private final String promoName;
     private final String description;
     private final int discountPercentage;
-    private final String imageName; // Added from your old model
+    private final String imageName;
 
-    // Main constructor with all fields
+    // Main constructor (from before)
     public Promo(int promoId, String promoName, String description, int discountPercentage, String imageName) {
         this.promoId = promoId;
         this.promoName = promoName;
@@ -18,20 +18,26 @@ public class Promo {
         this.imageName = imageName;
     }
 
-    // Overloaded constructor for new Admin Management (doesn't use image_name)
+    // Admin constructor (from before)
     public Promo(int promoId, String promoName, String description, int discountPercentage) {
         this(promoId, promoName, description, discountPercentage, null);
     }
 
-    // Overloaded constructor for old Reservation Flow (doesn't use new fields)
+    // Old Reservation constructor (THIS WAS THE PROBLEM)
     public Promo(int promoId, String promoName, String imageName) {
-        this(promoId, promoName, null, 0, imageName);
+        this(promoId, promoName, null, 0, imageName); // It was setting description to null
+    }
+
+    // --- ADD THIS NEW CONSTRUCTOR FOR THE FIX ---
+    public Promo(int promoId, String promoName, String description, String imageName) {
+        this(promoId, promoName, description, 0, imageName); // Calls the main constructor
     }
 
     public int getPromoId() {
         return promoId;
     }
 
+    // ... (rest of your getters and equals/hashCode methods) ...
     public String getPromoName() {
         return promoName;
     }

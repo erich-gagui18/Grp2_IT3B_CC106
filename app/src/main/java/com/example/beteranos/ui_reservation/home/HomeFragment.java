@@ -1,12 +1,11 @@
 package com.example.beteranos.ui_reservation.home;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout; // Import for the LinearLayout container
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -21,8 +20,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentHomeBinding;
-import com.example.beteranos.ui_reservation.notifications.NotificationAdapter;
-import com.example.beteranos.ui_reservation.notifications.NotificationsViewModel;
+
+// --- FIX: Correct import paths ---
+import com.example.beteranos.ui_reservation.home.notifications.NotificationAdapter;
+import com.example.beteranos.ui_reservation.home.notifications.NotificationsViewModel;
 
 public class HomeFragment extends Fragment {
 
@@ -42,7 +43,7 @@ public class HomeFragment extends Fragment {
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
-        // Initialize NotificationsViewModel
+        // --- FIX: Initialize the correct ViewModel ---
         notificationsViewModel = new ViewModelProvider(this).get(NotificationsViewModel.class);
 
         return root;
@@ -56,7 +57,6 @@ public class HomeFragment extends Fragment {
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // Exits the app (same as pressing home)
                 requireActivity().finishAffinity();
             }
         };
@@ -68,17 +68,14 @@ public class HomeFragment extends Fragment {
             navController.navigate(R.id.navigation_gallery);
         });
 
-        // --- ADDED: Barber Profile navigation ---
-        // Access the LinearLayout using its ID from the layout
+        // Barber Profile navigation
         LinearLayout barberContainer = view.findViewById(R.id.barber_container);
         if (barberContainer != null) {
             barberContainer.setOnClickListener(v -> {
                 NavController navController = Navigation.findNavController(v);
-                // Navigate using the action defined in mobile_navigation.xml
                 navController.navigate(R.id.action_home_to_barber_profile);
             });
         }
-        // --- END OF ADDED CODE ---
 
         // Setup notification icon click listener
         View notificationIcon = view.findViewById(R.id.iv_notifications);
@@ -88,17 +85,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void showNotificationDropdown(View anchorView) {
-        // Dismiss existing popup if open
         if (notificationPopup != null && notificationPopup.isShowing()) {
             notificationPopup.dismiss();
             return;
         }
 
-        // Inflate dropdown layout
         View popupView = LayoutInflater.from(getContext())
                 .inflate(R.layout.notification_dropdown, null);
 
-        // Create popup window
         notificationPopup = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -106,21 +100,19 @@ public class HomeFragment extends Fragment {
                 true
         );
 
-        // Setup RecyclerView
         RecyclerView rvNotifications = popupView.findViewById(R.id.rv_notification_dropdown);
         TextView tvEmpty = popupView.findViewById(R.id.tv_empty_notifications);
         ProgressBar progressBar = popupView.findViewById(R.id.pb_dropdown_loading);
         TextView tvSeeAll = popupView.findViewById(R.id.tv_see_all);
 
+        // --- FIX: Use the new ListAdapter ---
         notificationAdapter = new NotificationAdapter();
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         rvNotifications.setAdapter(notificationAdapter);
 
-        // Get customer ID (Ensure this is correct for your app flow)
         int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
 
         if (customerId != -1) {
-            // Observe notifications
             notificationsViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
                 if (notificationPopup != null && notificationPopup.isShowing()) {
                     progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -130,9 +122,9 @@ public class HomeFragment extends Fragment {
             notificationsViewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
                 if (notificationPopup != null && notificationPopup.isShowing()) {
                     if (notifications != null && !notifications.isEmpty()) {
-                        // Show only last 5 notifications in dropdown
                         int endIndex = Math.min(notifications.size(), 5);
-                        notificationAdapter.setNotifications(notifications.subList(0, endIndex));
+                        // --- FIX: Use submitList() with List<Notification> ---
+                        notificationAdapter.submitList(notifications.subList(0, endIndex));
                         rvNotifications.setVisibility(View.VISIBLE);
                         tvEmpty.setVisibility(View.GONE);
                     } else {
@@ -142,32 +134,27 @@ public class HomeFragment extends Fragment {
                 }
             });
 
-            // Fetch notifications
             notificationsViewModel.fetchNotifications(customerId);
         } else {
-            // Guest user
             tvEmpty.setText("Please login to view notifications");
             tvEmpty.setVisibility(View.VISIBLE);
             rvNotifications.setVisibility(View.GONE);
             progressBar.setVisibility(View.GONE);
         }
 
-        // See All button - navigate to notifications fragment
         tvSeeAll.setOnClickListener(v -> {
             notificationPopup.dismiss();
             NavController navController = Navigation.findNavController(requireView());
             navController.navigate(R.id.navigation_notifications);
         });
 
-        // Dismiss popup when clicked outside
         notificationPopup.setOutsideTouchable(true);
         notificationPopup.setFocusable(true);
 
-        // Show popup below the notification icon
         notificationPopup.showAsDropDown(
                 anchorView,
-                -250, // X offset (adjust to align properly)
-                10,   // Y offset
+                -250,
+                10,
                 Gravity.END
         );
     }

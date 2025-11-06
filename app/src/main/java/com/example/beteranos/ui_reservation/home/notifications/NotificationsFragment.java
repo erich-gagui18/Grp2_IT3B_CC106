@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_reservation.notifications;
+package com.example.beteranos.ui_reservation.home.notifications; // <-- Correct package
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,7 +12,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.example.beteranos.R;
+import com.example.beteranos.models.Notification;
 import com.example.beteranos.ui_customer_login.CustomerLoginActivity;
 import com.example.beteranos.databinding.FragmentNotificationsBinding;
 
@@ -21,6 +23,7 @@ public class NotificationsFragment extends Fragment {
     private FragmentNotificationsBinding binding;
     private NotificationsViewModel notificationsViewModel;
     private NotificationAdapter adapter;
+    private int customerId = -1;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -33,28 +36,25 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Setup back button
         binding.btnBack.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);
-            navController.navigateUp(); // Goes back to previous screen
+            navController.navigateUp();
         });
 
-        int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
+        customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
 
         if (customerId != -1) {
             // Logged-in user
-            binding.rvNotifications.setVisibility(View.VISIBLE);
             binding.guestView.setVisibility(View.GONE);
-            binding.emptyState.setVisibility(View.GONE);
-
             setupRecyclerView();
+            setupPullToRefresh();
             observeViewModel();
             notificationsViewModel.fetchNotifications(customerId);
         } else {
             // Guest user
-            binding.rvNotifications.setVisibility(View.GONE);
-            binding.emptyState.setVisibility(View.GONE);
+            binding.swipeRefreshLayout.setVisibility(View.GONE);
             binding.guestView.setVisibility(View.VISIBLE);
+            binding.loadingIndicator.setVisibility(View.GONE);
 
             binding.btnGoToLogin.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), CustomerLoginActivity.class);
@@ -71,19 +71,41 @@ public class NotificationsFragment extends Fragment {
         binding.rvNotifications.setAdapter(adapter);
     }
 
+    private void setupPullToRefresh() {
+        binding.swipeRefreshLayout.setOnRefreshListener(() -> {
+            notificationsViewModel.fetchNotifications(customerId);
+        });
+    }
+
     private void observeViewModel() {
         notificationsViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            binding.loadingIndicator.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (binding == null) return;
+
+            if (isLoading && adapter.getCurrentList().isEmpty()) {
+                binding.loadingIndicator.setVisibility(View.VISIBLE);
+                binding.swipeRefreshLayout.setRefreshing(false);
+                binding.emptyState.setVisibility(View.GONE);
+                binding.rvNotifications.setVisibility(View.GONE);
+            } else {
+                binding.loadingIndicator.setVisibility(View.GONE);
+                binding.swipeRefreshLayout.setRefreshing(isLoading);
+            }
         });
 
         notificationsViewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
-            if (notifications != null && !notifications.isEmpty()) {
-                adapter.setNotifications(notifications);
-                binding.rvNotifications.setVisibility(View.VISIBLE);
-                binding.emptyState.setVisibility(View.GONE);
-            } else {
+            if (binding == null) return;
+
+            adapter.submitList(notifications);
+
+            boolean isLoading = notificationsViewModel.getIsLoading().getValue() != null &&
+                    notificationsViewModel.getIsLoading().getValue();
+
+            if (!isLoading && (notifications == null || notifications.isEmpty())) {
                 binding.rvNotifications.setVisibility(View.GONE);
                 binding.emptyState.setVisibility(View.VISIBLE);
+            } else {
+                binding.rvNotifications.setVisibility(View.VISIBLE);
+                binding.emptyState.setVisibility(View.GONE);
             }
         });
     }

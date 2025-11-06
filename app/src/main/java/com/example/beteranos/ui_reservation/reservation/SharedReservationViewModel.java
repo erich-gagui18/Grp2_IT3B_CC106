@@ -145,7 +145,7 @@ public class SharedReservationViewModel extends ViewModel {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
                 // --- FIX: Select all columns needed for the constructor ---
-                String query = "SELECT promo_id, promo_name, image_name FROM promos";
+                String query = "SELECT promo_id, promo_name, image_name, description FROM promos";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
@@ -154,6 +154,7 @@ public class SharedReservationViewModel extends ViewModel {
                         fetchedPromos.add(new Promo(
                                 rs.getInt("promo_id"),
                                 rs.getString("promo_name"),
+                                rs.getString("description"), // <-- Pass the description
                                 rs.getString("image_name")
                         ));
                     }
@@ -369,7 +370,6 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     // --- UPDATED saveReservation METHOD ---
-    // Inside SharedReservationViewModel.java
 
     public void saveReservation(int customerIdFromSession) {
         // --- Get all necessary values from LiveData ---

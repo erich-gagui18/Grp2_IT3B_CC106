@@ -35,8 +35,14 @@
         tools:layout="@layout/fragment_dashboard" />
 
     <fragment
+        android:id="@+id/navigation_reviews"
+        android:name="com.example.beteranos.ui_reservation.reviews.ReviewsFragment"
+        android:label="@string/title_reviews"
+        tools:layout="@layout/fragment_reviews" />
+
+    <fragment
         android:id="@+id/navigation_notifications"
-        android:name="com.example.beteranos.ui_reservation.notifications.NotificationsFragment"
+        android:name="com.example.beteranos.ui_reservation.home.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
 

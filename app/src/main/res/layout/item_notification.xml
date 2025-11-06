@@ -1,54 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:gravity="center_vertical"
+
     android:background="?attr/selectableItemBackground"
+
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
 
     <ImageView
-        android:id="@+id/iv_status_icon"
+        android:id="@+id/iv_icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_marginEnd="12dp"
-        android:src="@drawable/ic_notifications" />
+        android:layout_marginTop="4dp"
+        android:src="@drawable/ic_notifications"
+
+        app:tint="?attr/colorPrimary" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tv_notification_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Appointment Confirmed"
+
+            android:textColor="?android:attr/textColorPrimary"
+
+            android:textSize="16sp"
             android:textStyle="bold"
-            android:textSize="14sp"
-            android:textColor="?android:attr/textColorPrimary"/>
+            tools:text="Appointment Confirmed" />
 
         <TextView
-            android:id="@+id/tv_notification_message"
-            android:layout_width="wrap_content"
+            android:id="@+id/tv_notification_body"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your booking for Oct 21 at 10:00 AM is confirmed."
-            android:textSize="12sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:textColor="?android:attr/textColorSecondary"/>
-    </LinearLayout>
+            android:layout_marginTop="4dp"
 
-    <TextView
-        android:id="@+id/tv_notification_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="1h ago"
-        android:textSize="11sp"
-        android:textColor="?android:attr/textColorTertiary"/>
+            android:textColor="?android:attr/textColorSecondary"
+
+            android:textSize="14sp"
+            tools:text="Your appointment with Nico on Nov 7, 2025 at 10:30 AM is confirmed." />
+
+        <TextView
+            android:id="@+id/tv_notification_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+
+            android:textColor="?android:attr/textColorSecondary"
+
+            android:textSize="12sp"
+            tools:text="2 hours ago" />
+
+    </LinearLayout>
 
 </LinearLayout>

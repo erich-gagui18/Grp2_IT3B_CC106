@@ -25,7 +25,10 @@ public class ReservationActivity extends AppCompatActivity {
         // This code now correctly uses the IDs from your XML files.
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_reservation, R.id.navigation_dashboard, R.id.navigation_notifications, R.id.navigation_gallery)
+                R.id.navigation_home, R.id.navigation_reservation,
+                R.id.navigation_dashboard, R.id.navigation_notifications,
+                R.id.navigation_profile, R.id.navigation_reviews,
+                R.id.navigation_gallery)
                 .build();
 
         // Use the ID from your activity_reservation.xml
