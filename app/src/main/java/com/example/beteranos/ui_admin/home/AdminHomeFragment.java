@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback; // --- ADD THIS IMPORT ---
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -56,6 +57,18 @@ public class AdminHomeFragment extends Fragment {
         // ✅ Fetch appointments for today
         long today = binding.calendarView.getDate();
         updateLabelAndFetchAppointments(today);
+
+        // --- THIS IS THE FIX ---
+        // Add a custom back-press handler that is tied to this fragment's lifecycle
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // When on the Home fragment, the back button should minimize the app
+                // (like pressing the phone's home button) instead of finishing the activity.
+                requireActivity().moveTaskToBack(true);
+            }
+        });
+        // --- END FIX ---
     }
 
     private void setupCalendarListener() {
@@ -80,6 +93,7 @@ public class AdminHomeFragment extends Fragment {
     }
 
     private void populateAppointments(List<Appointment> appointments) {
+        if (binding == null) return; // Add null check for safety
         binding.reservationsContainer.removeAllViews();
 
         if (appointments == null || appointments.isEmpty()) {
@@ -126,7 +140,9 @@ public class AdminHomeFragment extends Fragment {
                     break;
             }
             statusText.setText(appointment.getStatus());
-            statusText.setTextColor(ContextCompat.getColor(requireContext(), colorRes));
+            if (getContext() != null) { // Add context null check
+                statusText.setTextColor(ContextCompat.getColor(requireContext(), colorRes));
+            }
 
             binding.reservationsContainer.addView(appointmentView);
         }
