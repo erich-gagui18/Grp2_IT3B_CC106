@@ -56,21 +56,25 @@ public class ServicesFragment extends Fragment {
         populateLocationSelector(); // Populate location choices first
         setupHaircutDropdown();
 
+        // --- FIX: Use a single, combined observer for UI refreshes ---
+        // This observer will re-draw the list if EITHER the list of services OR
+        // the list of *selected* services changes.
         sharedViewModel.allServices.observe(getViewLifecycleOwner(), services -> {
             if (services != null && !services.isEmpty()) {
-                removeHaircutDropdownFromParent();
-                populateServicesList(services);
+                redrawServicesList();
             }
         });
+
+        sharedViewModel.selectedServices.observe(getViewLifecycleOwner(), selected -> {
+            redrawServicesList();
+        });
+        // --- END FIX ---
 
         // Observe location changes if needed for dynamic pricing, etc.
         sharedViewModel.serviceLocation.observe(getViewLifecycleOwner(), location -> {
             Log.d("ServicesFragment", "Observed location change: " + location);
             // Re-populate services if prices depend on location
-            List<Service> currentServices = sharedViewModel.allServices.getValue();
-            if (currentServices != null && !currentServices.isEmpty()) {
-                populateServicesList(currentServices); // Re-render services to potentially show different prices
-            }
+            redrawServicesList(); // Re-render services to potentially show different prices
             // Update the checkmarks for location selector
             updateLocationCheckmarks(location);
         });
@@ -133,7 +137,6 @@ public class ServicesFragment extends Fragment {
                 if (!locationName.equals(sharedViewModel.serviceLocation.getValue())) {
                     sharedViewModel.serviceLocation.setValue(locationName);
                     // The observer will handle updating checkmarks now
-                    // updateLocationCheckmarks(locationName); // No longer needed here
                 }
             });
 
@@ -177,15 +180,20 @@ public class ServicesFragment extends Fragment {
         }
     }
 
-    private void populateServicesList(@Nullable List<Service> services) {
-        if (binding == null || services == null) return; // Check binding and services list
+    // --- RENAMED from populateServicesList to redrawServicesList ---
+    private void redrawServicesList() {
+        // Get the most up-to-date data from the ViewModel
+        List<Service> services = sharedViewModel.allServices.getValue();
+        List<Service> currentlySelectedList = sharedViewModel.selectedServices.getValue();
+        String currentServiceLocation = sharedViewModel.serviceLocation.getValue();
+
+        if (binding == null || services == null || getContext() == null) return; // Check binding and services list
+
         binding.servicesContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        List<Service> currentlySelectedList = sharedViewModel.selectedServices.getValue();
-        String currentServiceLocation = sharedViewModel.serviceLocation.getValue(); // Get current location
 
         removeHaircutDropdownFromParent();
-        binding.haircutChoiceLayout.setVisibility(View.GONE);
+        binding.haircutChoiceLayout.setVisibility(View.GONE); // Hide by default
 
         for (Service service : services) {
             View serviceView = inflater.inflate(R.layout.item_selectable_service, binding.servicesContainer, false);
@@ -197,52 +205,51 @@ public class ServicesFragment extends Fragment {
             // Define your home service fee logic (e.g., a fixed amount or fetch from DB)
             double homeServiceFee = 50.0; // Example fee
             if (LOCATION_HOME_SERVICE.equals(currentServiceLocation)) {
-                // Add fee only if it's NOT already included in the base price for specific services
-                // if (!service.getName().toLowerCase().contains("home")) { // Example check
                 displayPrice += homeServiceFee;
-                // }
             }
-            nameText.setText(String.format(Locale.getDefault(), "%s - ₱%.2f", service.getName(), displayPrice));
+
+            // --- FIX: Use getServiceName() ---
+            nameText.setText(String.format(Locale.getDefault(), "%s - ₱%.2f", service.getServiceName(), displayPrice));
             // --- End of price adjustment ---
 
-
+            // --- FIX: Use getServiceId() ---
             boolean isSelected = currentlySelectedList != null &&
-                    currentlySelectedList.stream().anyMatch(s -> s.getId() == service.getId());
+                    currentlySelectedList.stream().anyMatch(s -> s.getServiceId() == service.getServiceId());
             checkMark.setVisibility(isSelected ? View.VISIBLE : View.GONE);
 
             binding.servicesContainer.addView(serviceView);
 
+            // --- FIX: Use getServiceName() ---
             if (isHaircutService(service)) {
-                removeHaircutDropdownFromParent();
+                // This service is a haircut, add the dropdown layout *after* it
+                removeHaircutDropdownFromParent(); // Ensure it's not elsewhere
                 binding.servicesContainer.addView(binding.haircutChoiceLayout);
+                // Only show dropdown if the haircut is selected
                 binding.haircutChoiceLayout.setVisibility(isSelected ? View.VISIBLE : View.GONE);
             }
 
             serviceView.setOnClickListener(v -> {
-                boolean wasSelected = checkMark.getVisibility() == View.VISIBLE;
+                // We don't need to check visibility. Just check the ViewModel state.
+                boolean wasSelected = currentlySelectedList != null &&
+                        currentlySelectedList.stream().anyMatch(s -> s.getServiceId() == service.getServiceId());
+
                 if (wasSelected) {
-                    checkMark.setVisibility(View.GONE);
                     sharedViewModel.removeService(service);
                     if (isHaircutService(service)) {
-                        if (binding != null) { // Check binding before accessing UI
-                            binding.haircutChoiceLayout.setVisibility(View.GONE);
+                        // Clear haircut choice when haircut is deselected
+                        sharedViewModel.haircutChoice.setValue(null);
+                        if (binding != null) { // Check binding
                             binding.haircutChoiceDropdown.setText("", false);
                         }
-                        sharedViewModel.haircutChoice.setValue(null);
-                        Log.d("ServicesFragment", "Haircut deselected, choice cleared and dropdown hidden.");
+                        Log.d("ServicesFragment", "Haircut deselected, choice cleared.");
                     }
                 } else {
-                    checkMark.setVisibility(View.VISIBLE);
                     sharedViewModel.addService(service);
                     if (isHaircutService(service)) {
-                        if (binding != null) { // Check binding
-                            binding.haircutChoiceLayout.setVisibility(View.VISIBLE);
-                            String currentChoice = sharedViewModel.haircutChoice.getValue();
-                            binding.haircutChoiceDropdown.setText(currentChoice != null ? currentChoice : "", false);
-                        }
                         Log.d("ServicesFragment", "Haircut selected, dropdown shown.");
                     }
                 }
+                // The observers in onViewCreated will catch this change and call redrawServicesList()
             });
         }
     }
@@ -261,7 +268,8 @@ public class ServicesFragment extends Fragment {
     }
 
     private boolean isHaircutService(@Nullable Service service) {
-        return service != null && HAIRCUT_SERVICE_NAME.equalsIgnoreCase(service.getName());
+        // --- FIX: Use getServiceName() ---
+        return service != null && HAIRCUT_SERVICE_NAME.equalsIgnoreCase(service.getServiceName());
     }
 
     private void navigateToNext() {

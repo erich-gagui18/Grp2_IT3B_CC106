@@ -74,7 +74,7 @@ public class ReservationConfirmationFragment extends Fragment {
             StringBuilder servicesText = new StringBuilder();
             for (Service service : services) {
                 servicesText.append("- ")
-                        .append(service.getName())
+                        .append(service.getServiceName())
                         .append(String.format(" (₱%.2f)", service.getPrice()))
                         .append("\n");
             }
@@ -83,7 +83,7 @@ public class ReservationConfirmationFragment extends Fragment {
 
         Promo selectedPromo = sharedViewModel.selectedPromo.getValue();
         if (selectedPromo != null) {
-            binding.tvPromoName.setText(selectedPromo.getName());
+            binding.tvPromoName.setText(selectedPromo.getPromoName());
         } else {
             binding.tvPromoName.setText("No promo selected");
         }

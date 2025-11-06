@@ -57,7 +57,7 @@ public class BarbersFragment extends Fragment {
 
             // Observe the single selected barber to update the checkmark
             sharedViewModel.selectedBarber.observe(getViewLifecycleOwner(), selected -> {
-                boolean isThisOneSelected = selected != null && selected.getId() == barber.getId();
+                boolean isThisOneSelected = selected != null && selected.getBarberId() == barber.getBarberId();
                 checkMark.setVisibility(isThisOneSelected ? View.VISIBLE : View.GONE);
             });
 
