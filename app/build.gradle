@@ -46,6 +46,8 @@ dependencies {
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
     implementation libs.legacy.support.v4
+    implementation libs.androidx.navigation.fragment
+    implementation libs.androidx.navigation.ui
 
     // Testing dependencies
     testImplementation libs.junit

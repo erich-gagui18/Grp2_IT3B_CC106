@@ -83,27 +83,28 @@ public class SharedReservationViewModel extends ViewModel {
     private void fetchServicesFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Connection conn = null;
             List<Service> fetchedServices = new ArrayList<>();
-            try {
-                conn = new ConnectionClass().CONN();
-                if (conn != null) {
-                    String query = "SELECT service_id, service_name, price FROM services";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    ResultSet rs = stmt.executeQuery();
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("DB Connection Failed");
+
+                // --- FIX: Query now matches your schema ---
+                String query = "SELECT service_id, service_name, price FROM services";
+
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
+
                     while (rs.next()) {
-                        fetchedServices.add(new Service(rs.getInt("service_id"), rs.getString("service_name"), rs.getDouble("price")));
+                        // --- FIX: Use the new, correct constructor ---
+                        fetchedServices.add(new Service(
+                                rs.getInt("service_id"),
+                                rs.getString("service_name"),
+                                rs.getDouble("price")
+                        ));
                     }
-                    allServices.postValue(fetchedServices);
                 }
-            } catch (SQLException e) {
-                Log.e("SharedViewModel", "DB Error (Services): " + e.getMessage());
-            } finally {
-                if (conn != null) try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                allServices.postValue(fetchedServices);
+            } catch (Exception e) {
+                Log.e("ViewModel", "Error fetching services: " + e.getMessage(), e);
             }
         });
     }
@@ -111,27 +112,27 @@ public class SharedReservationViewModel extends ViewModel {
     private void fetchBarbersFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Connection conn = null;
             List<Barber> fetchedBarbers = new ArrayList<>();
-            try {
-                conn = new ConnectionClass().CONN();
-                if (conn != null) {
-                    String query = "SELECT barber_id, name FROM barbers";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    ResultSet rs = stmt.executeQuery();
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("DB Connection Failed");
+
+                // --- FIX: Select the new 'specialization' column ---
+                String query = "SELECT barber_id, name, specialization FROM barbers";
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
+
                     while (rs.next()) {
-                        fetchedBarbers.add(new Barber(rs.getInt("barber_id"), rs.getString("name")));
+                        // --- FIX: Use the new Barber(id, name, specialization) constructor ---
+                        fetchedBarbers.add(new Barber(
+                                rs.getInt("barber_id"),
+                                rs.getString("name"),
+                                rs.getString("specialization") // Pass the new field
+                        ));
                     }
-                    allBarbers.postValue(fetchedBarbers);
                 }
-            } catch (SQLException e) {
-                Log.e("SharedViewModel", "DB Error (Barbers): " + e.getMessage());
-            } finally {
-                if (conn != null) try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                allBarbers.postValue(fetchedBarbers);
+            } catch (Exception e) {
+                Log.e("ViewModel", "Error fetching barbers: " + e.getMessage(), e);
             }
         });
     }
@@ -139,27 +140,27 @@ public class SharedReservationViewModel extends ViewModel {
     private void fetchPromosFromDB() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Connection conn = null;
             List<Promo> fetchedPromos = new ArrayList<>();
-            try {
-                conn = new ConnectionClass().CONN();
-                if (conn != null) {
-                    String query = "SELECT promo_id, promo_name, description, image_name FROM promos WHERE is_active = 1";
-                    PreparedStatement stmt = conn.prepareStatement(query);
-                    ResultSet rs = stmt.executeQuery();
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("DB Connection Failed");
+
+                // --- FIX: Select all columns needed for the constructor ---
+                String query = "SELECT promo_id, promo_name, image_name FROM promos";
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
+
                     while (rs.next()) {
-                        fetchedPromos.add(new Promo(rs.getInt("promo_id"), rs.getString("promo_name"), rs.getString("description"), rs.getString("image_name")));
+                        // --- FIX: Use the constructor that matches the old flow ---
+                        fetchedPromos.add(new Promo(
+                                rs.getInt("promo_id"),
+                                rs.getString("promo_name"),
+                                rs.getString("image_name")
+                        ));
                     }
-                    allPromos.postValue(fetchedPromos);
                 }
-            } catch (SQLException e) {
-                Log.e("SharedViewModel", "DB Error (Promos): " + e.getMessage());
-            } finally {
-                if (conn != null) try {
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                allPromos.postValue(fetchedPromos);
+            } catch (Exception e) {
+                Log.e("ViewModel", "Error fetching promos: " + e.getMessage(), e);
             }
         });
     }
@@ -197,7 +198,7 @@ public class SharedReservationViewModel extends ViewModel {
                 if (conn != null) {
                     String query = "SELECT reservation_time FROM reservations WHERE barber_id = ? AND DATE(reservation_time) = ?";
                     PreparedStatement stmt = conn.prepareStatement(query);
-                    stmt.setInt(1, barber.getId());
+                    stmt.setInt(1, barber.getBarberId());
                     stmt.setDate(2, new java.sql.Date(dateInMillis));
                     ResultSet rs = stmt.executeQuery();
 
@@ -455,8 +456,8 @@ public class SharedReservationViewModel extends ViewModel {
                 String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(reservationQuery, Statement.RETURN_GENERATED_KEYS)) {
                     stmt.setInt(1, finalCustomerId);
-                    stmt.setInt(2, barber.getId());
-                    if (promo != null) stmt.setInt(3, promo.getId()); else stmt.setNull(3, Types.INTEGER);
+                    stmt.setInt(2, barber.getBarberId());
+                    if (promo != null) stmt.setInt(3, promo.getPromoId()); else stmt.setNull(3, Types.INTEGER);
                     stmt.setTimestamp(4, reservationTimestamp);
                     stmt.setString(5, "Pending");
                     stmt.setBytes(6, receiptImage);
@@ -487,7 +488,7 @@ public class SharedReservationViewModel extends ViewModel {
                     try (PreparedStatement serviceStmt = conn.prepareStatement(serviceLinkQuery)) {
                         for (Service service : services) {
                             serviceStmt.setInt(1, newReservationId); // Link to the main reservation ID
-                            serviceStmt.setInt(2, service.getId());  // Link to the specific service ID
+                            serviceStmt.setInt(2, service.getServiceId());  // Link to the specific service ID
                             serviceStmt.addBatch();
                         }
                         int[] serviceRowsAffected = serviceStmt.executeBatch(); // Execute batch insert for services

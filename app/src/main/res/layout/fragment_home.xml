@@ -38,11 +38,9 @@
                 android:background="@color/black"
                 android:orientation="vertical"
                 android:padding="24dp">
-
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -50,7 +48,6 @@
                         android:text="Welcome Betereanos\nBarbers Hub!"
                         android:textColor="@android:color/white"
                         android:textSize="16sp" />
-
                     <ImageView
                         android:id="@+id/iv_notifications"
                         android:layout_width="24dp"
@@ -63,7 +60,6 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         app:tint="@android:color/white" />
                 </RelativeLayout>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -72,19 +68,16 @@
                     android:textColor="@android:color/white"
                     android:textSize="32sp"
                     android:textStyle="bold" />
-
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginTop="24dp"
                     app:cardCornerRadius="25dp">
-
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:paddingEnd="16dp"
                         android:paddingStart="16dp">
-
                         <ImageView
                             android:id="@+id/search_icon"
                             android:layout_width="24dp"
@@ -92,7 +85,6 @@
                             android:layout_centerVertical="true"
                             android:src="@drawable/search_bar_background"
                             app:tint="@android:color/darker_gray" />
-
                         <EditText
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
@@ -137,13 +129,14 @@
                         android:orientation="vertical"
                         android:clickable="true"
                         android:focusable="true"
-                        android:background="?attr/selectableItemBackground"> <ImageView
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:background="@drawable/rounded_circle_bg"
-                        android:contentDescription="Gallery"
-                        android:padding="12dp"
-                        android:src="@drawable/ic_photo" />
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:background="@drawable/rounded_circle_bg"
+                            android:contentDescription="Gallery"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_photo" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -153,11 +146,15 @@
                     </LinearLayout>
 
                     <LinearLayout
+                        android:id="@+id/barber_container"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
 
                         <ImageView
                             android:layout_width="50dp"
