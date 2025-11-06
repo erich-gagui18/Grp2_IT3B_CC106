@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout; // Import for the LinearLayout container
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -55,6 +56,7 @@ public class HomeFragment extends Fragment {
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                // Exits the app (same as pressing home)
                 requireActivity().finishAffinity();
             }
         };
@@ -65,6 +67,18 @@ public class HomeFragment extends Fragment {
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.navigation_gallery);
         });
+
+        // --- ADDED: Barber Profile navigation ---
+        // Access the LinearLayout using its ID from the layout
+        LinearLayout barberContainer = view.findViewById(R.id.barber_container);
+        if (barberContainer != null) {
+            barberContainer.setOnClickListener(v -> {
+                NavController navController = Navigation.findNavController(v);
+                // Navigate using the action defined in mobile_navigation.xml
+                navController.navigate(R.id.action_home_to_barber_profile);
+            });
+        }
+        // --- END OF ADDED CODE ---
 
         // Setup notification icon click listener
         View notificationIcon = view.findViewById(R.id.iv_notifications);
@@ -102,7 +116,7 @@ public class HomeFragment extends Fragment {
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         rvNotifications.setAdapter(notificationAdapter);
 
-        // Get customer ID
+        // Get customer ID (Ensure this is correct for your app flow)
         int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
 
         if (customerId != -1) {
