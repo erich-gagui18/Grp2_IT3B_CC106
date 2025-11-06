@@ -7,8 +7,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.beteranos.R;
 import com.example.beteranos.models.Appointment;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,7 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
 
     static class AppointmentViewHolder extends RecyclerView.ViewHolder {
         private final TextView dateText;
+        private final TextView timeText; // ⭐️ NEW: TextView for the time
         private final TextView statusText;
         private final TextView barberText;
         private final TextView serviceText;
@@ -50,38 +53,57 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
         public AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
             dateText = itemView.findViewById(R.id.tv_appointment_date);
+            timeText = itemView.findViewById(R.id.tv_appointment_time); // ⭐️ NEW: Find the time TextView
             statusText = itemView.findViewById(R.id.tv_appointment_status);
             barberText = itemView.findViewById(R.id.tv_barber_name);
             serviceText = itemView.findViewById(R.id.tv_service_name);
         }
 
         public void bind(Appointment appointment) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy - hh:mm a", Locale.US);
-            dateText.setText(sdf.format(appointment.getReservationTime()));
+            // 1. Format the Date part (e.g., November 07, 2025)
+            SimpleDateFormat sdfDate = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
+            dateText.setText(sdfDate.format(appointment.getReservationTime()));
+
+            // 2. Format the Time part (e.g., 03:23 AM)
+            SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.US);
+            timeText.setText(sdfTime.format(appointment.getReservationTime())); // ⭐️ Set the time ⭐️
+
             barberText.setText("Barber: " + appointment.getBarberName());
             serviceText.setText("Service: " + appointment.getServiceName());
             statusText.setText(appointment.getStatus());
 
-            int color;
+            // ⭐️ UPDATED Status Logic: Uses custom R.color resources ⭐️
+            // We set the status text color dynamically, relying on the XML drawable for the background.
+            int textColorResId;
+            int defaultColor = android.R.color.darker_gray;
+
+            // Note: Since the SCHEDULED background is light green, its text color should be black.
             switch (appointment.getStatus().toLowerCase()) {
                 case "pending":
-                    color = ContextCompat.getColor(itemView.getContext(), android.R.color.holo_orange_dark);
+                    textColorResId = R.color.status_pending; // Use custom color
                     break;
                 case "scheduled":
                 case "confirmed":
-                    color = ContextCompat.getColor(itemView.getContext(), android.R.color.holo_green_dark);
+                    // Use black text for the light status_scheduled background for contrast
+                    textColorResId = R.color.black;
                     break;
                 case "cancelled":
-                    color = ContextCompat.getColor(itemView.getContext(), android.R.color.holo_red_dark);
+                    textColorResId = R.color.status_cancelled; // Use custom color
                     break;
                 case "completed":
-                    color = ContextCompat.getColor(itemView.getContext(), R.color.button_active_gray);
+                    textColorResId = R.color.status_completed; // Use custom color
                     break;
                 default:
-                    color = ContextCompat.getColor(itemView.getContext(), android.R.color.darker_gray);
+                    textColorResId = defaultColor;
                     break;
             }
-            statusText.setTextColor(color);
+
+            // Set the final status text color
+            if (textColorResId == defaultColor) {
+                statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), defaultColor));
+            } else {
+                statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), textColorResId));
+            }
         }
     }
 }
