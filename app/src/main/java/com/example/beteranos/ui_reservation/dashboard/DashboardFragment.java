@@ -8,32 +8,50 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat; // For colors
+import androidx.core.content.ContextCompat;
+import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-// MPAndroidChart Imports
 import com.github.mikephil.charting.charts.HorizontalBarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis; // Import YAxis
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 
-import com.example.beteranos.R; // Ensure R is imported
-import com.example.beteranos.databinding.FragmentDashboardBinding; // Use your actual binding class name
+import com.google.android.material.datepicker.MaterialDatePicker;
 
+import com.example.beteranos.R;
+import com.example.beteranos.databinding.FragmentDashboardBinding;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+
+enum SortType {
+    POPULARITY,
+    NAME
+}
 
 public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel;
+
+    private Long selectedStartDate = null;
+    private Long selectedEndDate = null;
+    private SortType currentSortType = SortType.POPULARITY;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.US);
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -46,67 +64,122 @@ public class DashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // No need to set up RecyclerViews
-        // setupRankingLists();
-
+        setupFilterListeners();
         observeViewModel();
 
-        // Fetch data
-        dashboardViewModel.fetchHaircutRanking();
-        dashboardViewModel.fetchBarberRanking();
+        binding.toggleSort.check(R.id.btn_sort_popularity);
+        loadData();
+    }
+
+    private void loadData() {
+        Log.d("DashboardFragment", "loadData called. Sort: " + currentSortType);
+        dashboardViewModel.fetchHaircutRanking(selectedStartDate, selectedEndDate, currentSortType);
+        dashboardViewModel.fetchBarberRanking(selectedStartDate, selectedEndDate, currentSortType);
+    }
+
+    private void setupFilterListeners() {
+        binding.btnSelectDateRange.setOnClickListener(v -> {
+            showDateRangePicker();
+        });
+
+        binding.toggleSort.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                if (checkedId == R.id.btn_sort_popularity) {
+                    currentSortType = SortType.POPULARITY;
+                } else if (checkedId == R.id.btn_sort_name) {
+                    currentSortType = SortType.NAME;
+                }
+                loadData();
+            }
+        });
+    }
+
+    private void showDateRangePicker() {
+        MaterialDatePicker.Builder<Pair<Long, Long>> builder = MaterialDatePicker.Builder.dateRangePicker();
+        builder.setTitleText("Select a Date Range");
+
+        MaterialDatePicker<Pair<Long, Long>> datePicker = builder.build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            TimeZone timeZone = TimeZone.getDefault();
+            long offset = timeZone.getOffset(selection.first);
+
+            selectedStartDate = selection.first + offset;
+            selectedEndDate = selection.second + offset;
+
+            String dateText = dateFormat.format(new Date(selectedStartDate)) + " - " +
+                    dateFormat.format(new Date(selectedEndDate));
+            binding.btnSelectDateRange.setText(dateText);
+
+            loadData();
+        });
+
+        datePicker.addOnNegativeButtonClickListener(v -> {
+            // User cancelled
+        });
+
+        datePicker.addOnCancelListener(v -> {
+            // User cancelled
+        });
+
+        datePicker.show(getParentFragmentManager(), datePicker.toString());
     }
 
     private void observeViewModel() {
-        // Observe haircut ranking data and update the chart
+        dashboardViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            if (binding == null) return;
+            binding.haircutProgress.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            binding.barberProgress.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+
+            binding.chartHaircutRanking.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
+            binding.chartBarberRanking.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
+        });
+
         dashboardViewModel.getHaircutRanking().observe(getViewLifecycleOwner(), rankingMap -> {
             if (rankingMap != null && binding != null) {
                 Log.d("DashboardFragment", "Haircut Ranking Data Received: " + rankingMap.size());
                 setupHorizontalBarChart(binding.chartHaircutRanking, rankingMap, "Haircut Choices");
             } else if (binding != null) {
-                binding.chartHaircutRanking.clear(); // Clear chart if data is null
+                binding.chartHaircutRanking.clear();
+                binding.chartHaircutRanking.setNoDataText("No data to display");
                 binding.chartHaircutRanking.invalidate();
             }
         });
 
-        // Observe barber ranking data and update the chart
         dashboardViewModel.getBarberRanking().observe(getViewLifecycleOwner(), rankingMap -> {
             if (rankingMap != null && binding != null) {
                 Log.d("DashboardFragment", "Barber Ranking Data Received: " + rankingMap.size());
                 setupHorizontalBarChart(binding.chartBarberRanking, rankingMap, "Barber Bookings");
             } else if (binding != null) {
-                binding.chartBarberRanking.clear(); // Clear chart if data is null
+                binding.chartBarberRanking.clear();
+                binding.chartBarberRanking.setNoDataText("No data to display");
                 binding.chartBarberRanking.invalidate();
             }
         });
     }
 
-    // --- Method to setup and display data on a HorizontalBarChart ---
     private void setupHorizontalBarChart(HorizontalBarChart barChart, Map<String, Integer> dataMap, String descriptionLabel) {
-        if (dataMap.isEmpty()) {
+        if (dataMap == null || dataMap.isEmpty()) {
             barChart.clear();
-            barChart.setNoDataText("No data available yet.");
+            barChart.setNoDataText("No data available for this filter.");
             barChart.invalidate();
             return;
         }
 
-        // 1. Prepare Data Entries
         ArrayList<BarEntry> entries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
         int index = 0;
-        // Data comes ordered (LinkedHashMap), but we need to reverse for horizontal chart
-        // (MPAndroidChart plots horizontal bars from bottom up)
+
         List<Map.Entry<String, Integer>> reversedData = new ArrayList<>(dataMap.entrySet());
         Collections.reverse(reversedData);
 
         for (Map.Entry<String, Integer> entry : reversedData) {
-            entries.add(new BarEntry(index, entry.getValue().floatValue())); // index = y, value = x
+            entries.add(new BarEntry(index, entry.getValue().floatValue()));
             labels.add(entry.getKey());
             index++;
         }
 
-        // 2. Create DataSet
         BarDataSet dataSet = new BarDataSet(entries, descriptionLabel);
-        // Use a color from your resources
         dataSet.setColor(ContextCompat.getColor(requireContext(), R.color.purple_500));
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
@@ -114,53 +187,56 @@ public class DashboardFragment extends Fragment {
         ArrayList<IBarDataSet> dataSets = new ArrayList<>();
         dataSets.add(dataSet);
 
-        // 3. Create BarData object
         BarData barData = new BarData(dataSets);
-        barData.setBarWidth(0.6f); // Adjust bar width
+        barData.setBarWidth(0.6f);
 
-        // 4. Configure Chart Appearance
         barChart.setData(barData);
-        barChart.setFitBars(true); // make the x-axis fit exactly all bars
+        barChart.setFitBars(true);
 
-        // Description
         Description description = new Description();
-        description.setEnabled(false); // Hide the description label
+        description.setEnabled(false);
         barChart.setDescription(description);
 
-        // X Axis (Labels - now on the left for HorizontalBarChart)
         XAxis xAxis = barChart.getXAxis();
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels)); // Set labels
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM); // Labels at the bottom of the chart (left side)
-        xAxis.setGranularity(1f); // Only show integer values
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
         xAxis.setGranularityEnabled(true);
-        xAxis.setDrawGridLines(false); // Hide vertical grid lines
+        xAxis.setDrawGridLines(false);
         xAxis.setTextSize(11f);
 
+        // --- Start of Alignment Fix ---
+        // Give enough space for the longest expected label
+        xAxis.setYOffset(10f); // Adjust if your labels are taller
+        // --- End of Alignment Fix ---
 
-        // Y Axis Left (Values - now along the bottom)
-        barChart.getAxisLeft().setEnabled(true); // Show values at bottom
-        barChart.getAxisLeft().setAxisMinimum(0f); // Start values from 0
-        barChart.getAxisLeft().setDrawGridLines(true); // Show horizontal grid lines
 
-        // Y Axis Right (Hide)
+        YAxis axisLeft = barChart.getAxisLeft(); // Get the left Y-axis
+        axisLeft.setEnabled(true);
+        axisLeft.setAxisMinimum(0f);
+        axisLeft.setDrawGridLines(true);
+        axisLeft.setTextSize(11f); // Added for consistency
+
+        // --- Start of Alignment Fix ---
+        // This is crucial. Set a fixed offset for the Y-axis labels.
+        // You might need to adjust this value (e.g., 60f, 70f, 80f)
+        // based on the longest label you expect ("Modern Mullet" is relatively long).
+        axisLeft.setXOffset(70f); // Experiment with this value
+        // --- End of Alignment Fix ---
+
         barChart.getAxisRight().setEnabled(false);
 
-        // General settings
         barChart.setDrawValueAboveBar(true);
-        barChart.setTouchEnabled(false); // Disable touch interactions if not needed
-        barChart.getLegend().setEnabled(false); // Hide the legend
-        barChart.animateY(1000); // Add animation
+        barChart.setTouchEnabled(false);
+        barChart.getLegend().setEnabled(false);
+        barChart.animateY(1000);
 
-        // 5. Refresh Chart
         barChart.invalidate();
     }
-
-
-    // Remove setupRankingLists() method as it's no longer used
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Clean up binding
+        binding = null;
     }
 }

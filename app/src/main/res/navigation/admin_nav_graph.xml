@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/admin_nav_graph"
-    app:startDestination="@+id/admin_nav_home">
+    app:startDestination="@id/admin_nav_home">
 
     <fragment
         android:id="@+id/admin_nav_home"
@@ -14,9 +14,8 @@
     <fragment
         android:id="@+id/admin_nav_calendar"
         android:name="com.example.beteranos.ui_admin.reservation.AdminReservationFragment"
-        android:label="@string/title_admin_reservation"
+        android:label="Reservations"
         tools:layout="@layout/fragment_admin_reservation" />
-
 
     <fragment
         android:id="@+id/admin_nav_dashboard"
@@ -33,7 +32,53 @@
     <fragment
         android:id="@+id/admin_nav_management"
         android:name="com.example.beteranos.ui_admin.management.AdminManagementFragment"
-        android:label="Management"
-        tools:layout="@layout/fragment_admin_management" />
+        android:label="Content Management"
+        tools:layout="@layout/fragment_admin_management">
+
+        <action
+            android:id="@+id/action_admin_nav_management_to_manageServicesFragment"
+            app:destination="@id/manageServicesFragment" />
+        <action
+            android:id="@+id/action_admin_nav_management_to_manageBarbersFragment"
+            app:destination="@id/manageBarbersFragment" />
+        <action
+            android:id="@+id/action_admin_nav_management_to_managePromosFragment"
+            app:destination="@id/managePromosFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/manageServicesFragment"
+        android:name="com.example.beteranos.ui_admin.management.services.ManageServicesFragment"
+        android:label="Manage Services"
+        tools:layout="@layout/fragment_manage_services" />
+
+    <fragment
+        android:id="@+id/manageBarbersFragment"
+        android:name="com.example.beteranos.ui_admin.management.barbers.ManageBarbersFragment"
+        android:label="Manage Barbers"
+        tools:layout="@layout/fragment_manage_barbers" />
+
+    <fragment
+        android:id="@+id/managePromosFragment"
+        android:name="com.example.beteranos.ui_admin.management.promos.ManagePromosFragment"
+        android:label="Manage Promos"
+        tools:layout="@layout/fragment_manage_promos" />
+
+    <fragment
+        android:id="@+id/admin_nav_management"
+        android:name="com.example.beteranos.ui_admin.management.AdminManagementFragment"
+        android:label="Content Management"
+        tools:layout="@layout/fragment_admin_management" >
+
+        <action
+            android:id="@+id/action_admin_nav_management_to_transactionReportFragment"
+            app:destination="@id/transactionReportFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/transactionReportFragment"
+        android:name="com.example.beteranos.ui_admin.management.transactions.TransactionReportFragment"
+        android:label="Transaction Report"
+        tools:layout="@layout/fragment_transaction_report" />
 
 </navigation>
