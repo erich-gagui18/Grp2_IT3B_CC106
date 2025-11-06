@@ -11,10 +11,12 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback; // --- ADDED THIS IMPORT ---
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.beteranos.ConnectionClass;
+import com.example.beteranos.MainActivity; // --- ADDED THIS IMPORT ---
 import com.example.beteranos.R;
 import com.example.beteranos.ui_admin.AdminDashboardActivity;
 
@@ -24,6 +26,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+// --- REMOVED BCrypt and SharedPreferences imports ---
 
 public class AdminLoginActivity extends AppCompatActivity {
 
@@ -64,11 +68,33 @@ public class AdminLoginActivity extends AppCompatActivity {
             dialog.show();
         });
 
+        // --- THIS IS THE FIX ---
+        // 1. Handle the top-left <ImageButton>
         backButton.setOnClickListener(v -> {
-            onBackPressed();
+            goToMainActivity();
         });
+
+        // 2. Handle the system navigation back button
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                goToMainActivity();
+            }
+        });
+        // --- END OF FIX ---
     }
 
+    // --- NEW HELPER METHOD FOR THE FIX ---
+    private void goToMainActivity() {
+        Intent intent = new Intent(AdminLoginActivity.this, MainActivity.class);
+        // These flags start MainActivity as a new task and clear the old one.
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish(); // Finish AdminLoginActivity
+    }
+
+
+    // --- YOUR ORIGINAL loginAdmin METHOD (UNCHANGED) ---
     private void loginAdmin(final String username, final String password) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -92,6 +118,7 @@ public class AdminLoginActivity extends AppCompatActivity {
 
                     if (rs.next()) {
                         String storedPassword = rs.getString("password_hash");
+                        // This is your original plain-text comparison
                         if (password.equals(storedPassword)) {
                             resultMessage = "Login Successful";
                             loginSuccess = true;
@@ -125,8 +152,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                 if (finalLoginSuccess) {
                     Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class);
 
-                    // --- THIS IS THE FIX ---
-                    // This line passes the username to the next activity.
+                    // This is your original line
                     intent.putExtra("USERNAME_EXTRA", username);
 
                     startActivity(intent);
@@ -134,5 +160,14 @@ public class AdminLoginActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    // --- OVERRIDE for the back button fix ---
+    @Override
+    public void onBackPressed() {
+        // This will be caught by the OnBackPressedCallback in onCreate,
+        // but this serves as a robust fallback.
+        goToMainActivity();
+        // We do not call super.onBackPressed() here
     }
 }

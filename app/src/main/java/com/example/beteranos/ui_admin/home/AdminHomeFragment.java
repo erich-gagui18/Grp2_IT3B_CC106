@@ -1,5 +1,7 @@
 package com.example.beteranos.ui_admin.home;
 
+import android.content.Context; // --- ADD THIS IMPORT ---
+import android.content.SharedPreferences; // --- ADD THIS IMPORT ---
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,11 +47,11 @@ public class AdminHomeFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ✅ Retrieve username (consistent with nav_graph argument)
-        String username = "Admin";
-        if (getArguments() != null && getArguments().containsKey("username")) {
-            username = getArguments().getString("username");
-        }
+        // --- THIS IS THE FIX ---
+        // Get username from SharedPreferences, not getArguments()
+        SharedPreferences prefs = requireActivity().getSharedPreferences("admin_prefs", Context.MODE_PRIVATE);
+        String username = prefs.getString("ADMIN_NAME", "Admin"); // Use "Admin" as default
+        // --- END OF FIX ---
 
         // ✅ Use string resource for better localization
         binding.textWelcome.setText(getString(R.string.welcome_message, username));
@@ -58,7 +60,6 @@ public class AdminHomeFragment extends Fragment {
         long today = binding.calendarView.getDate();
         updateLabelAndFetchAppointments(today);
 
-        // --- THIS IS THE FIX ---
         // Add a custom back-press handler that is tied to this fragment's lifecycle
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
@@ -68,7 +69,6 @@ public class AdminHomeFragment extends Fragment {
                 requireActivity().moveTaskToBack(true);
             }
         });
-        // --- END FIX ---
     }
 
     private void setupCalendarListener() {

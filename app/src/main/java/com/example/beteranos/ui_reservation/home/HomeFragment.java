@@ -1,5 +1,7 @@
 package com.example.beteranos.ui_reservation.home;
 
+import android.content.Context; // --- ADD THIS IMPORT ---
+import android.content.SharedPreferences; // --- ADD THIS IMPORT ---
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -21,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentHomeBinding;
 
-// --- FIX: Correct import paths ---
+// --- Correct import paths ---
 import com.example.beteranos.ui_reservation.home.notifications.NotificationAdapter;
 import com.example.beteranos.ui_reservation.home.notifications.NotificationsViewModel;
 
@@ -34,16 +36,11 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        HomeViewModel homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textHome;
-        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-
-        // --- FIX: Initialize the correct ViewModel ---
+        // Initialize NotificationsViewModel
         notificationsViewModel = new ViewModelProvider(this).get(NotificationsViewModel.class);
 
         return root;
@@ -52,6 +49,25 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // --- THIS IS THE FIX for the Parcel Crash ---
+        // Get user data from SharedPreferences
+        SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
+        String firstName = userPrefs.getString("first_name", "Guest");
+
+        // Set the welcome message
+        String welcomeText;
+        if (isLoggedIn) {
+            // Assumes you have: <string name="welcome_message">Welcome, %s!</string>
+            // If not, just use: welcomeText = "Welcome, " + firstName + "!";
+            welcomeText = getString(R.string.welcome_message, firstName);
+        } else {
+            welcomeText = "Welcome, Guest!";
+        }
+        binding.textHome.setText(welcomeText);
+        // --- END OF FIX ---
+
 
         // Handle back button press
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
@@ -105,14 +121,19 @@ public class HomeFragment extends Fragment {
         ProgressBar progressBar = popupView.findViewById(R.id.pb_dropdown_loading);
         TextView tvSeeAll = popupView.findViewById(R.id.tv_see_all);
 
-        // --- FIX: Use the new ListAdapter ---
         notificationAdapter = new NotificationAdapter();
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         rvNotifications.setAdapter(notificationAdapter);
 
-        int customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
+        // --- THIS IS THE FIX ---
+        // Get customerId from SharedPreferences, not the Activity Intent.
+        SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
+        int customerId = userPrefs.getInt("customer_id", -1);
+        // --- END OF FIX ---
 
-        if (customerId != -1) {
+        if (isLoggedIn && customerId != -1) {
+            // Observe notifications
             notificationsViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
                 if (notificationPopup != null && notificationPopup.isShowing()) {
                     progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -123,7 +144,6 @@ public class HomeFragment extends Fragment {
                 if (notificationPopup != null && notificationPopup.isShowing()) {
                     if (notifications != null && !notifications.isEmpty()) {
                         int endIndex = Math.min(notifications.size(), 5);
-                        // --- FIX: Use submitList() with List<Notification> ---
                         notificationAdapter.submitList(notifications.subList(0, endIndex));
                         rvNotifications.setVisibility(View.VISIBLE);
                         tvEmpty.setVisibility(View.GONE);
@@ -134,8 +154,10 @@ public class HomeFragment extends Fragment {
                 }
             });
 
+            // Fetch notifications
             notificationsViewModel.fetchNotifications(customerId);
         } else {
+            // Guest user
             tvEmpty.setText("Please login to view notifications");
             tvEmpty.setVisibility(View.VISIBLE);
             rvNotifications.setVisibility(View.GONE);

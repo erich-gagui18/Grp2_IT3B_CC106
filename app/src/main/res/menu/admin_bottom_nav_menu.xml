@@ -1,33 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 🏠 Home -->
     <item
         android:id="@+id/admin_nav_home"
         android:icon="@drawable/ic_home"
         android:title="Home" />
 
-    <!-- 🗓️ Calendar -->
     <item
         android:id="@+id/admin_nav_calendar"
         android:icon="@drawable/ic_calendar"
         android:title="Calendar" />
 
-    <!-- 🔹 Empty space for FAB (no icon or title) -->
     <item
         android:id="@+id/admin_nav_placeholder"
-        android:enabled="false"
-        android:icon="@null"
         android:title=""
-        android:visible="false" />
+        android:visible="false"
+        android:enabled="true" />
 
-    <!-- 📊 Dashboard -->
     <item
         android:id="@+id/admin_nav_dashboard"
         android:icon="@drawable/ic_dashboard"
         android:title="Dashboard" />
 
-    <!-- 👤 Profile -->
     <item
         android:id="@+id/admin_nav_profile"
         android:icon="@drawable/ic_person"

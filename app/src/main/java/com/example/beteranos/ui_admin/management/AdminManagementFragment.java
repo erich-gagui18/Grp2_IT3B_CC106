@@ -16,6 +16,7 @@ import com.example.beteranos.databinding.FragmentAdminManagementBinding;
 public class AdminManagementFragment extends Fragment {
 
     private FragmentAdminManagementBinding binding;
+    private NavController navController; // Hold NavController as a class variable
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -29,26 +30,30 @@ public class AdminManagementFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        final NavController navController = Navigation.findNavController(view);
+        // Find the NavController once
+        navController = Navigation.findNavController(view);
 
-        // Set click listener for Manage Services
-        binding.cardManageServices.setOnClickListener(v -> {
-            navController.navigate(R.id.action_admin_nav_management_to_manageServicesFragment);
-        });
+        // --- OPTIMIZED CODE ---
+        // Use the helper method to set up all navigation clicks
+        setupNavigationClick(binding.cardManageServices, R.id.action_admin_nav_management_to_manageServicesFragment);
+        setupNavigationClick(binding.cardManageBarbers, R.id.action_admin_nav_management_to_manageBarbersFragment);
+        setupNavigationClick(binding.cardManagePromos, R.id.action_admin_nav_management_to_managePromosFragment);
+        setupNavigationClick(binding.cardTransactionReport, R.id.action_admin_nav_management_to_transactionReportFragment);
+    }
 
-        // Set click listener for Manage Barbers
-        binding.cardManageBarbers.setOnClickListener(v -> {
-            navController.navigate(R.id.action_admin_nav_management_to_manageBarbersFragment);
-        });
-
-        // Set click listener for Manage Promos
-        binding.cardManagePromos.setOnClickListener(v -> {
-            navController.navigate(R.id.action_admin_nav_management_to_managePromosFragment);
-        });
-
-        // --- ADD THIS CLICK LISTENER ---
-        binding.cardTransactionReport.setOnClickListener(v -> {
-            navController.navigate(R.id.action_admin_nav_management_to_transactionReportFragment);
+    /**
+     * --- NEW HELPER METHOD ---
+     * A simple helper to set a click listener that navigates to a specific action ID.
+     *
+     * @param view     The View to attach the click listener to (e.g., a CardView)
+     * @param actionId The Navigation Action ID to navigate to
+     */
+    private void setupNavigationClick(@NonNull View view, int actionId) {
+        view.setOnClickListener(v -> {
+            // Check if NavController is still valid to prevent rare crashes
+            if (navController != null && navController.getCurrentDestination() != null) {
+                navController.navigate(actionId);
+            }
         });
     }
 
@@ -56,5 +61,6 @@ public class AdminManagementFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        navController = null; // Clear the NavController
     }
 }
