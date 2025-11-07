@@ -59,9 +59,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
                                         intent = new Intent(CustomerLoginActivity.this, ReservationActivity.class);
                                         intent.putExtra("CUSTOMER_ID", rs.getInt("customer_id"));
 
-                                        // --- THIS IS THE FIX ---
                                         // Check for null values before adding them to the intent.
-                                        // If a value is null, pass an empty string instead.
                                         String firstName = rs.getString("first_name");
                                         String middleName = rs.getString("middle_name");
                                         String lastName = rs.getString("last_name");
@@ -92,6 +90,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
                         SharedPreferences.Editor editor = userPrefs.edit();
 
                         editor.putBoolean("isLoggedIn", true);
+                        editor.putBoolean("isGuest", false); // Important: Logged in users are NOT guests
                         editor.putInt("customer_id", finalIntent.getIntExtra("CUSTOMER_ID", -1));
                         editor.putString("first_name", finalIntent.getStringExtra("FIRST_NAME"));
                         editor.putString("middle_name", finalIntent.getStringExtra("MIDDLE_NAME"));
@@ -119,12 +118,22 @@ public class CustomerLoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // --- THIS IS THE INTEGRATED CODE ---
+        // ** GUEST LOGIN LOGIC **
         binding.guestText.setOnClickListener(v -> {
-            // Go to the main reservation screen without any user data
+            SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = userPrefs.edit();
+
+            // Clear all previous login data just in case
+            editor.clear();
+
+            // Set guest state flags
+            editor.putBoolean("isLoggedIn", false);
+            editor.putBoolean("isGuest", true); // Set this flag to TRUE
+            editor.apply();
+
             Intent intent = new Intent(CustomerLoginActivity.this, ReservationActivity.class);
             startActivity(intent);
-            finish(); // Close the login screen
+            finish(); // Remove CustomerLoginActivity from the back stack
         });
     }
 }

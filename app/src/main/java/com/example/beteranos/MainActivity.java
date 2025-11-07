@@ -18,8 +18,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // --- THIS IS THE FIX ---
-        // The "Reserve Now" button now opens the CustomerLoginActivity
+        // The "Reserve Now" button opens the CustomerLoginActivity
         binding.reserveButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, CustomerLoginActivity.class);
             startActivity(intent);
