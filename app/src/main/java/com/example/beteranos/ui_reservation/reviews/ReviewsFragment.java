@@ -1,6 +1,10 @@
 package com.example.beteranos.ui_reservation.reviews;
 
 import androidx.lifecycle.ViewModelProvider;
+
+import android.content.Context; // --- ADD THIS IMPORT ---
+import android.content.Intent; // --- ADD THIS IMPORT ---
+import android.content.SharedPreferences; // --- ADD THIS IMPORT ---
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.beteranos.databinding.FragmentReviewsBinding;
 import com.example.beteranos.models.Barber;
+import com.example.beteranos.ui_customer_login.CustomerLoginActivity; // --- ADD THIS IMPORT ---
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +30,7 @@ public class ReviewsFragment extends Fragment {
     private FragmentReviewsBinding binding;
     private ReviewsAdapter adapter;
     private List<Barber> barberList; // To map selected barber name back to ID
-    private int customerId = -1;
+    private int customerId = -1; // We still need this for the click listener
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -39,19 +44,37 @@ public class ReviewsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Get customer ID
-        customerId = requireActivity().getIntent().getIntExtra("CUSTOMER_ID", -1);
+        // --- THIS IS THE FIX ---
+        // Get customer ID and login state from SharedPreferences
+        SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
+        this.customerId = userPrefs.getInt("customer_id", -1); // Set the class variable
+        // --- END FIX ---
 
+
+        // --- UPDATED GUEST LOGIC ---
+        // Guests can still see reviews, but they can't post.
+        // We show/hide the "Go to Login" overlay.
+        if (isLoggedIn && customerId != -1) {
+            // User is logged in
+            binding.guestView.setVisibility(View.GONE);
+            setupClickListeners(); // Only set up "submit" click listener if logged in
+        } else {
+            // User is a guest
+            binding.guestView.setVisibility(View.VISIBLE);
+
+            // Make the new button functional
+            binding.btnGoToLogin.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), CustomerLoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                requireActivity().finish(); // This is now safe
+            });
+        }
+
+        // --- This logic runs for EVERYONE (guests and logged-in users) ---
         setupRecyclerView();
         setupObservers();
-        setupClickListeners();
-
-        // Handle guest users
-        if (customerId == -1) {
-            binding.tvGuestMessage.setVisibility(View.VISIBLE);
-        } else {
-            binding.tvGuestMessage.setVisibility(View.GONE);
-        }
     }
 
     private void setupRecyclerView() {
@@ -61,11 +84,9 @@ public class ReviewsFragment extends Fragment {
     }
 
     private void setupClickListeners() {
+        // This method is now only called if the user is logged in
         binding.btnSubmitReview.setOnClickListener(v -> {
-            if (customerId == -1) {
-                mViewModel.submitReview(customerId, 0, 0, ""); // ViewModel will handle the error toast
-                return;
-            }
+            // We already know customerId is valid if this listener was set up
 
             // Get data from form
             String selectedBarberName = binding.barberSpinnerDropdown.getText().toString();
@@ -81,7 +102,6 @@ public class ReviewsFragment extends Fragment {
                 Toast.makeText(getContext(), "Please provide a rating", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // Comment is optional
 
             // Find the ID of the selected barber
             int selectedBarberId = -1;
@@ -100,11 +120,13 @@ public class ReviewsFragment extends Fragment {
             }
 
             // Submit to ViewModel
-            mViewModel.submitReview(customerId, selectedBarberId, rating, comment);
+            mViewModel.submitReview(this.customerId, selectedBarberId, rating, comment);
         });
     }
 
     private void setupObservers() {
+        // This method is called for everyone
+
         // Observer for the list of all barbers (for the dropdown)
         mViewModel.allBarbers.observe(getViewLifecycleOwner(), barbers -> {
             if (barbers != null && !barbers.isEmpty()) {
@@ -137,7 +159,10 @@ public class ReviewsFragment extends Fragment {
         // Observer for loading state
         mViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             binding.progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            binding.btnSubmitReview.setEnabled(!isLoading); // Disable button while loading
+            // Don't disable the button if it's not even visible (i.e., guest mode)
+            if (binding.btnSubmitReview.getVisibility() == View.VISIBLE) {
+                binding.btnSubmitReview.setEnabled(!isLoading);
+            }
         });
 
         // Observer for toast messages (from submit, fetch errors, etc.)
