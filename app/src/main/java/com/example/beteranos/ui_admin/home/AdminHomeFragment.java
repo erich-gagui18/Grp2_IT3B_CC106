@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentAdminHomeBinding;
 import com.example.beteranos.models.Appointment;
+import com.example.beteranos.ui_admin.SharedAdminAppointmentViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -27,14 +28,14 @@ import java.util.Locale;
 public class AdminHomeFragment extends Fragment {
 
     private FragmentAdminHomeBinding binding;
-    private AdminHomeViewModel adminViewModel;
+    private SharedAdminAppointmentViewModel adminViewModel;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
-        adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
+        adminViewModel = new ViewModelProvider(requireActivity()).get(SharedAdminAppointmentViewModel.class);
 
         setupCalendarListener();
         observeViewModel();

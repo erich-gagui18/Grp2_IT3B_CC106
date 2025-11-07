@@ -1,7 +1,6 @@
 package com.example.beteranos.ui_admin.profile;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
@@ -10,7 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.beteranos.ConnectionClass;
-import com.example.beteranos.ui_admin_login.AdminLoginActivity;
+// --- REMOVED Appointment, List, ArrayList imports ---
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +20,7 @@ import java.util.concurrent.Executors;
 public class AdminProfileViewModel extends ViewModel {
 
     private static final String TAG = "AdminProfileViewModel";
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     // LiveData for admin details
     private final MutableLiveData<String> _name = new MutableLiveData<>();
@@ -34,7 +34,7 @@ public class AdminProfileViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _navigateToLogin = new MutableLiveData<>(false);
     public LiveData<Boolean> navigateToLogin = _navigateToLogin;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    // --- REMOVED appointmentHistory LiveData ---
 
     public void fetchAdminDetails(int adminId) {
         if (adminId == -1) {
@@ -47,7 +47,6 @@ public class AdminProfileViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- FIX: Only select the 'username' column ---
                 String query = "SELECT username FROM admins WHERE admin_id = ?";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -70,6 +69,8 @@ public class AdminProfileViewModel extends ViewModel {
         });
     }
 
+    // --- REMOVED fetchAppointmentHistory() method ---
+
     public void logout(Context context) {
         executor.execute(() -> {
             // Clear admin SharedPreferences
@@ -83,7 +84,6 @@ public class AdminProfileViewModel extends ViewModel {
         });
     }
 
-    // Call this after navigation to prevent re-triggering
     public void onLoginNavigationComplete() {
         _navigateToLogin.setValue(false);
     }

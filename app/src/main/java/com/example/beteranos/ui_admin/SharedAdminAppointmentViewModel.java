@@ -1,13 +1,10 @@
-package com.example.beteranos.ui_admin.reservation;
+package com.example.beteranos.ui_admin; // <-- Note: I moved this to the parent ui_admin package
 
 import android.util.Log;
-
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
 import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.models.Appointment;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,7 +13,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class AdminReservationViewModel extends ViewModel {
+// --- RENAMED the class ---
+public class SharedAdminAppointmentViewModel extends ViewModel {
 
     public final MutableLiveData<List<Appointment>> appointments = new MutableLiveData<>();
     public final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
@@ -25,6 +23,11 @@ public class AdminReservationViewModel extends ViewModel {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public void fetchAppointmentsForDate(long dateInMillis) {
+        // Optional: You could add a check here to prevent re-fetching if the date is the same
+        // if (dateInMillis == lastFetchedDateInMillis && appointments.getValue() != null) {
+        //     return;
+        // }
+
         this.lastFetchedDateInMillis = dateInMillis;
         isLoading.postValue(true);
 
@@ -33,6 +36,7 @@ public class AdminReservationViewModel extends ViewModel {
             Connection conn = null;
             try {
                 conn = new ConnectionClass().CONN();
+                if (conn == null) throw new Exception("DB Connection Failed");
 
                 String query = "SELECT r.reservation_id, " +
                         "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
@@ -62,11 +66,10 @@ public class AdminReservationViewModel extends ViewModel {
                             rs.getString("status")
                     ));
                 }
-
                 appointments.postValue(fetchedAppointments);
 
             } catch (Exception e) {
-                Log.e("AdminResViewModel", "DB Error: " + e.getMessage());
+                Log.e("SharedAdminApptVM", "DB Error: " + e.getMessage());
             } finally {
                 if (conn != null) {
                     try { conn.close(); } catch (Exception ignored) {}
@@ -81,6 +84,8 @@ public class AdminReservationViewModel extends ViewModel {
             Connection conn = null;
             try {
                 conn = new ConnectionClass().CONN();
+                if (conn == null) throw new Exception("DB Connection Failed");
+
                 String query = "UPDATE reservations SET status = ? WHERE reservation_id = ?";
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setString(1, newStatus);
@@ -88,7 +93,7 @@ public class AdminReservationViewModel extends ViewModel {
                 int updated = stmt.executeUpdate();
 
                 if (updated > 0) {
-                    // Update the LiveData list locally to avoid full refresh
+                    // This local update is fantastic. It will notify BOTH fragments.
                     List<Appointment> currentList = appointments.getValue();
                     if (currentList != null) {
                         List<Appointment> updatedList = new ArrayList<>(currentList.size());
@@ -113,7 +118,7 @@ public class AdminReservationViewModel extends ViewModel {
                 }
 
             } catch (Exception e) {
-                Log.e("AdminViewModel", "DB Error updating status: " + e.getMessage());
+                Log.e("SharedAdminApptVM", "DB Error updating status: " + e.getMessage());
             } finally {
                 if (conn != null) {
                     try { conn.close(); } catch (Exception ignored) {}

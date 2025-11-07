@@ -59,7 +59,12 @@ public class TransactionReportViewModel extends ViewModel {
                     "LEFT JOIN " +
                     "    services s ON rs.service_id = s.service_id " +
                     "WHERE " +
-                    "    (r.status = 'Confirmed' OR r.status = 'Scheduled') " + // Or use 'Completed' if you have it
+
+                    // --- THIS IS THE FIX ---
+                    // We now only query for appointments that are 'Completed'.
+                    "    (r.status = 'Completed') " +
+                    // --- END OF FIX ---
+
                     (startDate != null && endDate != null ? "AND r.reservation_time BETWEEN ? AND ? " : "") +
                     "GROUP BY " +
                     "    r.reservation_id, customer_name, barber_name, r.reservation_time " +
@@ -73,6 +78,7 @@ public class TransactionReportViewModel extends ViewModel {
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     if (startDate != null && endDate != null) {
+                        // Your inclusive end date logic is correct
                         long inclusiveEndDate = endDate + (24 * 60 * 60 * 1000);
                         stmt.setTimestamp(1, new Timestamp(startDate));
                         stmt.setTimestamp(2, new Timestamp(inclusiveEndDate));
@@ -103,5 +109,11 @@ public class TransactionReportViewModel extends ViewModel {
                 _isLoading.postValue(false);
             }
         });
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdown(); // Use shutdown() for a graceful exit
     }
 }

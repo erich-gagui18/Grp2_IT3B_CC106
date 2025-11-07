@@ -22,4 +22,11 @@
     <color name="button_inactive_black">#FF000000</color>
 
     <color name="primary_color">@color/black</color>
-    <color name="text_primary">#212121</color>  <color name="text_secondary">#757575</color> <color name="status_scheduled">#69F0AE</color> <color name="status_completed">#03A9F4</color> <color name="status_cancelled">#F44336</color>  <color name="status_pending">#FFB300</color>    </resources>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="status_scheduled">#69F0AE</color>
+    <color name="status_completed">#03A9F4</color>
+    <color name="status_cancelled">#F44336</color>
+    <color name="status_pending">#FFB300</color>
+
+</resources>

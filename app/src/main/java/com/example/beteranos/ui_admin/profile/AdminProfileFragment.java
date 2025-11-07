@@ -13,14 +13,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+// --- REMOVED LinearLayoutManager import ---
 
 import com.example.beteranos.databinding.FragmentAdminProfileBinding;
+// --- REMOVED AdminAppointmentAdapter import ---
 import com.example.beteranos.ui_admin_login.AdminLoginActivity;
 
 public class AdminProfileFragment extends Fragment {
 
     private FragmentAdminProfileBinding binding;
     private AdminProfileViewModel viewModel;
+    // --- REMOVED adapter variable ---
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -33,15 +36,21 @@ public class AdminProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // --- REMOVED setupRecyclerView() call ---
+
         // Fetch admin details
         SharedPreferences prefs = requireActivity().getSharedPreferences("admin_prefs", Context.MODE_PRIVATE);
-        // Get the ADMIN_ID saved during login
         int adminId = prefs.getInt("ADMIN_ID", -1);
+
+        // Fetch data
         viewModel.fetchAdminDetails(adminId);
+        // --- REMOVED viewModel.fetchAppointmentHistory() call ---
 
         observeViewModel();
         setupClickListeners();
     }
+
+    // --- REMOVED setupRecyclerView() method ---
 
     private void observeViewModel() {
         // Observe the admin name
@@ -49,41 +58,35 @@ public class AdminProfileFragment extends Fragment {
             binding.tvAdminName.setText(name);
         });
 
-        // --- FIX: Removed the observer for viewModel.email ---
-
         // Observe the loading state
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            // --- SIMPLIFIED loading logic ---
             binding.progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             binding.tvAdminName.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
-            // --- REMOVED: tvAdminEmail visibility toggle ---
         });
+
+        // --- REMOVED appointmentHistory observer ---
 
         // Observer for the logout navigation
         viewModel.navigateToLogin.observe(getViewLifecycleOwner(), shouldNavigate -> {
             if (shouldNavigate) {
-                // Create intent for the Admin Login Screen
+                // (Your existing code is correct)
                 Intent intent = new Intent(getActivity(), AdminLoginActivity.class);
-                // Clear the back stack and start a new task
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
-
-                // Finish the current AdminDashboardActivity
                 requireActivity().finish();
-
-                // Reset the event
                 viewModel.onLoginNavigationComplete();
             }
         });
     }
 
     private void setupClickListeners() {
+        // (Your existing code is correct)
         binding.btnLogout.setOnClickListener(v -> {
-            // Call the logout method in the ViewModel
             viewModel.logout(requireContext());
         });
 
         binding.btnChangePassword.setOnClickListener(v -> {
-            // TODO: Navigate to a new ChangePasswordFragment
             Toast.makeText(getContext(), "Change Password feature coming soon!", Toast.LENGTH_SHORT).show();
         });
     }

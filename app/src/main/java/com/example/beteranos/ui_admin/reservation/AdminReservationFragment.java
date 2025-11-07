@@ -4,9 +4,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,92 +14,114 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.beteranos.databinding.FragmentAdminReservationBinding;
 import com.example.beteranos.models.Appointment;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
+import com.example.beteranos.ui_admin.SharedAdminAppointmentViewModel;
 
+import java.util.Calendar;
+
+// The interface implementation is unchanged
 public class AdminReservationFragment extends Fragment implements AdminAppointmentAdapter.OnAppointmentActionListener {
 
     private FragmentAdminReservationBinding binding;
-    private AdminReservationViewModel adminViewModel;
+    private SharedAdminAppointmentViewModel viewModel;
     private AdminAppointmentAdapter adapter;
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    // onCreateView is unchanged
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
+
+        viewModel = new ViewModelProvider(requireActivity()).get(SharedAdminAppointmentViewModel.class);
         binding = FragmentAdminReservationBinding.inflate(inflater, container, false);
-        adminViewModel = new ViewModelProvider(this).get(AdminReservationViewModel.class);
 
         setupRecyclerView();
         setupCalendarListener();
         observeViewModel();
 
+        // Fetch for today initially
+        long today = Calendar.getInstance().getTimeInMillis();
+        viewModel.fetchAppointmentsForDate(today);
+
         return binding.getRoot();
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        // Load today's appointments initially
-        long todayMillis = binding.calendarView.getDate();
-        fetchAppointmentsForDate(todayMillis);
-    }
-
+    // All setup and observe methods are unchanged...
     private void setupRecyclerView() {
         adapter = new AdminAppointmentAdapter(this);
-        binding.reservationsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.reservationsRecyclerView.setAdapter(adapter);
+        binding.rvAdminAppointments.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.rvAdminAppointments.setAdapter(adapter);
     }
 
     private void setupCalendarListener() {
         binding.calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             Calendar calendar = Calendar.getInstance();
-            calendar.set(year, month, dayOfMonth, 0, 0, 0);
-            long selectedDateMillis = calendar.getTimeInMillis();
-            fetchAppointmentsForDate(selectedDateMillis);
+            calendar.set(year, month, dayOfMonth);
+            long selectedDateInMillis = calendar.getTimeInMillis();
+            viewModel.fetchAppointmentsForDate(selectedDateInMillis);
         });
-    }
-
-    private void fetchAppointmentsForDate(long dateInMillis) {
-        // Update label
-        SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
-        binding.reservationsLabel.setText("Reservations for " + sdf.format(dateInMillis));
-
-        // Fetch from ViewModel
-        adminViewModel.fetchAppointmentsForDate(dateInMillis);
     }
 
     private void observeViewModel() {
-        adminViewModel.appointments.observe(getViewLifecycleOwner(), appointments -> {
-            // Submit a new copy to ListAdapter to trigger DiffUtil efficiently
-            adapter.submitList(appointments == null ? new ArrayList<>() : new ArrayList<>(appointments));
-
-            // Show empty list text if no appointments
-            boolean empty = appointments == null || appointments.isEmpty();
-            binding.reservationsRecyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
-            binding.emptyListText.setVisibility(empty ? View.VISIBLE : View.GONE);
+        viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            binding.loadingIndicator.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         });
 
-        adminViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
-            binding.progressBar.setVisibility(isLoading != null && isLoading ? View.VISIBLE : View.GONE);
+        viewModel.appointments.observe(getViewLifecycleOwner(), appointments -> {
+            adapter.submitList(appointments);
+            if (appointments == null || appointments.isEmpty()) {
+                binding.tvNoAppointments.setVisibility(View.VISIBLE);
+                binding.rvAdminAppointments.setVisibility(View.GONE);
+            } else {
+                binding.tvNoAppointments.setVisibility(View.GONE);
+                binding.rvAdminAppointments.setVisibility(View.VISIBLE);
+            }
         });
     }
 
-    // Adapter interface callbacks
+    // --- INTERFACE METHODS (UPDATE) ---
+
     @Override
-    public void onApprove(Appointment appointment) {
-        adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Scheduled");
+    public void onConfirmClicked(Appointment appointment) {
+        // Show a confirmation dialog before confirming
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Confirm Appointment")
+                .setMessage("Are you sure you want to confirm this appointment?")
+                .setPositiveButton("Yes, Confirm", (dialog, which) -> {
+                    viewModel.updateAppointmentStatus(appointment.getReservationId(), "Confirmed");
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     @Override
-    public void onReject(Appointment appointment) {
-        adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Cancelled");
+    public void onCancelClicked(Appointment appointment) {
+        // Show a confirmation dialog before cancelling
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Cancel Appointment")
+                .setMessage("Are you sure you want to cancel this appointment?")
+                .setPositiveButton("Yes, Cancel", (dialog, which) -> {
+                    viewModel.updateAppointmentStatus(appointment.getReservationId(), "Cancelled");
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
+
+    // --- ADD THIS NEW METHOD ---
+    @Override
+    public void onMarkAsCompletedClicked(Appointment appointment) {
+        // Show a confirmation dialog before completing
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Complete Appointment")
+                .setMessage("Mark this appointment as completed?")
+                .setPositiveButton("Yes, Mark as Completed", (dialog, which) -> {
+                    viewModel.updateAppointmentStatus(appointment.getReservationId(), "Completed");
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+    // --- END OF NEW METHOD ---
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding.reservationsRecyclerView.setAdapter(null);
         binding = null;
     }
 }
