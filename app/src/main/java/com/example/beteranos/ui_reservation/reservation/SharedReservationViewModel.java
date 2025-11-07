@@ -126,7 +126,7 @@ public class SharedReservationViewModel extends ViewModel {
                         fetchedBarbers.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
-                                rs.getString("specialization") // Pass the new field
+                                rs.getString("specialization") // <-- Pass the specialization
                         ));
                     }
                 }
@@ -373,18 +373,20 @@ public class SharedReservationViewModel extends ViewModel {
 
     public void saveReservation(int customerIdFromSession) {
         // --- Get all necessary values from LiveData ---
-        String emailAddr = email.getValue(); // Needed to find guest ID if needed
+        String emailAddr = email.getValue();
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
         Promo promo = selectedPromo.getValue();
         String date = selectedDate.getValue();
         String time = selectedTime.getValue();
-        byte[] receiptImage = paymentReceiptImage.getValue();
+        // Revert to using receiptImageBytes
+        byte[] receiptImageBytes = paymentReceiptImage.getValue();
         String chosenLocation = serviceLocation.getValue();
         String chosenHaircut = haircutChoice.getValue();
 
         // --- Basic validation ---
-        if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImage == null || chosenLocation == null) {
+        // Ensure receiptImageBytes is checked
+        if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImageBytes == null || chosenLocation == null) {
             reservationStatus.postValue(false);
             Log.e("ViewModel", "Validation failed: Missing essential reservation data for save.");
             return;
@@ -395,8 +397,8 @@ public class SharedReservationViewModel extends ViewModel {
             String claimCode = null;
             boolean isTrulyGuest = false;
             int finalCustomerId = customerIdFromSession;
-            int newReservationId = -1; // To store the ID of the main reservation record
-            Connection conn = null; // Declare connection outside try-with-resources for manual transaction control
+            int newReservationId = -1;
+            Connection conn = null;
             boolean reservationSuccess = false;
 
             try {
@@ -447,21 +449,24 @@ public class SharedReservationViewModel extends ViewModel {
                     Log.d("ViewModel", "Generating claim code (" + claimCode + ") for guest ID: " + finalCustomerId);
                 }
 
-
                 // --- Step 3: Parse Date/Time ---
                 Timestamp reservationTimestamp =
                         new Timestamp(new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US).parse(date + " " + time).getTime());
 
                 // --- Step 4: Insert ONE row into reservations table (WITHOUT service_id) ---
                 String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
                 try (PreparedStatement stmt = conn.prepareStatement(reservationQuery, Statement.RETURN_GENERATED_KEYS)) {
                     stmt.setInt(1, finalCustomerId);
                     stmt.setInt(2, barber.getBarberId());
                     if (promo != null) stmt.setInt(3, promo.getPromoId()); else stmt.setNull(3, Types.INTEGER);
                     stmt.setTimestamp(4, reservationTimestamp);
                     stmt.setString(5, "Pending");
-                    stmt.setBytes(6, receiptImage);
-                    stmt.setString(7, claimCode); // NULL if not guest
+
+                    // *** CRITICAL JDBC FIX: Set byte[] data into the BLOB column ***
+                    stmt.setBytes(6, receiptImageBytes);
+
+                    stmt.setString(7, claimCode);
                     if (chosenHaircut != null && !chosenHaircut.isEmpty()) stmt.setString(8, chosenHaircut); else stmt.setNull(8, Types.VARCHAR);
                     stmt.setString(9, chosenLocation);
 

@@ -36,4 +36,6 @@
     <string name="status_label">Status: %1$s</string>
     <string name="no_appointments">No appointments scheduled for this day.</string>
 
+    <string name="payment_receipt_image">Payment receipt image shown in full screen</string>
+
 </resources>

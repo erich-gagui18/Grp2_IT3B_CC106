@@ -32,4 +32,17 @@
             android:inputType="textCapWords" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:id="@+id/daysOffSelector"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp"
+        android:textSize="16sp"
+        android:textStyle="italic"
+        android:drawableEnd="@drawable/ic_edit"
+        android:hint="Select Days Off" />
 </LinearLayout>

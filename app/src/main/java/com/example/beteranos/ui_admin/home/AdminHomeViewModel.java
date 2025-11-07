@@ -33,7 +33,7 @@ public class AdminHomeViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     public LiveData<Boolean> isLoading = _isLoading;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(2); // One for stats, one for list
+    private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
     public void fetchHomeDashboardData() {
         _isLoading.postValue(true);
@@ -41,20 +41,14 @@ public class AdminHomeViewModel extends ViewModel {
         fetchPendingAppointments();
     }
 
-    // --- THIS METHOD IS NOW FIXED FOR MYSQL ---
+    // This method contains the MySQL compatibility fix (IFNULL and GROUP_CONCAT logic)
     private void fetchStats() {
         executor.execute(() -> {
 
-            // --- Reverted to MySQL-compatible functions ---
             String query = "SELECT " +
                     "    (SELECT COUNT(*) FROM reservations WHERE DATE(reservation_time) = CURDATE()) AS totalBookings, " +
-
-                    // --- THIS IS THE FIX ---
-                    // Removed the date check from pendingCount to show ALL pending appointments
                     "    (SELECT COUNT(*) FROM reservations WHERE status = 'Pending') AS pendingCount, " +
-                    // --- END OF FIX ---
-
-                    "    (SELECT IFNULL(SUM(s.price), 0) " + // <-- FIX: Changed ISNULL to IFNULL
+                    "    (SELECT IFNULL(SUM(s.price), 0) " +
                     "     FROM reservations r " +
                     "     JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                     "     JOIN services s ON rs.service_id = s.service_id " +
@@ -73,35 +67,36 @@ public class AdminHomeViewModel extends ViewModel {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching stats: " + e.getMessage(), e);
-                _stats.postValue(new AdminHomeStats(0, 0, 0)); // Post default on error
-            } finally {
-                _isLoading.postValue(false); // Stats are the "main" content
+                _stats.postValue(new AdminHomeStats(0, 0, 0));
             }
         });
     }
 
-    // --- THIS METHOD IS NOW FIXED FOR MYSQL ---
+    /**
+     * Fetches appointments with 'Pending' status, now including the payment receipt BLOB data.
+     */
     private void fetchPendingAppointments() {
         executor.execute(() -> {
             List<Appointment> pending = new ArrayList<>();
 
-            // --- Reverted to MySQL-compatible functions ---
+            // --- 🔑 START OF BLOB DATA ACCESS OBJECT (DAO) UPDATE ---
             String query = "SELECT r.reservation_id, " +
                     "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
-                    // --- FIX: Reverted STRING_AGG back to GROUP_CONCAT ---
                     "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
-                    // --- END OF FIX ---
                     "b.name AS barber_name, " +
-                    "r.reservation_time, r.status " +
+                    "r.reservation_time, r.status, " +
+                    "r.payment_receipt " + // 🔑 CRITICAL CHANGE: Select the BLOB column name
                     "FROM reservations r " +
                     "JOIN customers c ON r.customer_id = c.customer_id " +
                     "JOIN barbers b ON r.barber_id = b.barber_id " +
                     "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                     "JOIN services s ON rs.service_id = s.service_id " +
                     "WHERE r.status = 'Pending' " +
-                    // Group by all non-aggregated columns
-                    "GROUP BY r.reservation_id, c.first_name, c.last_name, b.name, r.reservation_time, r.status " +
+
+                    // 🔑 CRITICAL CHANGE: Group by the BLOB column name
+                    "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status, r.payment_receipt " +
                     "ORDER BY r.reservation_time ASC";
+            // --- END OF SQL QUERY UPDATE ---
 
             try (Connection conn = new ConnectionClass().CONN();
                  PreparedStatement stmt = conn.prepareStatement(query);
@@ -114,17 +109,21 @@ public class AdminHomeViewModel extends ViewModel {
                             rs.getString("service_names"),
                             rs.getString("barber_name"),
                             rs.getTimestamp("reservation_time"),
-                            rs.getString("status")
+                            rs.getString("status"),
+                            // 🔑 CRITICAL CHANGE: Use rs.getBytes() to retrieve the BLOB data
+                            rs.getBytes("payment_receipt")
                     ));
                 }
                 _pendingAppointments.postValue(pending);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching pending appointments: " + e.getMessage(), e);
+            } finally {
+                // Ensure loading state is turned off after all data is fetched or attempted.
+                _isLoading.postValue(false);
             }
         });
     }
 
-    // This method allows the "Confirm/Cancel" buttons to refresh the stats
     public void updateAppointmentStatus(int reservationId, String newStatus) {
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -134,7 +133,7 @@ public class AdminHomeViewModel extends ViewModel {
                     stmt.setInt(2, reservationId);
                     int updated = stmt.executeUpdate();
                     if (updated > 0) {
-                        // Refresh ALL data on the dashboard
+                        // After an update, re-fetch the data to refresh the UI list and stats
                         fetchHomeDashboardData();
                     }
                 }
@@ -144,7 +143,7 @@ public class AdminHomeViewModel extends ViewModel {
         });
     }
 
-    // Helper model class for the stats
+    // Helper model class for the stats (Unchanged)
     public static class AdminHomeStats {
         public final int totalBookings;
         public final int pendingCount;
@@ -156,7 +155,6 @@ public class AdminHomeViewModel extends ViewModel {
             this.estimatedRevenue = estimatedRevenue;
         }
 
-        // Formatter for revenue (e.g., ₱4.5k or ₱500)
         public String getFormattedRevenue() {
             if (estimatedRevenue >= 1000) {
                 return String.format(Locale.US, "₱%.1fk", estimatedRevenue / 1000.0);

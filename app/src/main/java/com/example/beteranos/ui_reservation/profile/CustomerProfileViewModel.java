@@ -60,9 +60,11 @@ public class CustomerProfileViewModel extends ViewModel {
         executor.execute(() -> {
             List<Appointment> history = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
-                // ✅ Updated query for many-to-many relationship using reservation_services
+
+                // --- 🔑 CRITICAL FIX: Use MAX() on the BLOB column ---
                 String query =
                         "SELECT r.reservation_time, r.status, b.name AS barber_name, " +
+                                "       MAX(r.payment_receipt) AS payment_receipt, " + // This must match the actual BLOB column name
                                 "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names " +
                                 "FROM reservations r " +
                                 "JOIN barbers b ON r.barber_id = b.barber_id " +
@@ -82,7 +84,9 @@ public class CustomerProfileViewModel extends ViewModel {
                                     rs.getString("service_names"), // now concatenated list
                                     rs.getString("barber_name"),
                                     rs.getTimestamp("reservation_time"),
-                                    rs.getString("status")
+                                    rs.getString("status"),
+                                    // Retrieve using the alias defined in the SELECT:
+                                    rs.getBytes("payment_receipt")
                             ));
                         }
                         appointmentHistory.postValue(history);

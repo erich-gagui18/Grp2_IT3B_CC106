@@ -40,5 +40,7 @@
         <activity android:name=".ui_admin_login.AdminLoginActivity" android:exported="false" />
         <activity android:name=".ui_admin.AdminDashboardActivity" android:exported="false" />
 
+        <activity android:name=".utils.FullImageActivity"
+            android:screenOrientation="portrait"/>
     </application>
 </manifest>
