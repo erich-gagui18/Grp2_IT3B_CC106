@@ -1,4 +1,4 @@
-package com.example.beteranos.ui_admin.reservation;
+package com.example.beteranos.ui_admin;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -28,11 +28,11 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
     public interface OnAppointmentActionListener {
         void onConfirmClicked(Appointment appointment);
         void onCancelClicked(Appointment appointment);
-        void onMarkAsCompletedClicked(Appointment appointment); // <-- ADD THIS NEW ACTION
+        void onMarkAsCompletedClicked(Appointment appointment);
     }
     // --- END INTERFACE ---
 
-    // Constructor is unchanged
+    // --- UPDATE CONSTRUCTOR to accept the listener ---
     public AdminAppointmentAdapter(OnAppointmentActionListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
@@ -49,12 +49,13 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
     @Override
     public void onBindViewHolder(@NonNull AppointmentViewHolder holder, int position) {
         Appointment appointment = getItem(position);
+        // --- Pass the listener to the bind method ---
         holder.bind(appointment, timeFormat, listener);
     }
 
     static class AppointmentViewHolder extends RecyclerView.ViewHolder {
         private final TextView timeText, customerText, serviceText, barberText, statusText;
-        private final Button btnConfirm, btnCancel;
+        private final Button btnConfirm, btnCancel; // --- ADD BUTTONS ---
 
         public AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,11 +64,11 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
             serviceText = itemView.findViewById(R.id.service_name_text);
             barberText = itemView.findViewById(R.id.barber_name_text);
             statusText = itemView.findViewById(R.id.appointment_status_text);
+            // --- FIND BUTTONS ---
             btnConfirm = itemView.findViewById(R.id.btn_confirm);
             btnCancel = itemView.findViewById(R.id.btn_cancel);
         }
 
-        // --- UPDATE THE BIND METHOD ---
         public void bind(Appointment appointment, SimpleDateFormat timeFormat, OnAppointmentActionListener listener) {
             Context context = itemView.getContext();
 
@@ -87,23 +88,19 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
                     btnConfirm.setVisibility(View.GONE);
                     btnCancel.setVisibility(View.GONE);
                     break;
-
-                // --- THIS IS THE UPDATE ---
                 case "scheduled":
                 case "confirmed":
                     backgroundRes = R.drawable.rounded_status_scheduled;
 
                     // Change the button text and action
-                    btnConfirm.setText("Mark as Completed"); // <-- NEW TEXT
+                    btnConfirm.setText("Mark as Completed");
                     btnConfirm.setVisibility(View.VISIBLE);
                     btnCancel.setVisibility(View.VISIBLE);
 
                     // Set listeners to the new actions
-                    btnConfirm.setOnClickListener(v -> listener.onMarkAsCompletedClicked(appointment)); // <-- NEW ACTION
+                    btnConfirm.setOnClickListener(v -> listener.onMarkAsCompletedClicked(appointment));
                     btnCancel.setOnClickListener(v -> listener.onCancelClicked(appointment));
                     break;
-                // --- END UPDATE ---
-
                 case "cancelled":
                     backgroundRes = R.drawable.rounded_status_cancelled;
                     btnConfirm.setVisibility(View.GONE);
@@ -112,7 +109,7 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
                 default: // Assumes "Pending"
                     backgroundRes = R.drawable.rounded_status_pending;
 
-                    btnConfirm.setText("Confirm"); // <-- Set default text
+                    btnConfirm.setText("Confirm");
                     btnConfirm.setVisibility(View.VISIBLE);
                     btnCancel.setVisibility(View.VISIBLE);
 
@@ -122,15 +119,14 @@ public class AdminAppointmentAdapter extends ListAdapter<Appointment, AdminAppoi
                     break;
             }
 
+            // Set the background resource dynamically
             statusText.setBackground(ContextCompat.getDrawable(context, backgroundRes));
             statusText.setTextColor(ContextCompat.getColor(context, android.R.color.white));
         }
     }
 
-    // DiffCallback is unchanged
     private static final DiffUtil.ItemCallback<Appointment> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Appointment>() {
-                // ... (your existing DiffUtil code) ...
                 @Override
                 public boolean areItemsTheSame(@NonNull Appointment oldItem, @NonNull Appointment newItem) {
                     return oldItem.getReservationId() == newItem.getReservationId();

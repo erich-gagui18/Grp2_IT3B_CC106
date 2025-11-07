@@ -1,44 +1,45 @@
 package com.example.beteranos.ui_admin.home;
 
-import android.content.Context; // --- ADD THIS IMPORT ---
-import android.content.SharedPreferences; // --- ADD THIS IMPORT ---
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
-import androidx.activity.OnBackPressedCallback; // --- ADD THIS IMPORT ---
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentAdminHomeBinding;
 import com.example.beteranos.models.Appointment;
-import com.example.beteranos.ui_admin.SharedAdminAppointmentViewModel;
+import com.example.beteranos.ui_admin.AdminAppointmentAdapter; // Make sure this import is correct
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
-
-public class AdminHomeFragment extends Fragment {
+// Implement the adapter's interface
+public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapter.OnAppointmentActionListener {
 
     private FragmentAdminHomeBinding binding;
-    private SharedAdminAppointmentViewModel adminViewModel;
+    private AdminHomeViewModel adminViewModel; // Use the new ViewModel
+    private AdminAppointmentAdapter pendingAdapter; // Adapter for the pending list
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
-        adminViewModel = new ViewModelProvider(requireActivity()).get(SharedAdminAppointmentViewModel.class);
 
-        setupCalendarListener();
-        observeViewModel();
+        // --- Get the NEW ViewModel ---
+        adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
+
+        setupRecyclerView();
+        observeViewModel(); // Call this here
 
         return binding.getRoot();
     }
@@ -48,105 +49,113 @@ public class AdminHomeFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- THIS IS THE FIX ---
-        // Get username from SharedPreferences, not getArguments()
+        // Get username from SharedPreferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("admin_prefs", Context.MODE_PRIVATE);
-        String username = prefs.getString("ADMIN_NAME", "Admin"); // Use "Admin" as default
-        // --- END OF FIX ---
+        String username = prefs.getString("ADMIN_NAME", "Admin");
 
-        // ✅ Use string resource for better localization
+        // This line now correctly finds the 'text_welcome' in your new layout
         binding.textWelcome.setText(getString(R.string.welcome_message, username));
 
-        // ✅ Fetch appointments for today
-        long today = binding.calendarView.getDate();
-        updateLabelAndFetchAppointments(today);
+        // Fetch all data for the dashboard
+        adminViewModel.fetchHomeDashboardData();
 
-        // Add a custom back-press handler that is tied to this fragment's lifecycle
+        setupClickListeners(view);
+
+        // Back press handler
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // When on the Home fragment, the back button should minimize the app
-                // (like pressing the phone's home button) instead of finishing the activity.
                 requireActivity().moveTaskToBack(true);
             }
         });
     }
 
-    private void setupCalendarListener() {
-        binding.calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(year, month, dayOfMonth);
-            long selectedDateInMillis = calendar.getTimeInMillis();
-            updateLabelAndFetchAppointments(selectedDateInMillis);
+    private void setupRecyclerView() {
+        pendingAdapter = new AdminAppointmentAdapter(this); // Pass 'this' as the listener
+        binding.rvPendingAppointments.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.rvPendingAppointments.setAdapter(pendingAdapter);
+    }
+
+    private void setupClickListeners(View view) {
+        NavController navController = Navigation.findNavController(view);
+
+        binding.btnActionSchedule.setOnClickListener(v ->
+                navController.navigate(R.id.admin_nav_calendar));
+
+        binding.btnActionAnalytics.setOnClickListener(v ->
+                navController.navigate(R.id.admin_nav_dashboard));
+    }
+
+    // --- THIS METHOD IS NOW FULLY UPDATED ---
+    private void observeViewModel() {
+
+        // --- THIS IS THE NEWLY FUNCTIONAL PART ---
+        // Observer for the "At a Glance" stats
+        adminViewModel.stats.observe(getViewLifecycleOwner(), stats -> {
+            if (stats != null) {
+                binding.tvStatBookings.setText(String.valueOf(stats.totalBookings));
+                binding.tvStatPending.setText(String.valueOf(stats.pendingCount));
+                binding.tvStatRevenue.setText(stats.getFormattedRevenue());
+            }
+        });
+        // --- END OF NEW PART ---
+
+        // Observer for the "Pending" list
+        adminViewModel.pendingAppointments.observe(getViewLifecycleOwner(), appointments -> {
+            if (appointments != null && !appointments.isEmpty()) {
+                binding.rvPendingAppointments.setVisibility(View.VISIBLE);
+                binding.tvNoPending.setVisibility(View.GONE);
+                pendingAdapter.submitList(appointments);
+            } else {
+                binding.rvPendingAppointments.setVisibility(View.GONE);
+                binding.tvNoPending.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // Observer for the main loading state (for the stats)
+        adminViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            binding.statsLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            // Use INVISIBLE to prevent the layout from "jumping"
+            binding.statsContainer.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
         });
     }
 
-    private void updateLabelAndFetchAppointments(long dateInMillis) {
-        SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
-        binding.reservationsLabel.setText(
-                getString(R.string.reservations_for_date, sdf.format(dateInMillis))
-        );
-        adminViewModel.fetchAppointmentsForDate(dateInMillis);
+    // --- Interface methods (unchanged, but necessary) ---
+
+    @Override
+    public void onConfirmClicked(Appointment appointment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Confirm Appointment")
+                .setMessage("Are you sure you want to confirm this appointment?")
+                .setPositiveButton("Yes, Confirm", (dialog, which) -> {
+                    adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Confirmed");
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
-    private void observeViewModel() {
-        adminViewModel.appointments.observe(getViewLifecycleOwner(), this::populateAppointments);
+    @Override
+    public void onCancelClicked(Appointment appointment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Cancel Appointment")
+                .setMessage("Are you sure you want to cancel this appointment?")
+                .setPositiveButton("Yes, Cancel", (dialog, which) -> {
+                    adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Cancelled");
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
-    private void populateAppointments(List<Appointment> appointments) {
-        if (binding == null) return; // Add null check for safety
-        binding.reservationsContainer.removeAllViews();
-
-        if (appointments == null || appointments.isEmpty()) {
-            TextView noAppointmentsView = new TextView(getContext());
-            noAppointmentsView.setText(R.string.no_appointments);
-            noAppointmentsView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            noAppointmentsView.setPadding(0, 64, 0, 0);
-            binding.reservationsContainer.addView(noAppointmentsView);
-            return;
-        }
-
-        LayoutInflater inflater = LayoutInflater.from(getContext());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.US);
-
-        for (Appointment appointment : appointments) {
-            View appointmentView = inflater.inflate(R.layout.item_appointment, binding.reservationsContainer, false);
-
-            TextView timeText = appointmentView.findViewById(R.id.appointment_time_text);
-            TextView customerText = appointmentView.findViewById(R.id.customer_name_text);
-            TextView serviceText = appointmentView.findViewById(R.id.service_name_text);
-            TextView barberText = appointmentView.findViewById(R.id.barber_name_text);
-            TextView statusText = appointmentView.findViewById(R.id.appointment_status_text);
-
-            timeText.setText(timeFormat.format(appointment.getReservationTime()));
-            customerText.setText(appointment.getCustomerName());
-            serviceText.setText("Service: " + appointment.getServiceName());
-            barberText.setText("Barber: " + appointment.getBarberName());
-
-            // ✅ Improved color handling
-            int colorRes;
-            switch (appointment.getStatus().toLowerCase()) {
-                case "pending":
-                    colorRes = android.R.color.holo_orange_dark;
-                    break;
-                case "scheduled":
-                case "confirmed":
-                    colorRes = android.R.color.holo_green_dark;
-                    break;
-                case "cancelled":
-                    colorRes = android.R.color.holo_red_dark;
-                    break;
-                default:
-                    colorRes = android.R.color.darker_gray;
-                    break;
-            }
-            statusText.setText(appointment.getStatus());
-            if (getContext() != null) { // Add context null check
-                statusText.setTextColor(ContextCompat.getColor(requireContext(), colorRes));
-            }
-
-            binding.reservationsContainer.addView(appointmentView);
-        }
+    @Override
+    public void onMarkAsCompletedClicked(Appointment appointment) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Complete Appointment")
+                .setMessage("Mark this appointment as completed?")
+                .setPositiveButton("Yes, Mark as Completed", (dialog, which) -> {
+                    adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Completed");
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 
     @Override

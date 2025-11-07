@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -14,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.beteranos.databinding.FragmentAdminReservationBinding;
 import com.example.beteranos.models.Appointment;
 
+import com.example.beteranos.ui_admin.AdminAppointmentAdapter;
 import com.example.beteranos.ui_admin.SharedAdminAppointmentViewModel;
 
 import java.util.Calendar;
