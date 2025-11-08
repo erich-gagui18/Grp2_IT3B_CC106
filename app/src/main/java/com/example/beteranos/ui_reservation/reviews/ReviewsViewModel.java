@@ -83,14 +83,15 @@ public class ReviewsViewModel extends ViewModel {
             List<Barber> barberList = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
-                String query = "SELECT barber_id, name, specialization FROM barbers";
+                String query = "SELECT barber_id, name, specialization, day_off FROM barbers";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         barberList.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
-                                rs.getString("specialization")
+                                rs.getString("specialization"),
+                                rs.getString("day_off")
                         ));
                     }
                     _allBarbers.postValue(barberList);

@@ -52,8 +52,28 @@ public class BarbersFragment extends Fragment {
             View barberView = inflater.inflate(R.layout.item_selectable_barber, binding.barbersContainer, false);
 
             TextView nameText = barberView.findViewById(R.id.barber_name_text);
+            // 🔑 NEW: Find TextView for Specialization
+            TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
+            // 🔑 NEW: Find TextView for Day Off
+            TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
+
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
+
+            // 🔑 POPULATE DATA
             nameText.setText(barber.getName());
+
+            // Set Specialization
+            specializationText.setText(barber.getSpecialization());
+
+            // Set Day Off with special formatting if needed
+            String dayOff = barber.getDayOff();
+            if (dayOff != null && !dayOff.isEmpty() && !dayOff.equalsIgnoreCase("none")) {
+                dayOffText.setText("Day Off: " + dayOff);
+            } else {
+                dayOffText.setText("Available today");
+                dayOffText.setTextColor(getResources().getColor(R.color.status_scheduled, null)); // Assuming you have a green color defined
+            }
+            // ------------------
 
             // Observe the single selected barber to update the checkmark
             sharedViewModel.selectedBarber.observe(getViewLifecycleOwner(), selected -> {

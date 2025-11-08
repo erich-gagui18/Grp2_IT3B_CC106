@@ -42,7 +42,7 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 if (conn == null) {
                     throw new Exception("Database connection failed");
                 }
-                String query = "SELECT barber_id, name, specialization FROM barbers ORDER BY name ASC";
+                String query = "SELECT barber_id, name, specialization, day_off FROM barbers ORDER BY name ASC";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
@@ -50,7 +50,8 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                         barberList.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
-                                rs.getString("specialization")
+                                rs.getString("specialization"),
+                                rs.getString("day_off")
                         ));
                     }
                     _allBarbers.postValue(barberList);

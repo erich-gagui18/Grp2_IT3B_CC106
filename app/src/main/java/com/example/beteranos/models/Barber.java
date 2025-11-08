@@ -1,23 +1,24 @@
 package com.example.beteranos.models;
 
-import java.util.Objects; // Import this
+import java.util.Objects;
 
 public class Barber {
-    // Renamed 'id' to 'barberId' for better clarity
+
     private final int barberId;
     private final String name;
 
-    // --- ADDED ---
     private final String specialization;
+    // 🔑 ADDED: Day Off field
+    private final String dayOff;
 
-    // --- UPDATED CONSTRUCTOR ---
-    public Barber(int barberId, String name, String specialization) {
+    // 🔑 UPDATED CONSTRUCTOR: Now includes dayOff
+    public Barber(int barberId, String name, String specialization, String dayOff) {
         this.barberId = barberId;
         this.name = name;
         this.specialization = specialization;
+        this.dayOff = dayOff; // Assign the new field
     }
 
-    // --- RENAMED GETTER ---
     public int getBarberId() {
         return barberId;
     }
@@ -26,22 +27,23 @@ public class Barber {
         return name;
     }
 
-    // --- ADDED GETTER ---
     public String getSpecialization() {
         return specialization;
     }
 
-    // --- ADDED for ListAdapter/DiffUtil ---
-    // This allows the adapter to efficiently check if two Barber objects are the same
+    // 🔑 ADDED GETTER: For Day Off
+    public String getDayOff() {
+        return dayOff;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Barber barber = (Barber) o;
-        return barberId == barber.barberId; // Barbers are the "same item" if their ID is the same
+        return barberId == barber.barberId;
     }
 
-    // --- ADDED for ListAdapter/DiffUtil ---
     @Override
     public int hashCode() {
         return Objects.hash(barberId);
