@@ -83,7 +83,10 @@ public class ReviewsViewModel extends ViewModel {
             List<Barber> barberList = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
-                String query = "SELECT barber_id, name, specialization, day_off FROM barbers";
+
+                // 🔑 UPDATED QUERY: Select the new 'image_url' column
+                String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -91,7 +94,8 @@ public class ReviewsViewModel extends ViewModel {
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
                                 rs.getString("specialization"),
-                                rs.getString("day_off")
+                                rs.getString("day_off"),
+                                rs.getString("image_url") // 🔑 NEW: Pass the image URL to the constructor
                         ));
                     }
                     _allBarbers.postValue(barberList);

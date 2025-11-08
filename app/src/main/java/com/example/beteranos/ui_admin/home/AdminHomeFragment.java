@@ -67,7 +67,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         SharedPreferences prefs = requireActivity().getSharedPreferences("admin_prefs", Context.MODE_PRIVATE);
         String username = prefs.getString("ADMIN_NAME", "Admin");
         binding.textWelcome.setText(getString(R.string.welcome_message, username));
-        adminViewModel.fetchHomeDashboardData();
+        loadDataIfNeeded();
         setupClickListeners(view);
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
@@ -75,6 +75,12 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 requireActivity().moveTaskToBack(true);
             }
         });
+    }
+
+    private void loadDataIfNeeded() {
+        // The ViewModel will now check if data has already been loaded
+        // in its constructor or in this method call.
+        adminViewModel.fetchHomeDashboardDataIfNeeded();
     }
 
     private void setupRecyclerView() {

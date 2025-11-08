@@ -116,8 +116,8 @@ public class SharedReservationViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- FIX: Select the new 'specialization' column ---
-                String query = "SELECT barber_id, name, specialization, day_off FROM barbers";
+                // 🔑 UPDATED QUERY: Select image_url
+                String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
@@ -126,7 +126,8 @@ public class SharedReservationViewModel extends ViewModel {
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
                                 rs.getString("specialization"),
-                                rs.getString("day_off")
+                                rs.getString("day_off"),
+                                rs.getString("image_url") // 🔑 NEW: Retrieve and pass image URL
                         ));
                     }
                 }
@@ -619,8 +620,6 @@ public class SharedReservationViewModel extends ViewModel {
             stmt.setString(2, (mName != null && !mName.isEmpty()) ? mName : null);
             stmt.setString(3, lName);
             stmt.setString(4, phoneNum);
-            stmt.setInt(5, customerId);
-            stmt.executeUpdate();
         }
     }
 }

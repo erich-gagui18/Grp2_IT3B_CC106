@@ -6,17 +6,18 @@ public class Barber {
 
     private final int barberId;
     private final String name;
-
     private final String specialization;
-    // 🔑 ADDED: Day Off field
     private final String dayOff;
+    // 🔑 ADDED: Field for the barber's profile image URL
+    private final String imageUrl;
 
-    // 🔑 UPDATED CONSTRUCTOR: Now includes dayOff
-    public Barber(int barberId, String name, String specialization, String dayOff) {
+    // 🔑 UPDATED CONSTRUCTOR: Now includes dayOff and imageUrl
+    public Barber(int barberId, String name, String specialization, String dayOff, String imageUrl) {
         this.barberId = barberId;
         this.name = name;
         this.specialization = specialization;
-        this.dayOff = dayOff; // Assign the new field
+        this.dayOff = dayOff;
+        this.imageUrl = imageUrl; // Assign the new field
     }
 
     public int getBarberId() {
@@ -31,9 +32,13 @@ public class Barber {
         return specialization;
     }
 
-    // 🔑 ADDED GETTER: For Day Off
     public String getDayOff() {
         return dayOff;
+    }
+
+    // 🔑 ADDED GETTER: For Image URL
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     @Override

@@ -35,10 +35,26 @@ public class AdminHomeViewModel extends ViewModel {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
+    public void fetchHomeDashboardDataIfNeeded() {
+        // Check if stats are already loaded (stats.getValue() != null)
+        // AND if pending appointments are already loaded (pendingAppointments.getValue() != null).
+        // The following assumes 'stats' is a good indicator of loaded data.
+
+        if (stats.getValue() == null) {
+            // Data is null, so it needs to be fetched.
+            fetchHomeDashboardData();
+        }
+        // If stats.getValue() is NOT null, do nothing. The existing data will be displayed immediately.
+    }
+
     public void fetchHomeDashboardData() {
         _isLoading.postValue(true);
         fetchStats();
         fetchPendingAppointments();
+    }
+
+    public void refreshData() {
+        fetchHomeDashboardData();
     }
 
     // This method contains the MySQL compatibility fix (IFNULL and GROUP_CONCAT logic)

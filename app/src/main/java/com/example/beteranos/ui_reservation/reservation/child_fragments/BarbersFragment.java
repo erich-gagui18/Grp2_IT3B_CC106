@@ -10,11 +10,16 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentBarbersBinding;
 import com.example.beteranos.models.Barber;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment;
+import com.example.beteranos.ConnectionClass; // Added in case you need it, though not strictly required here
+import com.bumptech.glide.Glide; // 🔑 NEW: Import for image loading
+
 import java.util.List;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -53,7 +58,9 @@ public class BarbersFragment extends Fragment {
 
         // 🔑 Get colors once for efficiency and clarity
         // Assuming R.color.black is available, or use android.R.color.black
-        int prefixColor = getResources().getColor(android.R.color.white, null);
+        // NOTE: Changed prefixColor to R.color.black for visibility against a standard white background,
+        // but if your layout background is dark, you can keep android.R.color.white.
+        int prefixColor = getResources().getColor(android.R.color.black, null);
         int dayOffColor = getResources().getColor(android.R.color.holo_red_light, null);
         int availableColor = getResources().getColor(R.color.status_scheduled, null);
         // NOTE: We rely on your existing R.color.status_scheduled for green/available status.
@@ -64,8 +71,21 @@ public class BarbersFragment extends Fragment {
             TextView nameText = barberView.findViewById(R.id.barber_name_text);
             TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
             TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
-
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
+            ImageView profileImage = barberView.findViewById(R.id.barber_profile_image); // 🔑 NEW: Reference to the image view
+
+            // 🔑 NEW: Load Barber Profile Image using Glide
+            if (barber.getImageUrl() != null && !barber.getImageUrl().isEmpty()) {
+                Glide.with(requireContext())
+                        .load(barber.getImageUrl())
+                        .diskCacheStrategy(DiskCacheStrategy.NONE) // ADD THIS
+                        .skipMemoryCache(true)                     // ADD THIS
+                        .placeholder(R.drawable.barber_sample)
+                        .error(R.drawable.barber_sample)
+                        .into(profileImage);
+            } else {
+                profileImage.setImageResource(R.drawable.barber_sample); // Set default if URL is missing
+            }
 
             // 🔑 POPULATE DATA
             nameText.setText(barber.getName());
@@ -108,6 +128,8 @@ public class BarbersFragment extends Fragment {
             // ------------------
 
             // Observe the single selected barber to update the checkmark
+            // NOTE: The List is populated once, but the checkmark observer runs for every item.
+            // This is generally safe but can be optimized if performance is critical.
             sharedViewModel.selectedBarber.observe(getViewLifecycleOwner(), selected -> {
                 boolean isThisOneSelected = selected != null && selected.getBarberId() == barber.getBarberId();
                 checkMark.setVisibility(isThisOneSelected ? View.VISIBLE : View.GONE);

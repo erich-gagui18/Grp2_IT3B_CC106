@@ -34,6 +34,8 @@ public class AdminManagementBarbersViewModel extends ViewModel {
         fetchBarbers();
     }
 
+    // fetchBarbers method remains correct
+
     public void fetchBarbers() {
         _isLoading.postValue(true);
         executor.execute(() -> {
@@ -42,7 +44,7 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 if (conn == null) {
                     throw new Exception("Database connection failed");
                 }
-                String query = "SELECT barber_id, name, specialization, day_off FROM barbers ORDER BY name ASC";
+                String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers ORDER BY name ASC";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
@@ -51,7 +53,8 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
                                 rs.getString("specialization"),
-                                rs.getString("day_off")
+                                rs.getString("day_off"),
+                                rs.getString("image_url")
                         ));
                     }
                     _allBarbers.postValue(barberList);
@@ -65,15 +68,26 @@ public class AdminManagementBarbersViewModel extends ViewModel {
         });
     }
 
-    public void addBarber(String name, String specialization) {
+    /**
+     * 🔑 FIX: Updated signature to match the 3 arguments (name, specialization, imageUrl) passed by the Fragment.
+     */
+    public void addBarber(String name, String specialization, String imageUrl, String dayOff) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "INSERT INTO barbers (name, specialization) VALUES (?, ?)";
+
+                // 🔑 FIX 1: The query must include the 'day_off' column.
+                String query = "INSERT INTO barbers (name, specialization, image_url, day_off) VALUES (?, ?, ?, ?)";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, specialization);
+                    stmt.setString(3, imageUrl);
+
+                    // 🔑 FIX 2: Use the 'dayOff' parameter passed from the Fragment.
+                    stmt.setString(4, dayOff);
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Barber added successfully");
@@ -82,22 +96,33 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error adding barber: " + e.getMessage(), e);
-                _toastMessage.postValue("Error adding barber");
-                _isLoading.postValue(false); // Only stop loading on error (success stops in fetch)
+                _toastMessage.postValue("Error adding barber: " + e.getMessage());
+            } finally {
+                // Ensure loading state is turned off regardless of success or failure
+                _isLoading.postValue(false);
             }
         });
     }
 
-    public void updateBarber(int barberId, String name, String specialization) {
+    /**
+     * 🔑 FIX: Updated signature to match the 5 arguments (ID, name, specialization, imageUrl, dayOff) passed by the Fragment.
+     */
+    public void updateBarber(int barberId, String name, String specialization, String imageUrl, String dayOff) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "UPDATE barbers SET name = ?, specialization = ? WHERE barber_id = ?";
+
+                // Corrected query to update image_url AND day_off
+                String query = "UPDATE barbers SET name = ?, specialization = ?, image_url = ?, day_off = ? WHERE barber_id = ?";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, specialization);
-                    stmt.setInt(3, barberId);
+                    stmt.setString(3, imageUrl);
+                    stmt.setString(4, dayOff);   // Set the Day Off
+                    stmt.setInt(5, barberId);
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Barber updated successfully");
@@ -106,7 +131,9 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error updating barber: " + e.getMessage(), e);
-                _toastMessage.postValue("Error updating barber");
+                _toastMessage.postValue("Error updating barber: " + e.getMessage());
+            } finally {
+                // Ensure loading state is turned off regardless of success or failure
                 _isLoading.postValue(false);
             }
         });
