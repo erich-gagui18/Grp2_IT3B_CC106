@@ -16,6 +16,9 @@ import com.example.beteranos.models.Barber;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment;
 import java.util.List;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 
 public class BarbersFragment extends Fragment {
 
@@ -48,30 +51,59 @@ public class BarbersFragment extends Fragment {
         binding.barbersContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
+        // 🔑 Get colors once for efficiency and clarity
+        // Assuming R.color.black is available, or use android.R.color.black
+        int prefixColor = getResources().getColor(android.R.color.white, null);
+        int dayOffColor = getResources().getColor(android.R.color.holo_red_light, null);
+        int availableColor = getResources().getColor(R.color.status_scheduled, null);
+        // NOTE: We rely on your existing R.color.status_scheduled for green/available status.
+
         for (Barber barber : barbers) {
             View barberView = inflater.inflate(R.layout.item_selectable_barber, binding.barbersContainer, false);
 
             TextView nameText = barberView.findViewById(R.id.barber_name_text);
-            // 🔑 NEW: Find TextView for Specialization
             TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
-            // 🔑 NEW: Find TextView for Day Off
             TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
 
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
 
             // 🔑 POPULATE DATA
             nameText.setText(barber.getName());
-
-            // Set Specialization
             specializationText.setText(barber.getSpecialization());
 
-            // Set Day Off with special formatting if needed
-            String dayOff = barber.getDayOff();
-            if (dayOff != null && !dayOff.isEmpty() && !dayOff.equalsIgnoreCase("none")) {
-                dayOffText.setText("Day Off: " + dayOff);
+            // 🔑 OPTIMIZED LOGIC USING SPANNABLE STRING
+            String barberDayOff = barber.getDayOff();
+
+            if (barberDayOff != null && !barberDayOff.isEmpty() && !barberDayOff.equalsIgnoreCase("none")) {
+                // Scenario 1: Barber has a specific day off (show prefix in black, day in red)
+
+                final String prefix = "Day Off: ";
+                String fullText = prefix + barberDayOff;
+
+                SpannableString spannableString = new SpannableString(fullText);
+
+                // 1. Set the color for the prefix "Day Off: " (from index 0 up to prefix length)
+                spannableString.setSpan(
+                        new ForegroundColorSpan(prefixColor),
+                        0,
+                        prefix.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+
+                // 2. Set the color for the day off itself (from prefix length to end)
+                spannableString.setSpan(
+                        new ForegroundColorSpan(dayOffColor),
+                        prefix.length(),
+                        fullText.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+
+                dayOffText.setText(spannableString);
+
             } else {
+                // Scenario 2: Barber is generally available (show text in green/scheduled color)
                 dayOffText.setText("Available today");
-                dayOffText.setTextColor(getResources().getColor(R.color.status_scheduled, null)); // Assuming you have a green color defined
+                dayOffText.setTextColor(availableColor);
             }
             // ------------------
 
