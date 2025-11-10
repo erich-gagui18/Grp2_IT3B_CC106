@@ -52,7 +52,6 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
     // Define the fixed list of Day Off choices
     private final String[] DAY_OFF_CHOICES = new String[]{"No day off", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentManageBarbersBinding.inflate(inflater, container, false);
@@ -165,10 +164,10 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
 
             // Pre-populate Day Off
             String currentDayOff = existingBarber.getDayOff();
-            // Set the text without showing the dropdown initially (false)
+            // Display the actual string from the model (will be "No day off" or the day)
             dialogBinding.dayOffEditText.setText(currentDayOff, false);
 
-            // Pre-populate Image
+            // Pre-populate Image (Omitted for brevity, no changes here)
             String currentImageUrl = existingBarber.getImageUrl();
             if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
                 Glide.with(this)
@@ -176,7 +175,6 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                         .placeholder(R.drawable.barber_sample)
                         .error(R.drawable.barber_sample)
                         .into(dialogBinding.barberImageView);
-                // Important: Keep the existing image URI/URL for saving later
                 tempImageUri = Uri.parse(currentImageUrl);
             } else {
                 dialogBinding.barberImageView.setImageResource(R.drawable.barber_sample);
@@ -189,15 +187,12 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
             tempImageUri = null;
         }
 
-        // --- IMAGE PICKER SETUP ---
+        // --- IMAGE PICKER SETUP --- (Omitted for brevity, no changes here)
         dialogBinding.btnSelectImage.setOnClickListener(v -> {
-            // CRITICAL: Store the ImageView reference from the current dialog
             profileImageView = dialogBinding.barberImageView;
-
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
-            // Set flags for persistent read permission
             intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
             imagePickerLauncher.launch(intent);
         });
@@ -213,7 +208,6 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
         builder.setPositiveButton(positiveButtonText, null);
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Clear the ImageView reference on dismiss
             profileImageView = null;
             dialog.dismiss();
         });
@@ -225,12 +219,16 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String name = dialogBinding.nameEditText.getText().toString().trim();
                 String specialization = dialogBinding.specEditText.getText().toString().trim();
-                String dayOff = dialogBinding.dayOffEditText.getText().toString().trim();
+                String dayOffInput = dialogBinding.dayOffEditText.getText().toString().trim();
+
+                // --- ⭐️ CRITICAL CHANGE HERE ⭐️ ---
+                // Convert "No day off" string to null for database storage
+                String finalDayOff = dayOffInput.equals("No day off") ? null : dayOffInput;
 
                 // Determine the final image path to save
                 String finalImageUrl = tempImageUri != null ?
                         tempImageUri.toString() :
-                        (existingBarber != null ? existingBarber.getImageUrl() : "");
+                        (existingBarber != null ? existingBarber.getImageUrl() : null); // Use null if no existing URL and no new URI
 
 
                 boolean isValid = true;
@@ -248,8 +246,8 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                     dialogBinding.specLayout.setError(null);
                 }
 
-                // Day Off Validation: Ensure a selection was made
-                if (TextUtils.isEmpty(dayOff) || dayOff.equals("None")) { // Assuming "None" is an empty/invalid value
+                // Day Off Validation: Check against the raw input string
+                if (TextUtils.isEmpty(dayOffInput) || dayOffInput.equals("None")) {
                     dialogBinding.dayOffLayout.setError("Day off selection is required");
                     isValid = false;
                 } else {
@@ -264,14 +262,12 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                                 name,
                                 specialization,
                                 finalImageUrl,
-                                dayOff
+                                finalDayOff // Pass the potentially NULL value
                         );
                     } else {
-                        // IMPORTANT: For new barbers, include the dayOff and image URL
-                        viewModel.addBarber(name, specialization, finalImageUrl, dayOff);
+                        viewModel.addBarber(name, specialization, finalImageUrl, finalDayOff); // Pass the potentially NULL value
                     }
 
-                    // Clear the ImageView reference upon successful save/dismissal
                     profileImageView = null;
                     dialog.dismiss();
                 }

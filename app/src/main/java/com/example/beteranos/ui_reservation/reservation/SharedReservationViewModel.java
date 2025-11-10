@@ -139,7 +139,6 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     private void fetchServicesFromDB() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             List<Service> fetchedServices = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -166,7 +165,6 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     private void fetchBarbersFromDB() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             List<Barber> fetchedBarbers = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -247,7 +245,24 @@ public class SharedReservationViewModel extends ViewModel {
             return;
         }
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        // --- ⭐️ THIS IS THE FIX ⭐️ ---
+        // 1. Get the name of the selected day (e.g., "Sunday")
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.US);
+        String selectedDayName = dayFormat.format(new Date(dateInMillis));
+
+        // 2. Check if this day is in the barber's days_off string
+        // NOTE: Your fetchBarbersFromDB uses "day_off", so we call .getDaysOff()
+        String daysOff = barber.getDayOff();
+        if (daysOff != null && daysOff.contains(selectedDayName)) {
+            // This is the barber's day off. Post an empty list immediately.
+            Log.d("ViewModel", "Barber is off on " + selectedDayName);
+            availableTimeSlots.postValue(new ArrayList<>());
+            return; // Stop here
+        }
+        // --- END OF FIX ---
+
+        // It's not their day off, proceed with finding booked slots
+        // Uses the class-level 'executor'
         executor.execute(() -> {
             List<String> allSlots = new ArrayList<>(Arrays.asList("09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"));
             List<String> bookedSlots = new ArrayList<>();
@@ -287,7 +302,6 @@ public class SharedReservationViewModel extends ViewModel {
         Log.d("ViewModel", "checkAndProcessDetails: Starting. isGuest=" + isGuest);
 
         // --- Guest Flow ---
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             Log.d("ViewModel", "checkAndProcessDetails: Background task started.");
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -393,7 +407,6 @@ public class SharedReservationViewModel extends ViewModel {
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12)); // 12 = cost factor
         // ------------------------------------------------
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             boolean success = false;
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -461,7 +474,6 @@ public class SharedReservationViewModel extends ViewModel {
         final double finalDownPayment = downPayment;
 
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             String claimCode = null;
             boolean isTrulyGuest = false;
@@ -663,7 +675,6 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     public void validateGuestCode(String code) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             boolean isValid = false;
             Connection conn = null;
@@ -705,5 +716,17 @@ public class SharedReservationViewModel extends ViewModel {
             stmt.setInt(5, customerId);
             stmt.executeUpdate();
         }
+    }
+    // ... (at the end of your file, before the last '}') ...
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        // Shut down the shared executor
+        executor.shutdown();
+
+        // Remove observers to prevent leaks
+        selectedServices.removeObserver(services -> calculateFinalPrice());
+        selectedPromo.removeObserver(promo -> calculateFinalPrice());
     }
 }
