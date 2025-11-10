@@ -17,10 +17,15 @@ import java.util.Locale;
 
 public class TransactionAdapter extends ListAdapter<Transaction, TransactionAdapter.TransactionViewHolder> {
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.US);
+    private final OnTransactionClickListener listener;
 
-    public TransactionAdapter() {
+    public interface OnTransactionClickListener {
+        void onTransactionClicked(Transaction transaction);
+    }
+
+    public TransactionAdapter(OnTransactionClickListener listener) {
         super(DIFF_CALLBACK);
+        this.listener = listener;
     }
 
     @NonNull
@@ -34,42 +39,84 @@ public class TransactionAdapter extends ListAdapter<Transaction, TransactionAdap
     @Override
     public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
         Transaction transaction = getItem(position);
-        holder.bind(transaction);
+        holder.bind(transaction, listener);
     }
 
     static class TransactionViewHolder extends RecyclerView.ViewHolder {
-        private final TextView dateText, amountText, customerText, barberText, servicesText;
+        // Views for the item layout
+        private final TextView tvCustomerName, tvBarberName, tvServices, tvDate, tvAmount, tvStatus;
+        private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.US);
 
         public TransactionViewHolder(@NonNull View itemView) {
             super(itemView);
-            dateText = itemView.findViewById(R.id.tv_transaction_date);
-            amountText = itemView.findViewById(R.id.tv_transaction_amount);
-            customerText = itemView.findViewById(R.id.tv_customer_name);
-            barberText = itemView.findViewById(R.id.tv_barber_name);
-            servicesText = itemView.findViewById(R.id.tv_services_list);
+            tvCustomerName = itemView.findViewById(R.id.tv_customer_name);
+            tvBarberName = itemView.findViewById(R.id.tv_barber_name);
+            tvServices = itemView.findViewById(R.id.tv_services);
+            tvDate = itemView.findViewById(R.id.tv_date);
+            tvAmount = itemView.findViewById(R.id.tv_amount);
+            tvStatus = itemView.findViewById(R.id.tv_status);
         }
 
-        public void bind(Transaction transaction) {
-            dateText.setText(DATE_FORMAT.format(transaction.getReservationTime()));
-            amountText.setText(String.format(Locale.US, "₱%.2f", transaction.getFinalPrice()));
-            customerText.setText("Customer: " + transaction.getCustomerName());
-            barberText.setText("Barber: " + transaction.getBarberName());
-            servicesText.setText("Services: " + transaction.getServices());
-        }
-    }
+        public void bind(Transaction transaction, OnTransactionClickListener listener) {
+            tvCustomerName.setText("Customer: " + transaction.getCustomerName());
+            tvBarberName.setText("Barber: " + transaction.getBarberName());
+            tvServices.setText("Services: " + transaction.getServices());
 
+            // Format the date
+            if (transaction.getReservationTime() != null) {
+                tvDate.setText(dateFormat.format(transaction.getReservationTime()));
+            } else {
+                tvDate.setText("N/A");
+            }
+
+            tvAmount.setText(transaction.getFormattedFinalPrice());
+
+            // Status coloring logic
+            String status = transaction.getStatus();
+            if (status != null) {
+                tvStatus.setText(status.toUpperCase(Locale.US));
+
+                switch (status.toLowerCase(Locale.US)) {
+                    case "completed":
+                    case "done":
+                        tvStatus.setBackgroundResource(R.drawable.bg_status_completed);
+                        break;
+                    case "scheduled":
+                        tvStatus.setBackgroundResource(R.drawable.bg_status_scheduled);
+                        break;
+                    case "cancelled":
+                    case "failed":
+                        tvStatus.setBackgroundResource(R.drawable.bg_status_cancelled);
+                        break;
+                    case "pending":
+                    default:
+                        tvStatus.setBackgroundResource(R.drawable.bg_status_pending);
+                        break;
+                }
+            } else {
+                // Handle null status gracefully
+                tvStatus.setText("UNKNOWN");
+                tvStatus.setBackgroundResource(R.drawable.bg_status_pending);
+            }
+
+            // Set click listener on the whole item view
+            itemView.setOnClickListener(v -> listener.onTransactionClicked(transaction));
+        }
+    } // End of TransactionViewHolder class
+
+    // ⭐️ FIX: DIFF_CALLBACK MUST be a static member of the OUTER class ⭐️
     private static final DiffUtil.ItemCallback<Transaction> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Transaction>() {
                 @Override
                 public boolean areItemsTheSame(@NonNull Transaction oldItem, @NonNull Transaction newItem) {
-                    return oldItem.getReservationId() == newItem.getReservationId();
+                    // Uses the unique reservation ID (String) for identity
+                    return oldItem.getReservationId().equals(newItem.getReservationId());
                 }
 
                 @Override
                 public boolean areContentsTheSame(@NonNull Transaction oldItem, @NonNull Transaction newItem) {
-                    // Simple check, can be expanded if transactions are editable
-                    return oldItem.getFinalPrice() == newItem.getFinalPrice() &&
-                            oldItem.getCustomerName().equals(newItem.getCustomerName());
+                    // Uses the overridden equals method on the Transaction model
+                    return oldItem.equals(newItem);
                 }
             };
-}
+} // End of TransactionAdapter class

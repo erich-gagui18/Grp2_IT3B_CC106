@@ -36,15 +36,9 @@ public class AdminHomeViewModel extends ViewModel {
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
     public void fetchHomeDashboardDataIfNeeded() {
-        // Check if stats are already loaded (stats.getValue() != null)
-        // AND if pending appointments are already loaded (pendingAppointments.getValue() != null).
-        // The following assumes 'stats' is a good indicator of loaded data.
-
         if (stats.getValue() == null) {
-            // Data is null, so it needs to be fetched.
             fetchHomeDashboardData();
         }
-        // If stats.getValue() is NOT null, do nothing. The existing data will be displayed immediately.
     }
 
     public void fetchHomeDashboardData() {
@@ -57,18 +51,22 @@ public class AdminHomeViewModel extends ViewModel {
         fetchHomeDashboardData();
     }
 
-    // This method contains the MySQL compatibility fix (IFNULL and GROUP_CONCAT logic)
     private void fetchStats() {
         executor.execute(() -> {
 
+            // ⭐️ UPDATED SQL QUERY FOR ACCURATE REVENUE ⭐️
             String query = "SELECT " +
                     "    (SELECT COUNT(*) FROM reservations WHERE DATE(reservation_time) = CURDATE()) AS totalBookings, " +
                     "    (SELECT COUNT(*) FROM reservations WHERE status = 'Pending') AS pendingCount, " +
-                    "    (SELECT IFNULL(SUM(s.price), 0) " +
+                    " " +
+                    "    (SELECT IFNULL( " +
+                    "        SUM(CASE WHEN r.status = 'Completed' THEN r.final_price ELSE 0 END) + " +
+                    "        SUM(CASE WHEN r.status IN ('Confirmed', 'Scheduled') THEN r.down_payment_amount ELSE 0 END) " +
+                    "     , 0) " +
                     "     FROM reservations r " +
-                    "     JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
-                    "     JOIN services s ON rs.service_id = s.service_id " +
-                    "     WHERE DATE(r.reservation_time) = CURDATE() AND r.status IN ('Confirmed', 'Completed', 'Scheduled')) AS estimatedRevenue";
+                    "     WHERE DATE(r.reservation_time) = CURDATE() " +
+                    "     AND r.status IN ('Completed', 'Confirmed', 'Scheduled')) AS estimatedRevenue";
+            // ⭐️ END OF SQL UPDATE ⭐️
 
             try (Connection conn = new ConnectionClass().CONN();
                  PreparedStatement stmt = conn.prepareStatement(query);
@@ -95,7 +93,6 @@ public class AdminHomeViewModel extends ViewModel {
         executor.execute(() -> {
             List<Appointment> pending = new ArrayList<>();
 
-            // --- 🔑 START OF SQL QUERY UPDATE ---
             String query = "SELECT r.reservation_id, " +
                     "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
                     "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
@@ -108,12 +105,8 @@ public class AdminHomeViewModel extends ViewModel {
                     "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                     "JOIN services s ON rs.service_id = s.service_id " +
                     "WHERE r.status = 'Pending' " +
-
-                    // 🔑 CRITICAL FIX: Remove r.payment_receipt from GROUP BY.
-                    // Grouping by the unique primary key (r.reservation_id) is sufficient.
                     "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
                     "ORDER BY r.reservation_time ASC";
-            // --- END OF SQL QUERY UPDATE ---
 
             try (Connection conn = new ConnectionClass().CONN();
                  PreparedStatement stmt = conn.prepareStatement(query);
@@ -127,7 +120,6 @@ public class AdminHomeViewModel extends ViewModel {
                             rs.getString("barber_name"),
                             rs.getTimestamp("reservation_time"),
                             rs.getString("status"),
-                            // 🔑 CRITICAL CHANGE: Use rs.getBytes() to retrieve the BLOB data
                             rs.getBytes("payment_receipt")
                     ));
                 }

@@ -29,4 +29,5 @@
     <color name="status_cancelled">#F44336</color>
     <color name="status_pending">#FFB300</color>
 
+    <color name="status_confirmed">#69F0AE</color>
 </resources>

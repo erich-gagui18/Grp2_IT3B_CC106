@@ -21,6 +21,7 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    // This method is correct and fetches appointments for the calendar
     public void fetchAppointmentsForDate(long dateInMillis) {
 
         this.lastFetchedDateInMillis = dateInMillis;
@@ -33,7 +34,7 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
                 conn = new ConnectionClass().CONN();
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- START OF QUERY FIX ---
+                // This query is correct (fixes the "Out of sort memory" error)
                 String query = "SELECT r.reservation_id, " +
                         "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
                         "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
@@ -46,20 +47,15 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
                         "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                         "JOIN services s ON rs.service_id = s.service_id " +
                         "WHERE DATE(r.reservation_time) = ? " +
-
-                        // --- 🔑 CRITICAL FIX: DO NOT group by the BLOB column. ---
-                        // Group by all other non-aggregate columns.
+                        // Group by all non-aggregate, non-BLOB columns
                         "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
-
                         "ORDER BY r.reservation_time ASC";
-                // --- END OF QUERY FIX ---
 
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setDate(1, new java.sql.Date(dateInMillis));
                 ResultSet rs = stmt.executeQuery();
 
                 while (rs.next()) {
-                    // This constructor call is correct
                     fetchedAppointments.add(new Appointment(
                             rs.getInt("reservation_id"),
                             rs.getString("customer_name"),
@@ -83,6 +79,34 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
         });
     }
 
+    // --- ⭐️ THIS IS THE NEW METHOD (STEP 2 of our plan) ⭐️ ---
+    // This method is called when the admin confirms a "Pending" booking
+    // and enters the down payment amount.
+    public void confirmAppointmentWithDownPayment(int reservationId, double downPaymentAmount) {
+        executor.execute(() -> {
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("DB Connection Failed");
+
+                // This is the SQL command from your plan
+                String query = "UPDATE reservations SET status = 'Confirmed', down_payment_amount = ? WHERE reservation_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setDouble(1, downPaymentAmount);
+                    stmt.setInt(2, reservationId);
+                    int updated = stmt.executeUpdate();
+
+                    if (updated > 0) {
+                        // Refresh the list to show the status change
+                        fetchAppointmentsForDate(lastFetchedDateInMillis);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("SharedAdminApptVM", "DB Error confirming payment: " + e.getMessage());
+            }
+        });
+    }
+
+
+    // This method is still used for "Cancel" and "Mark as Completed"
     public void updateAppointmentStatus(int reservationId, String newStatus) {
         executor.execute(() -> {
             Connection conn = null;
@@ -97,29 +121,10 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
                 int updated = stmt.executeUpdate();
 
                 if (updated > 0) {
-                    List<Appointment> currentList = appointments.getValue();
-                    if (currentList != null) {
-                        List<Appointment> updatedList = new ArrayList<>(currentList.size());
-                        for (Appointment appt : currentList) {
-                            if (appt.getReservationId() == reservationId) {
-                                // --- START OF COMPILE ERROR FIX ---
-                                Appointment updatedAppt = new Appointment(
-                                        appt.getReservationId(),
-                                        appt.getCustomerName(),
-                                        appt.getServiceName(),
-                                        appt.getBarberName(),
-                                        appt.getReservationTime(),
-                                        newStatus,
-                                        appt.getPaymentReceiptBytes() // <-- 🔑 Pass the existing byte[]
-                                );
-                                // --- END OF COMPILE ERROR FIX ---
-                                updatedList.add(updatedAppt);
-                            } else {
-                                updatedList.add(appt);
-                            }
-                        }
-                        appointments.postValue(updatedList);
-                    }
+                    // --- ⭐️ UPDATED LOGIC ⭐️ ---
+                    // Instead of manually updating the list, just re-fetch.
+                    // This is more reliable and ensures all data is fresh.
+                    fetchAppointmentsForDate(lastFetchedDateInMillis);
                 }
 
             } catch (Exception e) {
