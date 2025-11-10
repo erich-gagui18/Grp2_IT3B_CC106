@@ -95,13 +95,13 @@ public class AdminHomeViewModel extends ViewModel {
         executor.execute(() -> {
             List<Appointment> pending = new ArrayList<>();
 
-            // --- 🔑 START OF BLOB DATA ACCESS OBJECT (DAO) UPDATE ---
+            // --- 🔑 START OF SQL QUERY UPDATE ---
             String query = "SELECT r.reservation_id, " +
                     "CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
                     "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
                     "b.name AS barber_name, " +
                     "r.reservation_time, r.status, " +
-                    "r.payment_receipt " + // 🔑 CRITICAL CHANGE: Select the BLOB column name
+                    "r.payment_receipt " + // Select the BLOB column
                     "FROM reservations r " +
                     "JOIN customers c ON r.customer_id = c.customer_id " +
                     "JOIN barbers b ON r.barber_id = b.barber_id " +
@@ -109,8 +109,9 @@ public class AdminHomeViewModel extends ViewModel {
                     "JOIN services s ON rs.service_id = s.service_id " +
                     "WHERE r.status = 'Pending' " +
 
-                    // 🔑 CRITICAL CHANGE: Group by the BLOB column name
-                    "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status, r.payment_receipt " +
+                    // 🔑 CRITICAL FIX: Remove r.payment_receipt from GROUP BY.
+                    // Grouping by the unique primary key (r.reservation_id) is sufficient.
+                    "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
                     "ORDER BY r.reservation_time ASC";
             // --- END OF SQL QUERY UPDATE ---
 

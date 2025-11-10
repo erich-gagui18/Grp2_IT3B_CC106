@@ -19,7 +19,6 @@
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/sti"
             android:scaleType="centerCrop" /> <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"

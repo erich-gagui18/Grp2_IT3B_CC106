@@ -39,11 +39,13 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> email = new MutableLiveData<>();
 
     // --- Selections ---
-    public final MutableLiveData<String> serviceLocation = new MutableLiveData<>("Barbershop"); // Default
+    public final MutableLiveData<String> serviceLocation = new MutableLiveData<>("Barbershop");
     public final MutableLiveData<List<Service>> allServices = new MutableLiveData<>();
+    // ⭐️ ADDED: Observe selectedServices for price calculation ⭐️
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
     public final MutableLiveData<Barber> selectedBarber = new MutableLiveData<>();
     public final MutableLiveData<List<Barber>> allBarbers = new MutableLiveData<>();
+    // ⭐️ ADDED: Observe selectedPromo for price calculation ⭐️
     public final MutableLiveData<Promo> selectedPromo = new MutableLiveData<>();
     public final MutableLiveData<List<Promo>> allPromos = new MutableLiveData<>();
     public final MutableLiveData<String> selectedDate = new MutableLiveData<>();
@@ -51,24 +53,80 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<byte[]> paymentReceiptImage = new MutableLiveData<>();
     public final MutableLiveData<String> haircutChoice = new MutableLiveData<>();
 
+    public final MutableLiveData<Double> downPaymentAmount = new MutableLiveData<>();
+
+    // --- ⭐️ NEW: Price Calculation LiveData ⭐️ ---
+    public final MutableLiveData<Double> totalPrice = new MutableLiveData<>(0.0);
+    public final MutableLiveData<Double> promoDiscount = new MutableLiveData<>(0.0);
+    public final MutableLiveData<Double> finalPrice = new MutableLiveData<>(0.0);
+
     // --- Dynamic Data & Status ---
     public final MutableLiveData<List<String>> availableTimeSlots = new MutableLiveData<>();
     public final MutableLiveData<Boolean> reservationStatus = new MutableLiveData<>();
     public final MutableLiveData<Boolean> isGuestCodeValid = new MutableLiveData<>();
-    public final MutableLiveData<String> newClaimCode = new MutableLiveData<>(); // For guests who *don't* set password
+    public final MutableLiveData<String> newClaimCode = new MutableLiveData<>();
 
     // --- LiveData for Optional Password Flow ---
-    public final MutableLiveData<Integer> promptSetPassword = new MutableLiveData<>(); // Carries customerId
-    public final MutableLiveData<Boolean> passwordUpdateStatus = new MutableLiveData<>(); // Result of password update
-    public final MutableLiveData<String> customerCheckError = new MutableLiveData<>(); // Errors during check/create
-    public final MutableLiveData<Boolean> navigateToServicesSignal = new MutableLiveData<>(); // Signal to navigate
+    public final MutableLiveData<Integer> promptSetPassword = new MutableLiveData<>();
+    public final MutableLiveData<Boolean> passwordUpdateStatus = new MutableLiveData<>();
+    public final MutableLiveData<String> customerCheckError = new MutableLiveData<>();
+    public final MutableLiveData<Boolean> navigateToServicesSignal = new MutableLiveData<>();
 
     // LiveData for showing toasts
     public final MutableLiveData<String> toastMessage = new MutableLiveData<>();
+
+    // --- Use one shared thread pool ---
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+
     public SharedReservationViewModel() {
         fetchServicesFromDB();
         fetchBarbersFromDB();
         fetchPromosFromDB();
+
+        // ⭐️ NEW: Set up price calculation observers ⭐️
+        selectedServices.observeForever(services -> calculateFinalPrice());
+        selectedPromo.observeForever(promo -> calculateFinalPrice());
+    }
+
+    // --------------------------------------------------------------------------------
+    // ⭐️ NEW CORE BUSINESS LOGIC: DISCOUNT CALCULATION ⭐️
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Calculates the total price of selected services and applies the active promo discount.
+     */
+    private void calculateFinalPrice() {
+        double currentTotal = 0.0;
+        double currentDiscount = 0.0;
+
+        // 1. Calculate Base Total
+        List<Service> services = selectedServices.getValue();
+        if (services != null) {
+            for (Service service : services) {
+                currentTotal += service.getPrice();
+            }
+        }
+
+        // 2. Apply Discount
+        Promo promo = selectedPromo.getValue();
+        if (promo != null && currentTotal > 0) {
+            int percentage = promo.getDiscountPercentage();
+            currentDiscount = currentTotal * ((double) percentage / 100.0);
+            currentDiscount = Math.round(currentDiscount * 100.0) / 100.0;
+        }
+
+        double finalAmount = currentTotal - currentDiscount;
+
+        // 3. Post Results
+        totalPrice.setValue(currentTotal);
+        promoDiscount.setValue(currentDiscount);
+        finalPrice.setValue(Math.max(0.0, finalAmount));
+
+        // ⭐️ CALCULATE AND SET DOWN PAYMENT (50% of final price) ⭐️
+        downPaymentAmount.setValue(Math.max(0.0, finalAmount) / 2.0);
+
+        Log.d("PriceCalc", String.format("Total: %.2f, Discount: %.2f, Final: %.2f, DownPayment: %.2f",
+                currentTotal, currentDiscount, finalAmount, downPaymentAmount.getValue()));
     }
 
     // --- Standard Setters & Fetchers ---
@@ -87,14 +145,12 @@ public class SharedReservationViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- FIX: Query now matches your schema ---
                 String query = "SELECT service_id, service_name, price FROM services";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
-                        // --- FIX: Use the new, correct constructor ---
                         fetchedServices.add(new Service(
                                 rs.getInt("service_id"),
                                 rs.getString("service_name"),
@@ -116,7 +172,6 @@ public class SharedReservationViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // 🔑 UPDATED QUERY: Select image_url
                 String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
@@ -127,7 +182,7 @@ public class SharedReservationViewModel extends ViewModel {
                                 rs.getString("name"),
                                 rs.getString("specialization"),
                                 rs.getString("day_off"),
-                                rs.getString("image_url") // 🔑 NEW: Retrieve and pass image URL
+                                rs.getString("image_url")
                         ));
                     }
                 }
@@ -139,24 +194,23 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     private void fetchPromosFromDB() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        // --- OPTIMIZATION: Removed local executor, uses class executor ---
         executor.execute(() -> {
             List<Promo> fetchedPromos = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- FIX: Select all columns needed for the constructor ---
-                String query = "SELECT promo_id, promo_name, image_name, description FROM promos";
+                String query = "SELECT promo_id, promo_name, description, discount_percentage, image_name FROM promos";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
-                        // --- FIX: Use the constructor that matches the old flow ---
                         fetchedPromos.add(new Promo(
                                 rs.getInt("promo_id"),
                                 rs.getString("promo_name"),
-                                rs.getString("description"), // <-- Pass the description
-                                rs.getString("image_name")
+                                rs.getString("description"),
+                                rs.getInt("discount_percentage"),
+                                rs.getBytes("image_name")
                         ));
                     }
                 }
@@ -167,11 +221,13 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
+    // --- Service Selectors (Now call calculateFinalPrice) ---
     public void addService(Service service) {
         List<Service> currentList = selectedServices.getValue();
         if (currentList != null && !currentList.contains(service)) {
             currentList.add(service);
             selectedServices.setValue(currentList);
+            calculateFinalPrice(); // ⭐️ Trigger calculation ⭐️
         }
     }
 
@@ -180,6 +236,7 @@ public class SharedReservationViewModel extends ViewModel {
         if (currentList != null) {
             currentList.remove(service);
             selectedServices.setValue(currentList);
+            calculateFinalPrice(); // ⭐️ Trigger calculation ⭐️
         }
     }
 
@@ -318,7 +375,7 @@ public class SharedReservationViewModel extends ViewModel {
             insertStmt.setString(2, (mName != null && !mName.isEmpty()) ? mName : null);
             insertStmt.setString(3, lName);
             insertStmt.setString(4, phoneNum);
-            insertStmt.setString(5, emailAddr); // Save email even for guests now
+            insertStmt.setString(5, emailAddr);
             insertStmt.executeUpdate();
             try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
@@ -373,25 +430,36 @@ public class SharedReservationViewModel extends ViewModel {
     // --- UPDATED saveReservation METHOD ---
 
     public void saveReservation(int customerIdFromSession) {
-        // --- Get all necessary values from LiveData ---
+        // --- Retrieve ALL necessary values from LiveData ---
         String emailAddr = email.getValue();
         List<Service> services = selectedServices.getValue();
         Barber barber = selectedBarber.getValue();
         Promo promo = selectedPromo.getValue();
         String date = selectedDate.getValue();
         String time = selectedTime.getValue();
-        // Revert to using receiptImageBytes
         byte[] receiptImageBytes = paymentReceiptImage.getValue();
         String chosenLocation = serviceLocation.getValue();
         String chosenHaircut = haircutChoice.getValue();
 
-        // --- Basic validation ---
-        // Ensure receiptImageBytes is checked
-        if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImageBytes == null || chosenLocation == null) {
+        // ⭐️ RETRIEVE PRICE VALUES ⭐️
+        Double total = totalPrice.getValue();
+        Double discount = promoDiscount.getValue();
+        Double finalAmo = finalPrice.getValue();
+        Double downPayment = downPaymentAmount.getValue();
+
+        // --- Basic validation (now includes price validation) ---
+        if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImageBytes == null || chosenLocation == null || total == null || finalAmo == null || downPayment == null) {
             reservationStatus.postValue(false);
-            Log.e("ViewModel", "Validation failed: Missing essential reservation data for save.");
+            Log.e("ViewModel", "Validation failed: Missing essential reservation data for save (including price/receipt).");
             return;
         }
+
+        // Use primitive double values for cleaner SQL insertion
+        final double finalTotal = total;
+        final double finalDiscount = (discount != null ? discount : 0.0);
+        final double finalFinalAmo = finalAmo;
+        final double finalDownPayment = downPayment;
+
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -408,7 +476,7 @@ public class SharedReservationViewModel extends ViewModel {
                 if (conn == null) {
                     throw new SQLException("Database connection failed.");
                 }
-                conn.setAutoCommit(false); // Start transaction
+                conn.setAutoCommit(false);
 
                 // --- Step 1: Determine finalCustomerId ---
                 if (finalCustomerId == -1) {
@@ -450,28 +518,38 @@ public class SharedReservationViewModel extends ViewModel {
                     Log.d("ViewModel", "Generating claim code (" + claimCode + ") for guest ID: " + finalCustomerId);
                 }
 
-                // --- Step 3: Parse Date/Time ---
+                // --- Step 3: Parse Date/Time (Re-adding this for context) ---
                 Timestamp reservationTimestamp =
                         new Timestamp(new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US).parse(date + " " + time).getTime());
 
-                // --- Step 4: Insert ONE row into reservations table (WITHOUT service_id) ---
-                String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                // --- Step 4: Insert ONE row into reservations table (NOW INCLUDES PRICE FIELDS) ---
+                // ⭐️ UPDATED QUERY: Added total_price, discount_amount, final_price, down_payment_amount ⭐️
+                String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location, total_price, discount_amount, final_price, down_payment_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 try (PreparedStatement stmt = conn.prepareStatement(reservationQuery, Statement.RETURN_GENERATED_KEYS)) {
+                    // Set Customer/Barber/Time/Status (Indices 1-5)
                     stmt.setInt(1, finalCustomerId);
                     stmt.setInt(2, barber.getBarberId());
                     if (promo != null) stmt.setInt(3, promo.getPromoId()); else stmt.setNull(3, Types.INTEGER);
                     stmt.setTimestamp(4, reservationTimestamp);
                     stmt.setString(5, "Pending");
 
-                    // *** CRITICAL JDBC FIX: Set byte[] data into the BLOB column ***
+                    // Set Receipt/Code/Haircut/Location (Indices 6-9)
                     stmt.setBytes(6, receiptImageBytes);
-
                     stmt.setString(7, claimCode);
                     if (chosenHaircut != null && !chosenHaircut.isEmpty()) stmt.setString(8, chosenHaircut); else stmt.setNull(8, Types.VARCHAR);
                     stmt.setString(9, chosenLocation);
 
+                    // ⭐️ SET PRICE VALUES (Indices 10-13) ⭐️
+                    stmt.setDouble(10, finalTotal);
+                    stmt.setDouble(11, finalDiscount);
+                    stmt.setDouble(12, finalFinalAmo);
+                    stmt.setDouble(13, finalDownPayment); // This is the amount the user paid
+
                     int affectedRows = stmt.executeUpdate();
+
+                    // ... (Get generatedKeys and newReservationId) ...
 
                     if (affectedRows == 0) {
                         throw new SQLException("Creating reservation failed, no rows affected.");
@@ -520,8 +598,8 @@ public class SharedReservationViewModel extends ViewModel {
                 Log.d("ViewModel", "Reservation transaction committed successfully.");
 
             } catch (Exception e) {
+                // ... (Error handling and rollback remain the same) ...
                 Log.e("ViewModel", "Error during saveReservation transaction: " + e.getMessage(), e);
-                // --- Step 7: Rollback on error ---
                 if (conn != null) {
                     try {
                         Log.w("ViewModel", "Rolling back transaction due to error.");
@@ -530,14 +608,13 @@ public class SharedReservationViewModel extends ViewModel {
                         Log.e("ViewModel", "Error rolling back transaction: " + rollbackEx.getMessage());
                     }
                 }
-                // Ensure status reflects failure
-                reservationSuccess = false; // Explicitly set to false on any exception
+                reservationSuccess = false;
 
             } finally {
-                // --- Step 8: Close connection and reset autocommit ---
+                // ... (Close connection remains the same) ...
                 if (conn != null) {
                     try {
-                        conn.setAutoCommit(true); // Reset autocommit before closing
+                        conn.setAutoCommit(true);
                         conn.close();
                     } catch (SQLException closeEx) {
                         Log.e("ViewModel", "Error closing connection: " + closeEx.getMessage());
@@ -545,7 +622,7 @@ public class SharedReservationViewModel extends ViewModel {
                 }
             }
 
-            // --- Step 9: Post final status outside the try/catch/finally ---
+            // --- Step 9: Post final status ---
             reservationStatus.postValue(reservationSuccess);
             if (reservationSuccess && claimCode != null) {
                 newClaimCode.postValue(claimCode);
@@ -566,6 +643,10 @@ public class SharedReservationViewModel extends ViewModel {
         selectedPromo.setValue(null);
         selectedDate.setValue(null);
         selectedTime.setValue(null);
+        totalPrice.setValue(0.0);
+        promoDiscount.setValue(0.0);
+        finalPrice.setValue(0.0);
+        downPaymentAmount.setValue(null);
         paymentReceiptImage.setValue(null);
         haircutChoice.setValue(null);
         // Reset Status/Dynamic Data
@@ -615,11 +696,14 @@ public class SharedReservationViewModel extends ViewModel {
 
     // --- Helper to update existing customer details ---
     private void updateCustomerDetails(Connection conn, int customerId, String fName, String mName, String lName, String phoneNum) throws SQLException {
-        String updateQuery = "UPDATE customers SET first_name = ?, middle_name = ?, last_name = ?, phone_number = ? WHERE customer_id = ?"; try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+        String updateQuery = "UPDATE customers SET first_name = ?, middle_name = ?, last_name = ?, phone_number = ? WHERE customer_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
             stmt.setString(1, fName);
             stmt.setString(2, (mName != null && !mName.isEmpty()) ? mName : null);
             stmt.setString(3, lName);
             stmt.setString(4, phoneNum);
+            stmt.setInt(5, customerId);
+            stmt.executeUpdate();
         }
     }
 }

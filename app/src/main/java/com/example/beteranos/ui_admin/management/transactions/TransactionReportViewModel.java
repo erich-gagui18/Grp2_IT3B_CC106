@@ -37,17 +37,19 @@ public class TransactionReportViewModel extends ViewModel {
         _isLoading.postValue(true);
         executor.execute(() -> {
             List<Transaction> transactionList = new ArrayList<>();
-            double total = 0.0;
+            double grandTotalSales = 0.0;
 
-            // This query joins all tables, groups by reservation,
-            // concatenates service names, and sums their prices.
+            // ⭐️ UPDATED QUERY: Selects all price columns for accurate reporting ⭐️
             String query = "SELECT " +
                     "    r.reservation_id, " +
                     "    r.reservation_time, " +
                     "    CONCAT(c.first_name, ' ', c.last_name) AS customer_name, " +
                     "    b.name AS barber_name, " +
                     "    GROUP_CONCAT(s.service_name SEPARATOR ', ') AS services, " +
-                    "    SUM(s.price) AS total_amount " +
+                    "    r.total_price, " +       // Original Price before discount
+                    "    r.discount_amount, " +   // Discount applied
+                    "    r.final_price, " +       // Price after discount (The full transaction value)
+                    "    r.down_payment_amount " +// Amount paid at booking
                     "FROM " +
                     "    reservations r " +
                     "JOIN " +
@@ -59,15 +61,13 @@ public class TransactionReportViewModel extends ViewModel {
                     "LEFT JOIN " +
                     "    services s ON rs.service_id = s.service_id " +
                     "WHERE " +
-
-                    // --- THIS IS THE FIX ---
-                    // We now only query for appointments that are 'Completed'.
-                    "    (r.status = 'Completed') " +
-                    // --- END OF FIX ---
-
+                    "    r.status = 'Completed' " +
                     (startDate != null && endDate != null ? "AND r.reservation_time BETWEEN ? AND ? " : "") +
                     "GROUP BY " +
-                    "    r.reservation_id, customer_name, barber_name, r.reservation_time " +
+                    // Grouping by all selected columns except the GROUP_CONCAT is required,
+                    // including the new price fields.
+                    "    r.reservation_id, customer_name, barber_name, r.reservation_time, " +
+                    "    r.total_price, r.discount_amount, r.final_price, r.down_payment_amount " +
                     "ORDER BY " +
                     "    r.reservation_time DESC";
 
@@ -78,7 +78,6 @@ public class TransactionReportViewModel extends ViewModel {
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     if (startDate != null && endDate != null) {
-                        // Your inclusive end date logic is correct
                         long inclusiveEndDate = endDate + (24 * 60 * 60 * 1000);
                         stmt.setTimestamp(1, new Timestamp(startDate));
                         stmt.setTimestamp(2, new Timestamp(inclusiveEndDate));
@@ -86,24 +85,29 @@ public class TransactionReportViewModel extends ViewModel {
 
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
-                            double amount = rs.getDouble("total_amount");
+                            // Use final_price as the true transaction amount (what the customer paid in total)
+                            double finalPrice = rs.getDouble("final_price");
+
                             transactionList.add(new Transaction(
                                     rs.getInt("reservation_id"),
                                     rs.getTimestamp("reservation_time"),
                                     rs.getString("customer_name"),
                                     rs.getString("barber_name"),
                                     rs.getString("services"),
-                                    amount
+                                    finalPrice, // Use finalPrice as the amount for the Transaction model
+                                    rs.getDouble("down_payment_amount"), // ⭐️ NEW: Down Payment ⭐️
+                                    rs.getDouble("total_price"), // ⭐️ NEW: Total Price ⭐️
+                                    rs.getDouble("discount_amount") // ⭐️ NEW: Discount ⭐️
                             ));
-                            total += amount;
+                            grandTotalSales += finalPrice;
                         }
                     }
                 }
                 _transactions.postValue(transactionList);
-                _totalSales.postValue(String.format(Locale.US, "₱%.2f", total));
+                _totalSales.postValue(String.format(Locale.US, "₱%.2f", grandTotalSales)); // Sum of all final prices
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching transactions: " + e.getMessage(), e);
-                _transactions.postValue(new ArrayList<>()); // Post empty list
+                _transactions.postValue(new ArrayList<>());
                 _totalSales.postValue("Error");
             } finally {
                 _isLoading.postValue(false);
@@ -114,6 +118,6 @@ public class TransactionReportViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        executor.shutdown(); // Use shutdown() for a graceful exit
+        executor.shutdown();
     }
 }

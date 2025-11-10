@@ -1,9 +1,14 @@
 package com.example.beteranos.ui_reservation.reservation.child_fragments;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,19 +21,20 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.beteranos.R;
-import com.example.beteranos.databinding.FragmentPaymentBinding; // Ensure correct binding class
+import com.example.beteranos.databinding.FragmentPaymentBinding;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment;
 
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.io.IOException;
+import java.util.Locale; // ⭐️ ADDED IMPORT ⭐️
 
 public class PaymentFragment extends Fragment {
 
     private FragmentPaymentBinding binding;
     private SharedReservationViewModel sharedViewModel;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
-    private boolean isGuest = false; // Flag to track guest status
+    private boolean isGuest = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,18 +47,22 @@ public class PaymentFragment extends Fragment {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null && binding != null) {
-                            binding.receiptImageView.setImageURI(imageUri);
-                            try {
-                                InputStream inputStream = requireActivity().getContentResolver().openInputStream(imageUri);
-                                if (inputStream != null) {
-                                    byte[] imageBytes = getBytes(inputStream);
-                                    sharedViewModel.paymentReceiptImage.setValue(imageBytes);
-                                    inputStream.close();
-                                } else {
-                                    Toast.makeText(getContext(), "Failed to open image stream", Toast.LENGTH_SHORT).show();
-                                }
-                            } catch (Exception e) {
-                                Log.e("PaymentFragment", "Error processing image", e);
+
+                            // 1. Convert Uri to Bitmap
+                            Bitmap receiptBitmap = uriToBitmap(imageUri);
+
+                            if (receiptBitmap != null) {
+                                // 2. Display the Bitmap preview
+                                binding.receiptImageView.setImageBitmap(receiptBitmap);
+
+                                // 3. Convert the Bitmap to compressed byte[] for saving
+                                // Using 70% quality for good compression of a receipt
+                                byte[] compressedBytes = getBytesFromBitmap(receiptBitmap, 70);
+                                sharedViewModel.paymentReceiptImage.setValue(compressedBytes);
+
+                                // Show confirmation message
+                                Toast.makeText(getContext(), "Receipt uploaded successfully.", Toast.LENGTH_SHORT).show();
+                            } else {
                                 Toast.makeText(getContext(), "Failed to load image", Toast.LENGTH_SHORT).show();
                             }
                         }
@@ -76,13 +86,14 @@ public class PaymentFragment extends Fragment {
         isGuest = (customerId == -1);
 
         // Show guest code input field only for guests
-        // Assumes you have guestCodeLayout in your fragment_payment.xml
         if (binding.guestCodeLayout != null) {
             binding.guestCodeLayout.setVisibility(isGuest ? View.VISIBLE : View.GONE);
         } else {
             Log.w("PaymentFragment", "guestCodeLayout not found in binding. Cannot show/hide.");
         }
 
+        // ⭐️ NEW: Display the required payment amount (down payment) ⭐️
+        displayPaymentAmount();
 
         binding.btnSelectImage.setOnClickListener(v -> openImageChooser());
 
@@ -105,50 +116,77 @@ public class PaymentFragment extends Fragment {
                 String guestCode = binding.guestCodeEditText.getText().toString().trim();
                 if (guestCode.isEmpty()) {
                     binding.guestCodeLayout.setError("Guest Code is required"); // Show error on layout
-                    // Toast.makeText(getContext(), "Please enter Guest Code", Toast.LENGTH_SHORT).show();
                     return;
                 } else {
                     binding.guestCodeLayout.setError(null); // Clear error
                 }
 
-                // Show loading and disable button
                 showLoadingState(true);
-
-                // Call ViewModel to validate the code
                 sharedViewModel.validateGuestCode(guestCode);
-                // The observer (setupObservers) will handle the result
 
             } else {
                 // --- LOGGED-IN USER FLOW: Proceed directly ---
-                proceedWithBooking(customerId); // Pass the actual customer ID
+                proceedWithBooking(customerId);
             }
         });
 
-        // Setup observers for ViewModel LiveData
         setupObservers();
+
+        // ⭐️ NEW: Observe final price to update down payment display ⭐️
+        sharedViewModel.finalPrice.observe(getViewLifecycleOwner(), price -> displayPaymentAmount());
     }
 
-    // --- NEW: Setup Observers Method ---
+    // ⭐️ NEW METHOD: Calculate and display the down payment ⭐️
+    private void displayPaymentAmount() {
+        Double finalPrice = sharedViewModel.finalPrice.getValue();
+        double downPayment = 0.0;
+
+        if (finalPrice != null && finalPrice > 0.0) {
+            // Calculate half of the final service amount
+            downPayment = finalPrice / 2.0;
+        }
+
+        // 1. Format the down payment for display
+        String paymentText = String.format(Locale.US, "₱%.2f", downPayment);
+
+        // 2. Set the text in the corresponding TextView (assumes the XML has tvPaymentAmount)
+        if (binding.tvPaymentAmount != null) {
+            binding.tvPaymentAmount.setText(paymentText);
+        } else {
+            Log.w("PaymentFragment", "tvPaymentAmount not found in binding. XML layout update required.");
+        }
+
+        // 3. Store the down payment in the ViewModel for reservation saving
+        sharedViewModel.downPaymentAmount.setValue(downPayment);
+
+        // Display the total amount for user context (assumes tvTotalServiceAmount)
+        String totalText = String.format(Locale.US, "₱%.2f", (finalPrice != null ? finalPrice : 0.0));
+        if (binding.tvTotalServiceAmount != null) {
+            binding.tvTotalServiceAmount.setText(totalText);
+        } else {
+            Log.w("PaymentFragment", "tvTotalServiceAmount not found in binding. XML layout update required.");
+        }
+    }
+
+
+    // --- Setup Observers Method ---
     private void setupObservers() {
+        // ... (Existing setupObservers code remains the same) ...
         // Observer for Guest Code Validation Result
         sharedViewModel.isGuestCodeValid.observe(getViewLifecycleOwner(), isValid -> {
-            if (isValid != null) { // Check if the event is fresh
-                if (binding == null) return; // Check if fragment view is still valid
+            if (isValid != null) {
+                if (binding == null) return;
 
                 if (isValid) {
-                    // Guest code is valid, proceed with booking
-                    // Pass -1; saveReservation logic will find/create guest based on ViewModel details
                     proceedWithBooking(-1);
                 } else {
-                    // Guest code is invalid
-                    showLoadingState(false); // Hide loading, enable button
+                    showLoadingState(false);
                     if (binding.guestCodeLayout != null) {
                         binding.guestCodeLayout.setError("Invalid or used Guest Code");
                     } else {
                         Toast.makeText(getContext(), "Invalid or used Guest Code", Toast.LENGTH_LONG).show();
                     }
                 }
-                // Reset the signal in ViewModel to prevent re-triggering on config change
                 sharedViewModel.isGuestCodeValid.setValue(null);
             }
         });
@@ -160,48 +198,45 @@ public class PaymentFragment extends Fragment {
                     Log.w("PaymentFragment", "Binding is null in reservationStatus observer.");
                     return;
                 }
-                showLoadingState(false); // Hide loading, enable button (if failed)
+                showLoadingState(false);
 
                 if (success) {
                     Toast.makeText(getContext(), "Booking Successful!", Toast.LENGTH_SHORT).show();
                     // Navigate to Confirmation
                     if (getParentFragment() instanceof ReservationFragment) {
+                        // ⭐️ The ReservationFragment's logic is responsible for initiating the database save here.
                         ((ReservationFragment) getParentFragment()).navigateToConfirmation();
                     } else {
                         Log.e("PaymentFragment", "Parent fragment is not ReservationFragment, cannot navigate.");
                     }
                 } else {
                     Toast.makeText(getContext(), "Booking Failed. Please try again.", Toast.LENGTH_LONG).show();
-                    // Button is re-enabled by showLoadingState(false)
                 }
-                // Reset the status signal
                 sharedViewModel.reservationStatus.setValue(null);
             }
         });
     }
 
-    // --- NEW: Helper method to handle booking initiation ---
+    // --- Helper method to handle booking initiation ---
     private void proceedWithBooking(int customerIdForSave) {
         if (binding == null) return;
         Log.d("PaymentFragment", "Proceeding with booking. Customer ID for save: " + customerIdForSave);
-        showLoadingState(true); // Show loading, disable button
-        // Call ViewModel's saveReservation
+        showLoadingState(true);
+        // ⭐️ The ViewModel will now save the reservation, including the downPaymentAmount
+        // stored just above. ⭐️
         sharedViewModel.saveReservation(customerIdForSave);
-        // The reservationStatus observer will handle the result
     }
 
-    // --- NEW: Helper method to manage loading UI state ---
+    // --- Helper method to manage loading UI state ---
     private void showLoadingState(boolean isLoading) {
         if (binding == null) return;
         binding.loadingOverlay.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        binding.btnBookNow.setEnabled(!isLoading); // Enable/disable button
-        binding.btnBookNow.setVisibility(isLoading ? View.GONE : View.VISIBLE); // Show/Hide button
+        binding.btnBookNow.setEnabled(!isLoading);
+        binding.btnBookNow.setVisibility(isLoading ? View.GONE : View.VISIBLE);
 
-        // Disable guest code input during loading
         if (binding.guestCodeLayout != null) {
             binding.guestCodeLayout.setEnabled(!isLoading);
         }
-        // Disable image selection button during loading
         if (binding.btnSelectImage != null){
             binding.btnSelectImage.setEnabled(!isLoading);
         }
@@ -214,23 +249,46 @@ public class PaymentFragment extends Fragment {
         imagePickerLauncher.launch(intent);
     }
 
-    private byte[] getBytes(InputStream inputStream) throws Exception {
-        // ... (existing code) ...
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-        int bufferSize = 1024 * 4;
-        byte[] buffer = new byte[bufferSize];
-        int len;
-        while ((len = inputStream.read(buffer)) != -1) {
-            byteBuffer.write(buffer, 0, len);
+    // --------------------------------------------------------------------
+    // ⭐️ IMAGE HELPER METHODS (uriToBitmap, getBytesFromBitmap) ⭐️
+    // --------------------------------------------------------------------
+
+    // ... (uriToBitmap and getBytesFromBitmap remain the same) ...
+    private Bitmap uriToBitmap(Uri imageUri) {
+        if (imageUri == null || getContext() == null) {
+            return null;
         }
-        return byteBuffer.toByteArray();
+
+        ContentResolver contentResolver = getContext().getContentResolver();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.Source source = ImageDecoder.createSource(contentResolver, imageUri);
+                return ImageDecoder.decodeBitmap(source);
+            } else {
+                //noinspection deprecation
+                return MediaStore.Images.Media.getBitmap(contentResolver, imageUri);
+            }
+        } catch (IOException e) {
+            Log.e("PaymentFragment", "Failed to load bitmap from URI", e);
+            return null;
+        }
     }
 
-    // Removed observeReservationStatus() - logic moved into setupObservers()
+    private byte[] getBytesFromBitmap(Bitmap bitmap, int quality) {
+        if (bitmap == null) {
+            return null;
+        }
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+        return outputStream.toByteArray();
+    }
+
+    // --------------------------------------------------------------------
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Nullify the binding
+        binding = null;
     }
 }

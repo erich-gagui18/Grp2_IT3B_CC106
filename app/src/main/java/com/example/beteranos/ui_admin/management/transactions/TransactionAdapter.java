@@ -51,7 +51,7 @@ public class TransactionAdapter extends ListAdapter<Transaction, TransactionAdap
 
         public void bind(Transaction transaction) {
             dateText.setText(DATE_FORMAT.format(transaction.getReservationTime()));
-            amountText.setText(String.format(Locale.US, "₱%.2f", transaction.getTotalAmount()));
+            amountText.setText(String.format(Locale.US, "₱%.2f", transaction.getFinalPrice()));
             customerText.setText("Customer: " + transaction.getCustomerName());
             barberText.setText("Barber: " + transaction.getBarberName());
             servicesText.setText("Services: " + transaction.getServices());
@@ -68,7 +68,7 @@ public class TransactionAdapter extends ListAdapter<Transaction, TransactionAdap
                 @Override
                 public boolean areContentsTheSame(@NonNull Transaction oldItem, @NonNull Transaction newItem) {
                     // Simple check, can be expanded if transactions are editable
-                    return oldItem.getTotalAmount() == newItem.getTotalAmount() &&
+                    return oldItem.getFinalPrice() == newItem.getFinalPrice() &&
                             oldItem.getCustomerName().equals(newItem.getCustomerName());
                 }
             };

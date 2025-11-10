@@ -60,7 +60,7 @@ public class BarbersFragment extends Fragment {
         // Assuming R.color.black is available, or use android.R.color.black
         // NOTE: Changed prefixColor to R.color.black for visibility against a standard white background,
         // but if your layout background is dark, you can keep android.R.color.white.
-        int prefixColor = getResources().getColor(android.R.color.black, null);
+        int prefixColor = getResources().getColor(android.R.color.white, null);
         int dayOffColor = getResources().getColor(android.R.color.holo_red_light, null);
         int availableColor = getResources().getColor(R.color.status_scheduled, null);
         // NOTE: We rely on your existing R.color.status_scheduled for green/available status.
@@ -122,7 +122,7 @@ public class BarbersFragment extends Fragment {
 
             } else {
                 // Scenario 2: Barber is generally available (show text in green/scheduled color)
-                dayOffText.setText("Available today");
+                dayOffText.setText("No day off");
                 dayOffText.setTextColor(availableColor);
             }
             // ------------------

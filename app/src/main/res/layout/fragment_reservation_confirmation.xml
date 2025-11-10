@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
@@ -305,7 +306,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="20dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -340,6 +342,132 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="20dp" />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Service Price:"
+                        android:textSize="16sp"
+                        android:textColor="#2C3E50" />
+                    <TextView
+                        android:id="@+id/tv_total_amount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="₱250.00"
+                        android:textSize="16sp"
+                        android:textColor="#2C3E50"
+                        android:textStyle="bold"
+                        tools:text="₱250.00"/>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/discount_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Promo Discount:"
+                        android:textSize="16sp"
+                        android:textColor="#E74C3C" />
+                    <TextView
+                        android:id="@+id/tv_discount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="-₱25.00"
+                        android:textSize="16sp"
+                        android:textColor="#E74C3C"
+                        android:textStyle="bold"
+                        tools:text="-₱25.00"/>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TOTAL FINAL PRICE"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2C3E50" />
+                    <TextView
+                        android:id="@+id/tv_final_price"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="₱225.00"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2C3E50"
+                        tools:text="₱225.00"/>
+                </RelativeLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:background="#BBDEFB"
+                    android:layout_marginVertical="10dp"/>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Down Payment Paid (50%):"
+                        android:textSize="16sp"
+                        android:textColor="#1B5E20" />
+                    <TextView
+                        android:id="@+id/tv_down_payment_paid"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="-₱112.50"
+                        android:textSize="16sp"
+                        android:textColor="#1B5E20"
+                        android:textStyle="bold"
+                        tools:text="-₱112.50"/>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="REMAINING BALANCE"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#E67E22" />
+                    <TextView
+                        android:id="@+id/tv_remaining_balance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="₱112.50"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#E67E22"
+                        tools:text="₱112.50"/>
+                </RelativeLayout>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -349,7 +477,6 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_below="@id/card_details"
-            android:layout_alignParentBottom="true"
             android:layout_marginTop="16dp"
             android:text="Done"
             android:textSize="16sp"
@@ -359,6 +486,11 @@
             android:background="@drawable/button_background"
             android:textColor="#FFFFFF"
             android:elevation="2dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_below="@id/btn_done"/>
 
     </RelativeLayout>
 </ScrollView>
