@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:padding="24dp">
 
@@ -23,33 +24,42 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:drawablePadding="8dp"
             android:textSize="16sp"
-            tools:text="Erich G."/>
+            app:drawableStartCompat="@drawable/ic_person"
+            tools:text="Customer: Erich G."/>
 
         <TextView
             android:id="@+id/tv_detail_barber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
+            android:drawablePadding="8dp"
             android:textSize="16sp"
-            tools:text="Barber: Jonel"/>
+            android:textColor="?android:attr/textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_barber_appointment"
+            tools:text="Barber: Jonel" />
 
         <TextView
             android:id="@+id/tv_detail_datetime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
+            android:drawablePadding="8dp"
             android:textSize="16sp"
+            app:drawableStartCompat="@drawable/ic_calendar"
             tools:text="Date: Nov 10, 2025 at 01:00 PM"/>
 
         <TextView
             android:id="@+id/tv_detail_services"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
+            android:drawablePadding="8dp"
             android:textSize="16sp"
-            android:textStyle="italic"
-            tools:text="Services: Haircut, Beard Trim"/>
+            android:textColor="?android:attr/textColorPrimary"
+            app:drawableStartCompat="@drawable/ic_services"
+            tools:text="Services: Shaving" />
 
         <View
             android:layout_width="match_parent"
@@ -64,6 +74,7 @@
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="18sp"/>
+
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -120,7 +131,6 @@
                 android:textStyle="bold"
                 tools:text="₱450.00"/>
         </RelativeLayout>
-
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -169,5 +179,50 @@
                 tools:text="₱225.00"/>
         </RelativeLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Payment Receipt"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="18sp"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:background="#EEEEEE">
+
+            <ImageView
+                android:id="@+id/iv_payment_receipt"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                tools:visibility="visible"
+                tools:src="@tools:sample/backgrounds/scenic" />
+
+            <ProgressBar
+                android:id="@+id/pb_image_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+            <TextView
+                android:id="@+id/tv_no_receipt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="No receipt uploaded."
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
 </ScrollView>

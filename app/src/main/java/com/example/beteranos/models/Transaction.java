@@ -1,12 +1,13 @@
 package com.example.beteranos.models;
 
 import java.sql.Timestamp;
+import java.util.Arrays; // ⭐️ ADD THIS IMPORT
 import java.util.Objects;
 import java.util.Locale;
 
 public class Transaction {
 
-    // Core Fields (Made non-final for JDBC Setters)
+    // Core Fields
     private String reservationId;
     private Timestamp reservationTime;
     private String customerName;
@@ -20,7 +21,12 @@ public class Transaction {
     private double downPaymentAmount;
 
     private String status;
-    private double remainingBalance; // Value is set by the Repository
+    private double remainingBalance;
+
+    // --- ⭐️ THIS IS THE FIX ⭐️ ---
+    // Added the field for the payment receipt
+    private byte[] paymentReceipt;
+    // --- END OF FIX ---
 
     // Required for JDBC mapping
     public Transaction() {
@@ -39,6 +45,10 @@ public class Transaction {
     public double getDiscountAmount() { return discountAmount; }
     public double getRemainingBalance() { return remainingBalance; }
 
+    // --- ⭐️ ADD GETTER FOR THE FIX ⭐️ ---
+    // Name matches your Appointment.java model for consistency
+    public byte[] getPaymentReceiptBytes() { return paymentReceipt; }
+
     // --- Setters (Used by TransactionRepository) ---
     public void setReservationId(String reservationId) { this.reservationId = reservationId; }
     public void setReservationTime(Timestamp reservationTime) { this.reservationTime = reservationTime; }
@@ -52,8 +62,15 @@ public class Transaction {
     public void setStatus(String status) { this.status = status; }
     public void setRemainingBalance(double remainingBalance) { this.remainingBalance = remainingBalance; }
 
+    // --- ⭐️ ADD SETTER FOR THE FIX ⭐️ ---
+    public void setPaymentReceiptBytes(byte[] paymentReceipt) { this.paymentReceipt = paymentReceipt; }
+
     // --- Formatted Getters (Used by Adapter and Dialog) ---
     public String getFormattedRemainingBalance() {
+        // Added safety check: if 'Completed', remaining balance is always 0
+        if ("Completed".equalsIgnoreCase(status)) {
+            return String.format(Locale.US, "₱%.2f", 0.0);
+        }
         return String.format(Locale.US, "₱%.2f", getRemainingBalance());
     }
 
@@ -61,17 +78,30 @@ public class Transaction {
         return String.format(Locale.US, "₱%.2f", finalPrice);
     }
 
-    // For DiffUtil
+    // --- ⭐️ ROBUST equals() & hashCode() for ListAdapter ⭐️ ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Transaction that = (Transaction) o;
-        return Objects.equals(reservationId, that.reservationId);
+        return Double.compare(that.totalPrice, totalPrice) == 0 &&
+                Double.compare(that.discountAmount, discountAmount) == 0 &&
+                Double.compare(that.finalPrice, finalPrice) == 0 &&
+                Double.compare(that.downPaymentAmount, downPaymentAmount) == 0 &&
+                Double.compare(that.remainingBalance, remainingBalance) == 0 &&
+                Objects.equals(reservationId, that.reservationId) &&
+                Objects.equals(reservationTime, that.reservationTime) &&
+                Objects.equals(customerName, that.customerName) &&
+                Objects.equals(barberName, that.barberName) &&
+                Objects.equals(services, that.services) &&
+                Objects.equals(status, that.status) &&
+                Arrays.equals(paymentReceipt, that.paymentReceipt); // <-- Compare bytes
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reservationId);
+        int result = Objects.hash(reservationId, reservationTime, customerName, barberName, services, totalPrice, discountAmount, finalPrice, downPaymentAmount, status, remainingBalance);
+        result = 31 * result + Arrays.hashCode(paymentReceipt); // <-- Hash bytes
+        return result;
     }
 }

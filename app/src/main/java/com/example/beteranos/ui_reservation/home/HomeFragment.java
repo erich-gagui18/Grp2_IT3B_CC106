@@ -1,7 +1,7 @@
 package com.example.beteranos.ui_reservation.home;
 
-import android.content.Context; // --- ADD THIS IMPORT ---
-import android.content.SharedPreferences; // --- ADD THIS IMPORT ---
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -50,26 +50,28 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- THIS IS THE FIX for the Parcel Crash ---
-        // Get user data from SharedPreferences
+        // --- User data and welcome message setup ---
         SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
         String firstName = userPrefs.getString("first_name", "Guest");
 
-        // Set the welcome message
         String welcomeText;
         if (isLoggedIn) {
-            // Assumes you have: <string name="welcome_message">Welcome, %s!</string>
-            // If not, just use: welcomeText = "Welcome, " + firstName + "!";
-            welcomeText = getString(R.string.welcome_message, firstName);
+            // Check if R.string.welcome_message exists and takes a String argument
+            // If it doesn't, use the fallback: "Welcome, " + firstName + "!";
+            try {
+                welcomeText = getString(R.string.welcome_message, firstName);
+            } catch (Exception e) {
+                welcomeText = "Welcome, " + firstName + "!";
+            }
         } else {
             welcomeText = "Welcome, Guest!";
         }
         binding.textHome.setText(welcomeText);
-        // --- END OF FIX ---
+        // --- End welcome message setup ---
 
 
-        // Handle back button press
+        // Handle back button press (Exits the app)
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -89,9 +91,25 @@ public class HomeFragment extends Fragment {
         if (barberContainer != null) {
             barberContainer.setOnClickListener(v -> {
                 NavController navController = Navigation.findNavController(v);
+                // Ensure R.id.action_home_to_barber_profile is in your nav graph
                 navController.navigate(R.id.action_home_to_barber_profile);
             });
         }
+
+        // ⭐ NEW: Product Navigation Functionality ⭐
+        // In HomeFragment.java
+
+        LinearLayout productContainer = view.findViewById(R.id.product_container);
+        if (productContainer != null) {
+            productContainer.setOnClickListener(v -> {
+                NavController navController = Navigation.findNavController(v);
+
+                // This line will now work correctly
+                navController.navigate(R.id.action_navigation_home_to_navigation_products);
+            });
+        }
+
+        // ⭐ END NEW ⭐
 
         // Setup notification icon click listener
         View notificationIcon = view.findViewById(R.id.iv_notifications);
@@ -125,12 +143,10 @@ public class HomeFragment extends Fragment {
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         rvNotifications.setAdapter(notificationAdapter);
 
-        // --- THIS IS THE FIX ---
-        // Get customerId from SharedPreferences, not the Activity Intent.
+        // Get customerId from SharedPreferences
         SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
         int customerId = userPrefs.getInt("customer_id", -1);
-        // --- END OF FIX ---
 
         if (isLoggedIn && customerId != -1) {
             // Observe notifications
@@ -175,8 +191,8 @@ public class HomeFragment extends Fragment {
 
         notificationPopup.showAsDropDown(
                 anchorView,
-                -250,
-                10,
+                -250, // X-offset for placement
+                10,   // Y-offset
                 Gravity.END
         );
     }

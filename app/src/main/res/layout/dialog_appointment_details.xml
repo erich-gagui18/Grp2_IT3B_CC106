@@ -39,6 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:drawablePadding="8dp"
+        android:textColor="?android:attr/textColorPrimary"
         app:drawableStartCompat="@drawable/ic_barber"
         tools:text="Barber: Jonel" />
 
@@ -48,6 +49,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:drawablePadding="8dp"
+        android:textColor="?android:attr/textColorPrimary"
         app:drawableStartCompat="@drawable/ic_services"
         tools:text="Services: Shaving" />
 

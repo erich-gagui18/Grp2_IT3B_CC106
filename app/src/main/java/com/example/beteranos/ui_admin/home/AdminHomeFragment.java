@@ -3,9 +3,10 @@ package com.example.beteranos.ui_admin.home;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap; // 🔑 NEW IMPORT
-import android.graphics.BitmapFactory; // 🔑 NEW IMPORT
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,7 @@ import android.widget.EditText; // ⭐️ ADDED IMPORT
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast; // Recommended for user feedback
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -24,10 +25,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
-// Glide Imports removed/commented out as they are no longer used for local BLOB data
-// import com.bumptech.glide.Glide;
-// import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentAdminHomeBinding;
@@ -41,7 +38,6 @@ import com.example.beteranos.utils.SharedImageCache;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-// Implement the adapter's interface
 public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapter.OnAppointmentActionListener {
 
     private FragmentAdminHomeBinding binding;
@@ -73,7 +69,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         String username = prefs.getString("ADMIN_NAME", "Admin");
         binding.textWelcome.setText(getString(R.string.welcome_message, username));
         loadDataIfNeeded();
-        setupClickListeners(view);
+        setupClickListeners(view); // <-- This method is updated
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -85,6 +81,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
     private void loadDataIfNeeded() {
         // ⭐️ CHANGED: Call the correct ViewModel method
         adminViewModel.fetchAppointmentsForDate(System.currentTimeMillis()); // Fetch for today
+        adminViewModel.fetchHomeDashboardDataIfNeeded();
     }
 
     private void setupRecyclerView() {
@@ -93,12 +90,32 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         binding.rvPendingAppointments.setAdapter(pendingAdapter);
     }
 
+    // --- THIS METHOD IS UPDATED ---
+    // --- ⭐ THIS METHOD IS UPDATED ---
     private void setupClickListeners(View view) {
         NavController navController = Navigation.findNavController(view);
+
         binding.btnActionSchedule.setOnClickListener(v ->
                 navController.navigate(R.id.admin_nav_calendar));
+
         binding.btnActionAnalytics.setOnClickListener(v ->
                 navController.navigate(R.id.admin_nav_dashboard));
+
+        // --- ⭐️ THIS IS THE FIX ⭐️ ---
+        // The listener is now attached to the CARD ID from your new XML.
+        binding.cardStatRevenue.setOnClickListener(v -> {
+            try {
+                // --- ⭐️ IMPORTANT ⭐️ ---
+                // This is the correct ACTION ID. You must create this
+                // in your admin_navigation.xml file.
+                navController.navigate(R.id.transactionReportFragment);
+            } catch (Exception e) {
+                // This catch block prevents a crash if the action ID is wrong
+                Log.e("AdminHomeFragment", "Navigation failed. Check nav graph for action 'action_admin_nav_home_to_transactionReportFragment'", e);
+                Toast.makeText(getContext(), "Error: Could not open report.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        // --- END OF FIX ---
     }
 
     private void observeViewModel() {
@@ -125,6 +142,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
 
 
     // --- ⭐️ INTERFACE METHODS ARE NOW CORRECTED ⭐️ ---
+    // --- (All your interface methods for onConfirmClicked, onCancelClicked, etc. are correct and unchanged) ---
 
     @Override
     public void onConfirmClicked(Appointment appointment) {
@@ -195,7 +213,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
     // --- (Your existing onItemClicked logic is correct) ---
     @Override
     public void onItemClicked(Appointment appointment) {
-        // This is the same logic used in AdminReservationFragment
+        // ... (this method is unchanged and correct) ...
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_appointment_details, null);
 
         TextView tvCustomer = dialogView.findViewById(R.id.tv_detail_customer);
@@ -213,15 +231,13 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         tvBarber.setText("Barber: " + appointment.getBarberName());
         tvServices.setText("Services: " + appointment.getServiceName());
 
-        final byte[] receiptBytes = appointment.getPaymentReceiptBytes(); // 🔑 Retrieve the byte array
+        final byte[] receiptBytes = appointment.getPaymentReceiptBytes();
 
         if (receiptBytes != null && receiptBytes.length > 0) {
-            // Receipt exists
-            pbImageLoading.setVisibility(View.GONE); // Local data, no network loading time
+            pbImageLoading.setVisibility(View.GONE);
             tvNoReceipt.setVisibility(View.GONE);
             ivReceipt.setVisibility(View.VISIBLE);
 
-            // Decode the byte array into a Bitmap
             try {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(receiptBytes, 0, receiptBytes.length);
                 if (bitmap != null) {
@@ -238,20 +254,16 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
             }
 
         } else {
-            // No receipt was uploaded
             pbImageLoading.setVisibility(View.GONE);
             ivReceipt.setVisibility(View.GONE);
             tvNoReceipt.setVisibility(View.VISIBLE);
             tvNoReceipt.setText("No payment receipt uploaded.");
         }
 
-        // 🔑 IMPLEMENT THE FUNCTIONAL CLICK LISTENER HERE
         ivReceipt.setOnClickListener(v -> {
             if (receiptBytes != null && receiptBytes.length > 0) {
-                // 1. Store the byte array in the temporary cache, keyed by the Reservation ID
                 SharedImageCache.putReceiptBytes(appointment.getReservationId(), receiptBytes);
 
-                // 2. Launch the FullImageActivity, passing only the small key (ID)
                 Intent intent = new Intent(getContext(), FullImageActivity.class);
                 intent.putExtra(FullImageActivity.EXTRA_RECEIPT_KEY, appointment.getReservationId());
                 startActivity(intent);
@@ -266,7 +278,6 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 .setPositiveButton("Close", null)
                 .show();
     }
-    // --- END OF FIX ---
 
     @Override
     public void onDestroyView() {

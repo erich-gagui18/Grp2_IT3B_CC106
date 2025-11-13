@@ -11,6 +11,7 @@ import com.example.beteranos.models.Transaction;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,19 +22,18 @@ public class TransactionReportViewModel extends ViewModel {
 
     private static final String TAG = "TransactionReportVM";
 
+    // ... (Your LiveData properties are correct) ...
     private final MutableLiveData<List<Transaction>> _transactions = new MutableLiveData<>();
     public LiveData<List<Transaction>> transactions = _transactions;
-
     private final MutableLiveData<String> _totalSales = new MutableLiveData<>("₱0.00");
     public LiveData<String> totalSales = _totalSales;
-
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     public LiveData<Boolean> isLoading = _isLoading;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     // ---------------------------------------------
-    // 1. DATA FETCHING METHOD (Unchanged from your last version)
+    // 1. DATA FETCHING METHOD (UPDATED)
     // ---------------------------------------------
 
     public void fetchTransactions(Long startDate, Long endDate, String status) {
@@ -43,6 +43,8 @@ public class TransactionReportViewModel extends ViewModel {
             double grandTotalSales = 0.0;
             List<Object> params = new ArrayList<>();
 
+            // --- ⭐️ THIS IS THE FIX (1 of 2) ⭐️ ---
+            // Added r.payment_receipt to the SELECT statement
             String baseQuery = "SELECT " +
                     "    r.reservation_id, " +
                     "    r.reservation_time, " +
@@ -53,7 +55,8 @@ public class TransactionReportViewModel extends ViewModel {
                     "    r.total_price, " +
                     "    r.discount_amount, " +
                     "    r.final_price, " +
-                    "    r.down_payment_amount " +
+                    "    r.down_payment_amount, " +
+                    "    r.payment_receipt " + // <-- ADDED THIS COLUMN
                     "FROM reservations r " +
                     "JOIN customers c ON r.customer_id = c.customer_id " +
                     "JOIN barbers b ON r.barber_id = b.barber_id " +
@@ -75,6 +78,7 @@ public class TransactionReportViewModel extends ViewModel {
                 whereClause += "AND r.status IN ('Completed', 'Confirmed', 'Pending') ";
             }
 
+            // Group by does NOT include the BLOB column (payment_receipt), which is correct.
             String fullQuery = baseQuery + whereClause +
                     "GROUP BY " +
                     "    r.reservation_id, customer_name, barber_name, r.reservation_time, r.status, " +
@@ -113,6 +117,11 @@ public class TransactionReportViewModel extends ViewModel {
                         tx.setStatus(txStatus);
                         tx.setFinalPrice(calculatedFinalPrice);
                         tx.setRemainingBalance(calculatedRemainingBalance);
+
+                        // --- ⭐️ THIS IS THE FIX (2 of 2) ⭐️ ---
+                        // Set the payment receipt bytes on the transaction object
+                        tx.setPaymentReceiptBytes(rs.getBytes("payment_receipt"));
+                        // --- END OF FIX ---
 
                         transactionList.add(tx);
 
@@ -172,7 +181,6 @@ public class TransactionReportViewModel extends ViewModel {
                     int rowsAffected = stmt.executeUpdate();
                     Log.d(TAG, "Transaction " + reservationId + " marked completed and paid. Rows updated: " + rowsAffected);
 
-                    // ⭐️ UPDATE: Call updated helper with finalPrice for both DP and finalPrice ⭐️
                     updateTransactionInLiveData(reservationId, "Completed", finalPrice, finalPrice);
                 }
 
@@ -189,15 +197,9 @@ public class TransactionReportViewModel extends ViewModel {
     }
 
     // ---------------------------------------------
-    // 3. ⭐️ NEW METHOD: Confirm Reservation ⭐️
+    // 3. ⭐️ NEW METHOD: Confirm Reservation ⭐️ (Unchanged)
     // ---------------------------------------------
 
-    /**
-     * Marks a reservation as "Confirmed". This is used when an admin approves
-     * a pending reservation, securing the down payment.
-     *
-     * @param reservationId The ID of the transaction to update.
-     */
     public void confirmReservation(String reservationId) {
         _isLoading.postValue(true);
         executor.execute(() -> {
@@ -210,7 +212,6 @@ public class TransactionReportViewModel extends ViewModel {
                     return;
                 }
 
-                // Update the status to 'Confirmed'
                 String updateQuery = "UPDATE reservations SET status = 'Confirmed' WHERE reservation_id = ?";
                 stmt = conn.prepareStatement(updateQuery);
                 stmt.setString(1, reservationId);
@@ -218,7 +219,6 @@ public class TransactionReportViewModel extends ViewModel {
                 int rowsAffected = stmt.executeUpdate();
                 Log.d(TAG, "Reservation " + reservationId + " confirmed. Rows updated: " + rowsAffected);
 
-                // Fetch the required data to update LiveData without full re-fetch
                 String selectDataQuery = "SELECT total_price, discount_amount, down_payment_amount FROM reservations WHERE reservation_id = ?";
                 double finalPrice = 0.0;
                 double downPayment = 0.0;
@@ -234,7 +234,6 @@ public class TransactionReportViewModel extends ViewModel {
                     }
                 }
 
-                // Update the LiveData for UI refresh. Status: 'Confirmed', DownPayment: (Existing DP)
                 updateTransactionInLiveData(reservationId, "Confirmed", downPayment, finalPrice);
 
             } catch (Exception e) {
@@ -251,13 +250,9 @@ public class TransactionReportViewModel extends ViewModel {
 
 
     // ---------------------------------------------
-    // 4. ⭐️ UPDATED HELPER: Live Data Utility ⭐️
+    // 4. ⭐️ UPDATED HELPER: Live Data Utility ⭐️ (Unchanged)
     // ---------------------------------------------
 
-    /**
-     * Helper to update the LiveData list without a full database re-fetch.
-     * Now accepts finalPrice to correctly recalculate balance.
-     */
     private void updateTransactionInLiveData(String reservationId, String newStatus, double newDownPayment, double finalPrice) {
         List<Transaction> currentList = _transactions.getValue();
         if (currentList == null) return;
@@ -271,7 +266,6 @@ public class TransactionReportViewModel extends ViewModel {
             if (oldTx.getReservationId().equals(reservationId)) {
                 Transaction updatedTx = new Transaction();
 
-                // Copy over all original fields
                 updatedTx.setReservationId(oldTx.getReservationId());
                 updatedTx.setReservationTime(oldTx.getReservationTime());
                 updatedTx.setCustomerName(oldTx.getCustomerName());
@@ -280,10 +274,14 @@ public class TransactionReportViewModel extends ViewModel {
                 updatedTx.setTotalPrice(oldTx.getTotalPrice());
                 updatedTx.setDiscountAmount(oldTx.getDiscountAmount());
 
+                // --- ⭐️ COPY THE RECEIPT DATA ⭐️ ---
+                // This ensures the receipt is not lost when updating status
+                updatedTx.setPaymentReceiptBytes(oldTx.getPaymentReceiptBytes());
+
                 // Set the updated fields
-                updatedTx.setFinalPrice(finalPrice); // Use the passed-in finalPrice
+                updatedTx.setFinalPrice(finalPrice);
                 updatedTx.setDownPaymentAmount(newDownPayment);
-                updatedTx.setRemainingBalance(finalPrice - newDownPayment); // Recalculate balance
+                updatedTx.setRemainingBalance(finalPrice - newDownPayment);
                 updatedTx.setStatus(newStatus);
 
                 updatedList.set(i, updatedTx);
@@ -299,6 +297,7 @@ public class TransactionReportViewModel extends ViewModel {
     }
 
     private void recalculateTotalSales(List<Transaction> transactions) {
+        // ... (This method is correct, no changes) ...
         double grandTotalSales = 0.0;
         for (Transaction tx : transactions) {
             String txStatus = tx.getStatus();
