@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText; // ⭐️ ADDED IMPORT
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,6 +33,8 @@ import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentAdminHomeBinding;
 import com.example.beteranos.models.Appointment;
 import com.example.beteranos.ui_admin.AdminAppointmentAdapter;
+// ⭐️ IMPORT YOUR VIEWMODEL (Assuming it's in ui_admin package)
+import com.example.beteranos.ui_admin.SharedAdminAppointmentViewModel;
 import com.example.beteranos.utils.FullImageActivity;
 import com.example.beteranos.utils.SharedImageCache;
 
@@ -42,7 +45,8 @@ import java.util.Locale;
 public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapter.OnAppointmentActionListener {
 
     private FragmentAdminHomeBinding binding;
-    private AdminHomeViewModel adminViewModel;
+    // ⭐️ CHANGED: Use the correct ViewModel
+    private SharedAdminAppointmentViewModel adminViewModel;
     private AdminAppointmentAdapter pendingAdapter;
 
     private final SimpleDateFormat dialogDateFormat = new SimpleDateFormat("MMM d, yyyy 'at' hh:mm a", Locale.US);
@@ -52,7 +56,8 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
-        adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
+        // ⭐️ CHANGED: Use the correct ViewModel
+        adminViewModel = new ViewModelProvider(this).get(SharedAdminAppointmentViewModel.class);
 
         setupRecyclerView();
         observeViewModel();
@@ -78,9 +83,8 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
     }
 
     private void loadDataIfNeeded() {
-        // The ViewModel will now check if data has already been loaded
-        // in its constructor or in this method call.
-        adminViewModel.fetchHomeDashboardDataIfNeeded();
+        // ⭐️ CHANGED: Call the correct ViewModel method
+        adminViewModel.fetchAppointmentsForDate(System.currentTimeMillis()); // Fetch for today
     }
 
     private void setupRecyclerView() {
@@ -98,15 +102,8 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
     }
 
     private void observeViewModel() {
-        adminViewModel.stats.observe(getViewLifecycleOwner(), stats -> {
-            if (stats != null) {
-                binding.tvStatBookings.setText(String.valueOf(stats.totalBookings));
-                binding.tvStatPending.setText(String.valueOf(stats.pendingCount));
-                binding.tvStatRevenue.setText(stats.getFormattedRevenue());
-            }
-        });
-
-        adminViewModel.pendingAppointments.observe(getViewLifecycleOwner(), appointments -> {
+        // ⭐️ CHANGED: Observe the 'appointments' LiveData from the correct ViewModel
+        adminViewModel.appointments.observe(getViewLifecycleOwner(), appointments -> {
             if (appointments != null && !appointments.isEmpty()) {
                 binding.rvPendingAppointments.setVisibility(View.VISIBLE);
                 binding.tvNoPending.setVisibility(View.GONE);
@@ -118,25 +115,21 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         });
 
         adminViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            // ⭐️ CHANGED: Use the correct binding IDs for your stats loading
             binding.statsLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             binding.statsContainer.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
         });
+
+        // ⭐️ REMOVED stats and pendingAppointments observers, as they are now one 'appointments' observer
     }
 
 
-    // --- Interface methods for the "Pending" list adapter (Status updates are unchanged) ---
+    // --- ⭐️ INTERFACE METHODS ARE NOW CORRECTED ⭐️ ---
 
     @Override
     public void onConfirmClicked(Appointment appointment) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Confirm Appointment")
-                .setMessage("Are you sure you want to confirm this appointment?")
-                .setPositiveButton("Yes, Confirm", (dialog, which) -> {
-                    adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Confirmed");
-                    Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("No", null)
-                .show();
+        // ⭐️ FIXED: Show the payment dialog instead of just updating status
+        showConfirmPaymentDialog(appointment);
     }
 
     @Override
@@ -145,6 +138,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 .setTitle("Cancel Appointment")
                 .setMessage("Are you sure you want to cancel this appointment?")
                 .setPositiveButton("Yes, Cancel", (dialog, which) -> {
+                    // This correctly calls the ViewModel, which triggers the notification
                     adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Cancelled");
                     Toast.makeText(getContext(), "Appointment cancelled.", Toast.LENGTH_SHORT).show();
                 })
@@ -158,6 +152,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 .setTitle("Complete Appointment")
                 .setMessage("Mark this appointment as completed?")
                 .setPositiveButton("Yes, Mark as Completed", (dialog, which) -> {
+                    // This correctly calls the ViewModel, which triggers the notification
                     adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Completed");
                     Toast.makeText(getContext(), "Appointment marked as completed.", Toast.LENGTH_SHORT).show();
                 })
@@ -165,7 +160,39 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 .show();
     }
 
-    // --- 🔑 CRITICAL FIX: BLOB/byte[] image display logic ---
+    // --- ⭐️ ADDED: Helper method to show the payment dialog ⭐️ ---
+    private void showConfirmPaymentDialog(Appointment appointment) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Confirm Appointment");
+        builder.setMessage("Enter down payment amount for " + appointment.getCustomerName());
+
+        // Use the custom layout for the EditText
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirm_payment, null);
+        final EditText input = dialogView.findViewById(R.id.et_down_payment);
+        builder.setView(dialogView);
+
+        builder.setPositiveButton("Confirm", (dialog, which) -> {
+            String amountString = input.getText().toString();
+            if (amountString.isEmpty()) {
+                Toast.makeText(getContext(), "Please enter an amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                double amount = Double.parseDouble(amountString);
+                // ⭐️ CALLS THE CORRECT VIEWMODEL METHOD (This triggers the "Confirmed" notification)
+                adminViewModel.confirmAppointmentWithDownPayment(appointment.getReservationId(), amount);
+                Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_SHORT).show();
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Invalid amount", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+
+    // --- (Your existing onItemClicked logic is correct) ---
     @Override
     public void onItemClicked(Appointment appointment) {
         // This is the same logic used in AdminReservationFragment

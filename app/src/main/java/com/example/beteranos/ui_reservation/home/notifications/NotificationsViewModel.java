@@ -1,24 +1,29 @@
 package com.example.beteranos.ui_reservation.home.notifications;
 
+import android.app.Application;
+// ⭐️ REMOVED PendingIntent and Intent imports (no longer needed here)
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+
 import com.example.beteranos.ConnectionClass;
-import com.example.beteranos.models.Notification; // We will create Notification objects
+import com.example.beteranos.MainActivity;
+import com.example.beteranos.models.Notification;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp; // Import Timestamp
-import java.text.SimpleDateFormat; // For formatting
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class NotificationsViewModel extends ViewModel {
+public class NotificationsViewModel extends AndroidViewModel {
 
     private static final String TAG = "NotificationsViewModel";
 
@@ -34,7 +39,14 @@ public class NotificationsViewModel extends ViewModel {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    // --- THIS METHOD IS NOW UPDATED WITH YOUR LOGIC ---
+    // ⭐️ REMOVED NotificationHelper instance. This file's job is just to get the list.
+
+    public NotificationsViewModel(@NonNull Application application) {
+        super(application);
+        // ⭐️ REMOVED helper initialization
+    }
+
+
     public void fetchNotifications(int customerId) {
         if (customerId == -1) {
             _notifications.postValue(new ArrayList<>()); // Post empty list for guest
@@ -50,7 +62,7 @@ public class NotificationsViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // ✅ This is the query logic you provided
+                // Your existing query
                 String query =
                         "SELECT r.reservation_id, r.reservation_time, r.status, b.name AS barber_name, " +
                                 "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names " +
@@ -59,7 +71,7 @@ public class NotificationsViewModel extends ViewModel {
                                 "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                                 "JOIN services s ON rs.service_id = s.service_id " +
                                 "WHERE r.customer_id = ? " +
-                                "GROUP BY r.reservation_id, r.reservation_time, r.status, b.name " + // Added r.reservation_id
+                                "GROUP BY r.reservation_id, r.reservation_time, r.status, b.name " +
                                 "ORDER BY r.reservation_time DESC";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -79,9 +91,11 @@ public class NotificationsViewModel extends ViewModel {
                             String body = "Your appointment for " + services + " with " + barber +
                                     " on " + sdf.format(time) + " is " + status + ".";
 
-                            // We assume 'is_read' is false, as the table doesn't exist
-                            boolean isRead = false;
+                            // ⭐️ 4. REMOVED ALL NOTIFICATION TRIGGER LOGIC FROM HERE ⭐️
+                            // This logic MUST be moved to the file that *creates* the reservation.
 
+                            // This part remains the same, populating your in-app list
+                            boolean isRead = false;
                             notificationList.add(new Notification(
                                     id,
                                     title,
@@ -100,5 +114,12 @@ public class NotificationsViewModel extends ViewModel {
                 _isLoading.postValue(false);
             }
         });
+    }
+
+    // onCleared() is part of the original ViewModel, kept here
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdown();
     }
 }

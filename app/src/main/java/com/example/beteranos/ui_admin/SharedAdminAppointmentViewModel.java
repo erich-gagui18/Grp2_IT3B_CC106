@@ -1,25 +1,53 @@
 package com.example.beteranos.ui_admin;
 
+// ⭐️ 1. ADDED IMPORTS
+import android.app.Application;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel; // ⭐️ CHANGED from ViewModel
+
 import android.util.Log;
+// import androidx.lifecycle.ViewModel; // ⭐️ REMOVED
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+
 import com.example.beteranos.ConnectionClass;
+import com.example.beteranos.MainActivity; // Or your main app entry point
 import com.example.beteranos.models.Appointment;
+
+// ⭐️ THE FIX: Changed this import path to match your existing file ⭐️
+import com.example.beteranos.ui_reservation.home.notifications.NotificationHelper;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp; // ⭐️ ADDED Import
+import java.text.SimpleDateFormat; // ⭐️ ADDED Import
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale; // ⭐️ ADDED Import
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SharedAdminAppointmentViewModel extends ViewModel {
+// ⭐️ 2. CHANGED to AndroidViewModel
+public class SharedAdminAppointmentViewModel extends AndroidViewModel {
 
     public final MutableLiveData<List<Appointment>> appointments = new MutableLiveData<>();
     public final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private long lastFetchedDateInMillis;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    // ⭐️ 3. ADDED NotificationHelper
+    private final NotificationHelper notificationHelper;
+
+    // ⭐️ 4. CHANGED Constructor for AndroidViewModel
+    public SharedAdminAppointmentViewModel(@NonNull Application application) {
+        super(application);
+        // Initialize the helper using the application context
+        this.notificationHelper = new NotificationHelper(application.getApplicationContext());
+    }
 
     // This method is correct and fetches appointments for the calendar
     public void fetchAppointmentsForDate(long dateInMillis) {
@@ -97,6 +125,9 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
                     if (updated > 0) {
                         // Refresh the list to show the status change
                         fetchAppointmentsForDate(lastFetchedDateInMillis);
+
+                        // ⭐️ 5. TRIGGER "Confirmed" NOTIFICATION ⭐️
+                        sendNotificationForStatus(reservationId, "Confirmed");
                     }
                 }
             } catch (Exception e) {
@@ -125,6 +156,11 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
                     // Instead of manually updating the list, just re-fetch.
                     // This is more reliable and ensures all data is fresh.
                     fetchAppointmentsForDate(lastFetchedDateInMillis);
+
+                    // ⭐️ 6. TRIGGER "Completed" or "Cancelled" NOTIFICATION ⭐️
+                    if (newStatus.equalsIgnoreCase("Completed") || newStatus.equalsIgnoreCase("Cancelled")) {
+                        sendNotificationForStatus(reservationId, newStatus);
+                    }
                 }
 
             } catch (Exception e) {
@@ -136,6 +172,53 @@ public class SharedAdminAppointmentViewModel extends ViewModel {
             }
         });
     }
+
+    // ⭐️ 7. ADDED Helper method to build and send the notification ⭐️
+    /**
+     * Helper method to fetch reservation details AND send the notification.
+     */
+    private void sendNotificationForStatus(int reservationId, String status) {
+        // We must fetch the reservation details to know what to put in the notification
+        // This query gets the time and services for the notification body
+        String query = "SELECT r.reservation_time, GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names " +
+                "FROM reservations r " +
+                "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
+                "JOIN services s ON rs.service_id = s.service_id " +
+                "WHERE r.reservation_id = ? " +
+                "GROUP BY r.reservation_time";
+
+        try (Connection conn = new ConnectionClass().CONN();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, reservationId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Timestamp time = rs.getTimestamp("reservation_time");
+                String services = rs.getString("service_names");
+
+                String dateStr = new SimpleDateFormat("MMM dd, yyyy", Locale.US).format(time);
+                String timeStr = new SimpleDateFormat("hh:mm a", Locale.US).format(time);
+
+                // --- Build and Send Notification ---
+                Context context = getApplication().getApplicationContext();
+                Intent intent = new Intent(context, MainActivity.class); // Opens the app
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, reservationId, intent,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+                String title = "Appointment " + status;
+                String body = "Your appointment for " + services + " on " + dateStr + " at " + timeStr + " is now " + status + "!";
+
+                // Use the helper to show the pop-up notification
+                notificationHelper.showNotification(title, body, pendingIntent);
+            }
+
+        } catch (Exception e) {
+            Log.e("SharedAdminApptVM", "Error sending " + status + " notification: " + e.getMessage());
+        }
+    }
+
 
     @Override
     protected void onCleared() {
