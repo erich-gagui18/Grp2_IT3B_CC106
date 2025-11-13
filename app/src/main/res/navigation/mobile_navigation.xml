@@ -2,22 +2,32 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_home">
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_home">
 
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.beteranos.ui_reservation.home.HomeFragment"
         android:label="@string/title_home"
-        tools:layout="@layout/fragment_home">
+        tools:layout="@layout/fragment_home" >
 
         <action
             android:id="@+id/action_home_to_barber_profile"
             app:destination="@id/navigation_barber_profile" />
         <action
-            android:id="@+id/action_navigation_home_to_navigation_gallery"
+            android:id="@+id/action_home_to_gallery"
             app:destination="@id/navigation_gallery" />
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_products"
+            app:destination="@id/navigation_products" />
+
     </fragment>
+
+    <fragment
+        android:id="@+id/navigation_products"
+        android:name="com.example.beteranos.ui_reservation.home.products.ProductFragment"
+        android:label="Products"
+        tools:layout="@layout/fragment_product" />
 
     <fragment
         android:id="@+id/navigation_barber_profile"
