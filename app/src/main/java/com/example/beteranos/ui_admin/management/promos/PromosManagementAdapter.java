@@ -1,23 +1,15 @@
 package com.example.beteranos.ui_admin.management.promos;
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.example.beteranos.R;
+import com.example.beteranos.databinding.ItemManagePromoBinding;
 import com.example.beteranos.models.Promo;
-
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Objects;
 
 public class PromosManagementAdapter extends ListAdapter<Promo, PromosManagementAdapter.PromoViewHolder> {
 
@@ -28,7 +20,7 @@ public class PromosManagementAdapter extends ListAdapter<Promo, PromosManagement
         void onDeleteClick(Promo promo);
     }
 
-    public PromosManagementAdapter(@NonNull OnPromoActionListener listener) {
+    public PromosManagementAdapter(OnPromoActionListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
     }
@@ -36,9 +28,9 @@ public class PromosManagementAdapter extends ListAdapter<Promo, PromosManagement
     @NonNull
     @Override
     public PromoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_manage_promo, parent, false);
-        return new PromoViewHolder(view);
+        ItemManagePromoBinding binding = ItemManagePromoBinding.inflate(
+                LayoutInflater.from(parent.getContext()), parent, false);
+        return new PromoViewHolder(binding);
     }
 
     @Override
@@ -48,48 +40,27 @@ public class PromosManagementAdapter extends ListAdapter<Promo, PromosManagement
     }
 
     static class PromoViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView promoImage;
-        private final TextView nameText, descText;
-        private final ImageButton editButton, deleteButton;
+        private final ItemManagePromoBinding binding;
 
-        public PromoViewHolder(@NonNull View itemView) {
-            super(itemView);
-            promoImage = itemView.findViewById(R.id.promo_image);
-            nameText = itemView.findViewById(R.id.promo_name_text);
-            descText = itemView.findViewById(R.id.promo_desc_text);
-            editButton = itemView.findViewById(R.id.btn_edit);
-            deleteButton = itemView.findViewById(R.id.btn_delete);
+        public PromoViewHolder(@NonNull ItemManagePromoBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
 
         public void bind(Promo promo, OnPromoActionListener listener) {
-            nameText.setText(promo.getPromoName());
+            binding.promoNameText.setText(promo.getPromoName());
+            binding.promoDescriptionText.setText(promo.getDescription());
+            binding.promoDiscountText.setText(promo.getDiscountPercentage() + "% OFF");
 
-            if (promo.getDescription() != null && !promo.getDescription().isEmpty()) {
-                descText.setText(promo.getDescription());
-            } else {
-                descText.setText(String.format(Locale.US, "%d%% off services", promo.getDiscountPercentage()));
-            }
+            // Load the image from byte[]
+            Glide.with(itemView.getContext())
+                    .load(promo.getImage()) // This loads the byte[]
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .error(R.drawable.ic_image_broken)
+                    .into(binding.promoImageView);
 
-            // --- ⭐️ FIX INTEGRATED: Copied logic from your PromoFragment ---
-            byte[] imageBytes = promo.getImage();
-
-            if (imageBytes != null && imageBytes.length > 0) {
-                Glide.with(itemView.getContext())
-                        .asBitmap() // <-- Force bitmap decoding
-                        .load(imageBytes)
-                        .placeholder(R.drawable.ic_image_broken)
-                        .error(R.drawable.ic_image_broken)
-                        .into(promoImage);
-            } else {
-                // <-- Handle null/empty images
-                Glide.with(itemView.getContext())
-                        .load(R.drawable.ic_image_broken)
-                        .into(promoImage);
-            }
-            // --- END OF FIX ---
-
-            editButton.setOnClickListener(v -> listener.onEditClick(promo));
-            deleteButton.setOnClickListener(v -> listener.onDeleteClick(promo));
+            binding.btnEdit.setOnClickListener(v -> listener.onEditClick(promo));
+            binding.btnDelete.setOnClickListener(v -> listener.onDeleteClick(promo));
         }
     }
 
@@ -102,11 +73,7 @@ public class PromosManagementAdapter extends ListAdapter<Promo, PromosManagement
 
                 @Override
                 public boolean areContentsTheSame(@NonNull Promo oldItem, @NonNull Promo newItem) {
-                    // --- ⭐️ FIX: Use Objects.equals for Strings to prevent NullPointerException ---
-                    return Objects.equals(oldItem.getPromoName(), newItem.getPromoName()) &&
-                            Objects.equals(oldItem.getDescription(), newItem.getDescription()) &&
-                            Arrays.equals(oldItem.getImage(), newItem.getImage()) &&
-                            oldItem.getDiscountPercentage() == newItem.getDiscountPercentage();
+                    return oldItem.equals(newItem);
                 }
             };
 }
