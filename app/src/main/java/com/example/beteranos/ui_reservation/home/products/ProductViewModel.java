@@ -1,39 +1,52 @@
 package com.example.beteranos.ui_reservation.home.products;
 
+import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
-import com.example.beteranos.R;
-// ⭐ Confirmed Import Path ⭐
+import com.example.beteranos.ConnectionClass;
 import com.example.beteranos.models.Product;
-
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ProductViewModel extends ViewModel {
 
     private final MutableLiveData<List<Product>> _products = new MutableLiveData<>();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     public LiveData<List<Product>> getProducts() {
         return _products;
     }
 
-    public ProductViewModel() {
-        loadProducts();
-    }
+    public void fetchProducts() {
+        executor.execute(() -> {
+            List<Product> list = new ArrayList<>();
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn != null) {
+                    String query = "SELECT * FROM products ORDER BY name ASC";
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(query);
 
-    private void loadProducts() {
-        // This is a dummy list—replace it with real network/database calls later!
-        List<Product> dummyProducts = new ArrayList<>();
-
-        // Product creation uses the official Product model
-        dummyProducts.add(new Product(1, "Classic Pomade", "A firm hold, classic scent.", 19.99, R.drawable.bearded_oil));
-        dummyProducts.add(new Product(2, "Beard Oil (Argan)", "Nourishes and softens the beard.", 14.50, R.drawable.hair_pomade));
-        dummyProducts.add(new Product(3, "Hair Wax Matte", "Flexible hold with a matte finish.", 17.00, R.drawable.sea_salt_spray));
-        dummyProducts.add(new Product(4, "Shampoo & Conditioner", "Two-in-one cleansing and conditioning.", 24.99, R.drawable.texturing_powder));
-        dummyProducts.add(new Product(5, "Straight Razor Kit", "For a professional, close shave.", 35.00, R.drawable.bearded_oil));
-        dummyProducts.add(new Product(6, "Styling Comb Set", "A set of three high-quality combs.", 12.99, R.drawable.hair_pomade));
-
-        _products.setValue(dummyProducts);
+                    while (rs.next()) {
+                        list.add(new Product(
+                                rs.getInt("product_id"),
+                                rs.getString("name"),
+                                rs.getString("description"),
+                                rs.getDouble("price"),
+                                rs.getInt("stock_quantity"),
+                                rs.getBytes("image") // Fetch BLOB
+                        ));
+                    }
+                    _products.postValue(list);
+                }
+            } catch (Exception e) {
+                Log.e("ProductViewModel", "Error fetching products", e);
+            }
+        });
     }
 }

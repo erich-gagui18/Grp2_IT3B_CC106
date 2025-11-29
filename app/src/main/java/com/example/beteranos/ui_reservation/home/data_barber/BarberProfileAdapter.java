@@ -1,69 +1,73 @@
-package com.example.beteranos.ui_reservation.home.data_barber;
+package com.example.beteranos.ui_reservation.home.data_barber; // ⭐️ Correct Package
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.RatingBar; // ⭐️ NEW: Import RatingBar ⭐️
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.bumptech.glide.Glide;
 import com.example.beteranos.R;
-import com.example.beteranos.ui_reservation.home.data_barber.DataModel_Barber;
+import com.example.beteranos.databinding.ItemBarberProfileBinding;
+import com.example.beteranos.models.Barber;
 
-import java.util.List;
+public class BarberProfileAdapter extends ListAdapter<Barber, BarberProfileAdapter.BarberViewHolder> {
 
-public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdapter.BarberViewHolder> {
-
-    private List<DataModel_Barber> barberList;
-
-    public BarberProfileAdapter(List<DataModel_Barber> barberList) {
-        this.barberList = barberList;
-    }
-
-    public static class BarberViewHolder extends RecyclerView.ViewHolder {
-
-        TextView barberName;
-        TextView barberDescription;
-        ImageView barberImage;
-        RatingBar barberRating; // ⭐️ NEW: Reference for the RatingBar ⭐️
-
-        public BarberViewHolder(View itemView) {
-            super(itemView);
-
-            // Link variables to the specific views using their IDs
-            barberName = itemView.findViewById(R.id.barber_name);
-            barberDescription = itemView.findViewById(R.id.barber_description);
-            barberImage = itemView.findViewById(R.id.barber_image);
-            barberRating = itemView.findViewById(R.id.barber_rating); // ⭐️ NEW: Link the RatingBar ID ⭐️
-        }
+    public BarberProfileAdapter() {
+        super(DIFF_CALLBACK);
     }
 
     @NonNull
     @Override
     public BarberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_barber_details, parent, false);
-        return new BarberViewHolder(view);
+        ItemBarberProfileBinding binding = ItemBarberProfileBinding.inflate(
+                LayoutInflater.from(parent.getContext()), parent, false);
+        return new BarberViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull BarberViewHolder holder, int position) {
-        DataModel_Barber currentBarber = barberList.get(position);
-
-        // Set the text and image using the getter methods from the DataModel
-        holder.barberName.setText(currentBarber.getName());
-        holder.barberDescription.setText(currentBarber.getDescription());
-        holder.barberImage.setImageResource(currentBarber.getImageResourceId());
-
-        // ⭐️ NEW: Set the rating using the data from the DataModel ⭐️
-        holder.barberRating.setRating(currentBarber.getRating());
-
-        // Optional: Add an item click listener here if needed
+        holder.bind(getItem(position));
     }
 
-    @Override
-    public int getItemCount() {
-        return barberList.size();
+    static class BarberViewHolder extends RecyclerView.ViewHolder {
+        private final ItemBarberProfileBinding binding;
+
+        public BarberViewHolder(@NonNull ItemBarberProfileBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
+        }
+
+        public void bind(Barber barber) {
+            binding.tvBarberName.setText(barber.getName());
+            binding.tvSpecialization.setText(barber.getSpecialization());
+
+            String dayOff = barber.getDayOff();
+            if (dayOff != null && !dayOff.isEmpty() && !dayOff.equalsIgnoreCase("No day off")) {
+                binding.tvDayOff.setText("Day Off: " + dayOff);
+                binding.tvDayOff.setVisibility(android.view.View.VISIBLE);
+            } else {
+                binding.tvDayOff.setVisibility(android.view.View.GONE);
+            }
+
+            Glide.with(itemView.getContext())
+                    .load(barber.getImageUrl())
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .error(R.drawable.ic_image_placeholder)
+                    .centerCrop()
+                    .into(binding.ivBarberImage);
+        }
     }
+
+    private static final DiffUtil.ItemCallback<Barber> DIFF_CALLBACK = new DiffUtil.ItemCallback<Barber>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Barber oldItem, @NonNull Barber newItem) {
+            return oldItem.getBarberId() == newItem.getBarberId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Barber oldItem, @NonNull Barber newItem) {
+            return oldItem.equals(newItem);
+        }
+    };
 }

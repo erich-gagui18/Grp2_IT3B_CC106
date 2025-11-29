@@ -1,40 +1,26 @@
 package com.example.beteranos.models;
 
-/**
- * Simple data class for a product.
- */
 public class Product {
-    private final int id;
-    private final String name;
-    private final String description;
-    private final double price;
-    private final int imageResource; // Resource ID for the product image
+    private int id;
+    private String name;
+    private String description;
+    private double price;
+    private int stock;
+    private byte[] imageBytes; // For the BLOB image
 
-    public Product(int id, String name, String description, double price, int imageResource) {
+    public Product(int id, String name, String description, double price, int stock, byte[] imageBytes) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
-        this.imageResource = imageResource;
+        this.stock = stock;
+        this.imageBytes = imageBytes;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public int getImageResource() {
-        return imageResource;
-    }
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public double getPrice() { return price; }
+    public int getStock() { return stock; }
+    public byte[] getImageBytes() { return imageBytes; }
 }

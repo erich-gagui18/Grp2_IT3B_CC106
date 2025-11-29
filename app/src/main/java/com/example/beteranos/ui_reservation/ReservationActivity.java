@@ -18,6 +18,7 @@ public class ReservationActivity extends AppCompatActivity {
 
     private ActivityReservationBinding binding;
     private static final String TAG = "ReservationActivity";
+    private NavController navController; // ⭐️ Keep reference to NavController
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +35,12 @@ public class ReservationActivity extends AppCompatActivity {
                 .build();
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_activity_reservation);
-        NavController navController = navHostFragment.getNavController();
 
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(binding.navView, navController);
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            NavigationUI.setupWithNavController(binding.navView, navController);
+        }
     }
 
     // 🔙 Override the Back Button behavior
@@ -51,34 +54,37 @@ public class ReservationActivity extends AppCompatActivity {
 
         if (isGuest) {
             // **PRIORITY: ALWAYS EXIT TO LOGIN IF GUEST**
-
-            // Clear guest state/all session data
             SharedPreferences.Editor editor = userPrefs.edit();
             editor.clear();
             editor.apply();
 
-            // Navigate back to the Customer Login Activity
             Intent intent = new Intent(this, CustomerLoginActivity.class);
-
-            // Clear the activity stack (closing ReservationActivity and ensuring LoginActivity is the root)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
-
-            // Close this activity immediately
             finish();
-            return; // Stop further processing
         } else {
             // **HANDLE LOGGED-IN USER NAVIGATION**
 
-            // 2. Check if the Navigation Component can handle the back press (i.e., pop a fragment)
-            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_activity_reservation);
-            if (navHostFragment != null && navHostFragment.getNavController().popBackStack()) {
-                // NavController handled the back press (popped a fragment)
-                return;
-            }
+            // ⭐️ LOGIC UPDATE: Ensure Back Button goes to Home Fragment ⭐️
+            if (navController != null) {
+                int currentDestId = navController.getCurrentDestination().getId();
 
-            // 3. Fallback for default system behavior (close activity if at root)
-            super.onBackPressed();
+                // Check if we are ALREADY at the Home Fragment
+                if (currentDestId == R.id.navigation_home) {
+                    // If at Home, exit the app (normal behavior)
+                    super.onBackPressed();
+                } else {
+                    // If on any other screen (Profile, Reviews, etc.), go back to Home
+                    boolean popped = navController.popBackStack(R.id.navigation_home, false);
+
+                    if (!popped) {
+                        // Fallback: If Home wasn't in the stack, navigate explicitly
+                        navController.navigate(R.id.navigation_home);
+                    }
+                }
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 }

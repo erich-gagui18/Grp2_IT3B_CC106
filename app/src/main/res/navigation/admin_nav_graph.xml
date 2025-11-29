@@ -32,7 +32,7 @@
     <fragment
         android:id="@+id/admin_nav_management"
         android:name="com.example.beteranos.ui_admin.management.AdminManagementFragment"
-        android:label="Content Management"
+        android:label="Admin Management"
         tools:layout="@layout/fragment_admin_management">
 
         <action
@@ -44,6 +44,14 @@
         <action
             android:id="@+id/action_admin_nav_management_to_managePromosFragment"
             app:destination="@id/managePromosFragment" />
+
+        <action
+            android:id="@+id/action_admin_nav_management_to_manageProductsFragment"
+            app:destination="@id/manageProductsFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
             android:id="@+id/action_admin_nav_management_to_transactionReportFragment"
@@ -67,6 +75,12 @@
         android:name="com.example.beteranos.ui_admin.management.promos.ManagePromosFragment"
         android:label="Manage Promos"
         tools:layout="@layout/fragment_manage_promos" />
+
+    <fragment
+        android:id="@+id/manageProductsFragment"
+        android:name="com.example.beteranos.ui_admin.management.products.ManageProductsFragment"
+        android:label="Manage Products"
+        tools:layout="@layout/fragment_manage_products" />
 
     <fragment
         android:id="@+id/transactionReportFragment"
