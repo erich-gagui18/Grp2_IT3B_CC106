@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.beteranos.R;
 import com.example.beteranos.models.Product;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -18,6 +19,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     private List<Product> productList;
 
+    // ⭐️ FIX: Added constructor to accept the list from ProductFragment
     public ProductAdapter(List<Product> productList) {
         this.productList = productList;
     }
@@ -30,7 +32,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_product_customer, parent, false);
         return new ProductViewHolder(view);
     }
 
@@ -42,18 +45,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         holder.price.setText(String.format(Locale.US, "₱%.2f", product.getPrice()));
         holder.stock.setText("Stock: " + product.getStock());
 
-        // Convert BLOB byte[] to Image
-        if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(product.getImageBytes(), 0, product.getImageBytes().length);
+        byte[] imageBytes = product.getImageBytes();
+        if (imageBytes != null && imageBytes.length > 0) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
             holder.image.setImageBitmap(bitmap);
         } else {
-            holder.image.setImageResource(R.drawable.ic_image_placeholder); // Ensure you have a placeholder
+            holder.image.setImageResource(R.drawable.ic_image_placeholder);
         }
     }
 
     @Override
     public int getItemCount() {
-        return productList.size();
+        return productList != null ? productList.size() : 0;
     }
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {

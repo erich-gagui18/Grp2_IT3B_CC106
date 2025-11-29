@@ -54,6 +54,14 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
+            android:id="@+id/action_admin_nav_management_to_galleryManagementFragment"
+            app:destination="@id/galleryManagementFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+
+        <action
             android:id="@+id/action_admin_nav_management_to_transactionReportFragment"
             app:destination="@id/transactionReportFragment" />
     </fragment>
@@ -81,6 +89,12 @@
         android:name="com.example.beteranos.ui_admin.management.products.ManageProductsFragment"
         android:label="Manage Products"
         tools:layout="@layout/fragment_manage_products" />
+
+    <fragment
+        android:id="@+id/galleryManagementFragment"
+        android:name="com.example.beteranos.ui_admin.management.gallery.GalleryManagementFragment"
+        android:label="Manage Gallery"
+        tools:layout="@layout/fragment_gallery_management" />
 
     <fragment
         android:id="@+id/transactionReportFragment"
