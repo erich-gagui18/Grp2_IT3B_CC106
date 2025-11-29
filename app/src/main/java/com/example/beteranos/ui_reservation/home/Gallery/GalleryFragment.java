@@ -4,22 +4,19 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider; // Import this
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.beteranos.R;
-import com.example.beteranos.databinding.FragmentGalleryBinding; // Assuming you set up View Binding for this fragment
-
+import com.example.beteranos.databinding.FragmentGalleryBinding;
 import java.util.ArrayList;
-import java.util.List;
 
 public class GalleryFragment extends Fragment {
 
     private FragmentGalleryBinding binding;
+    private GalleryViewModel viewModel; // Reference the ViewModel
+    private GalleryAdapter adapter;
 
     @Nullable
     @Override
@@ -27,33 +24,39 @@ public class GalleryFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        // Ensure you have a layout file named fragment_gallery.xml
         binding = FragmentGalleryBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        // Initialize ViewModel
+        viewModel = new ViewModelProvider(this).get(GalleryViewModel.class);
 
-        // 1. Get the RecyclerView
-        RecyclerView recyclerView = root.findViewById(R.id.gallery_recycler_view);
+        return binding.getRoot();
+    }
 
-        // 2. Set the layout manager (e.g., a grid of 2 columns)
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        // 3. Prepare the image data (REPLACE THESE with your actual image resources)
-        List<Integer> images = new ArrayList<>();
-        images.add(R.drawable.haircut1);
+        setupRecyclerView();
+        observeViewModel();
 
-        images.add(R.drawable.haircut2);
-        images.add(R.drawable.haircut3);
-        images.add(R.drawable.haircut4);
-        images.add(R.drawable.haircut5);
-        images.add(R.drawable.haircut6);
+        // Trigger data fetch
+        viewModel.fetchGallerys();
+    }
 
-        // Add more images as needed...
+    private void setupRecyclerView() {
+        // Initialize adapter with empty list first
+        adapter = new GalleryAdapter(new ArrayList<>());
 
-        // 4. Create and set the Adapter
-        GalleryAdapter adapter = new GalleryAdapter(images);
-        recyclerView.setAdapter(adapter);
+        binding.galleryRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        binding.galleryRecyclerView.setAdapter(adapter);
+    }
 
-        return root;
+    private void observeViewModel() {
+        // Watch for data changes from the database
+        viewModel.images.observe(getViewLifecycleOwner(), images -> {
+            if (images != null) {
+                adapter.updateData(images);
+            }
+        });
     }
 
     @Override

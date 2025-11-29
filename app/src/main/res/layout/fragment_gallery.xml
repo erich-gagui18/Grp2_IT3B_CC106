@@ -16,6 +16,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/item_gallery_photo" />
+        tools:listitem="@layout/item_gallery_image_customer" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
