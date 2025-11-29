@@ -40,6 +40,9 @@ public class SharedReservationViewModel extends ViewModel {
 
     // --- Selections ---
     public final MutableLiveData<String> serviceLocation = new MutableLiveData<>("Barbershop");
+
+    public final MutableLiveData<String> homeServiceAddress = new MutableLiveData<>();
+
     public final MutableLiveData<List<Service>> allServices = new MutableLiveData<>();
     // ⭐️ ADDED: Observe selectedServices for price calculation ⭐️
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
@@ -454,6 +457,9 @@ public class SharedReservationViewModel extends ViewModel {
         String chosenLocation = serviceLocation.getValue();
         String chosenHaircut = haircutChoice.getValue();
 
+        // ⭐️ NEW: Get Address ⭐️
+        String rawAddress = homeServiceAddress.getValue();
+
         // ⭐️ RETRIEVE PRICE VALUES ⭐️
         Double total = totalPrice.getValue();
         Double discount = promoDiscount.getValue();
@@ -461,10 +467,18 @@ public class SharedReservationViewModel extends ViewModel {
         Double downPayment = downPaymentAmount.getValue();
 
         // --- Basic validation (now includes price validation) ---
-        if (emailAddr == null || services == null || services.isEmpty() || barber == null || date == null || time == null || receiptImageBytes == null || chosenLocation == null || total == null || finalAmo == null || downPayment == null) {
+        if (emailAddr == null || services == null || services.isEmpty() || barber == null ||
+                date == null || time == null || receiptImageBytes == null ||
+                chosenLocation == null || total == null || finalAmo == null || downPayment == null) {
             reservationStatus.postValue(false);
             Log.e("ViewModel", "Validation failed: Missing essential reservation data for save (including price/receipt).");
             return;
+        }
+
+        // ⭐️ LOGIC: Ensure address is only saved if Home Service is selected ⭐️
+        String finalHomeAddress = null;
+        if ("Home Service".equals(chosenLocation) && rawAddress != null && !rawAddress.trim().isEmpty()) {
+            finalHomeAddress = rawAddress.trim();
         }
 
         // Use primitive double values for cleaner SQL insertion
@@ -472,7 +486,7 @@ public class SharedReservationViewModel extends ViewModel {
         final double finalDiscount = (discount != null ? discount : 0.0);
         final double finalFinalAmo = finalAmo;
         final double finalDownPayment = downPayment;
-
+        final String addressToSave = finalHomeAddress; // Must be final for lambda
 
         executor.execute(() -> {
             String claimCode = null;
@@ -492,7 +506,7 @@ public class SharedReservationViewModel extends ViewModel {
 
                 // --- Step 1: Determine finalCustomerId ---
                 if (finalCustomerId == -1) {
-                    // Find guest ID using email (logic remains the same)
+                    // Find guest ID using email
                     Log.d("ViewModel", "customerIdFromSession is -1, finding guest ID via email: " + emailAddr);
                     String findIdQuery = "SELECT customer_id FROM customers WHERE email = ?";
                     try (PreparedStatement findStmt = conn.prepareStatement(findIdQuery)) {
@@ -503,14 +517,13 @@ public class SharedReservationViewModel extends ViewModel {
                                 Log.d("ViewModel", "Found guest customer ID: " + finalCustomerId);
                             } else {
                                 Log.e("ViewModel", "SAVE FAILED: Cannot find customer ID for email: " + emailAddr);
-                                throw new SQLException("Customer record not found for email."); // Throw to trigger rollback
+                                throw new SQLException("Customer record not found for email.");
                             }
                         }
                     }
                 }
 
                 // --- Step 2: Check if guest needs a claim code ---
-                // (Logic remains the same - check if password is null/empty for finalCustomerId)
                 String checkPassQuery = "SELECT password FROM customers WHERE customer_id = ?";
                 try (PreparedStatement checkStmt = conn.prepareStatement(checkPassQuery)) {
                     checkStmt.setInt(1, finalCustomerId);
@@ -530,14 +543,19 @@ public class SharedReservationViewModel extends ViewModel {
                     Log.d("ViewModel", "Generating claim code (" + claimCode + ") for guest ID: " + finalCustomerId);
                 }
 
-                // --- Step 3: Parse Date/Time (Re-adding this for context) ---
+                // --- Step 3: Parse Date/Time ---
                 Timestamp reservationTimestamp =
                         new Timestamp(new SimpleDateFormat("M/d/yyyy hh:mm a", Locale.US).parse(date + " " + time).getTime());
 
 
                 // --- Step 4: Insert ONE row into reservations table (NOW INCLUDES PRICE FIELDS) ---
-                // ⭐️ UPDATED QUERY: Added total_price, discount_amount, final_price, down_payment_amount ⭐️
-                String reservationQuery = "INSERT INTO reservations (customer_id, barber_id, promo_id, reservation_time, status, payment_receipt, claim_code, haircut_choice, service_location, total_price, discount_amount, final_price, down_payment_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                // ⭐️ UPDATED QUERY: Added home_address (Index 10) ⭐️
+                String reservationQuery = "INSERT INTO reservations (" +
+                        "customer_id, barber_id, promo_id, reservation_time, status, " +
+                        "payment_receipt, claim_code, haircut_choice, service_location, " +
+                        "home_address, " + // <-- Added this
+                        "total_price, discount_amount, final_price, down_payment_amount" +
+                        ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"; // <-- Added one more ? (Total 14)
 
                 try (PreparedStatement stmt = conn.prepareStatement(reservationQuery, Statement.RETURN_GENERATED_KEYS)) {
                     // Set Customer/Barber/Time/Status (Indices 1-5)
@@ -553,15 +571,20 @@ public class SharedReservationViewModel extends ViewModel {
                     if (chosenHaircut != null && !chosenHaircut.isEmpty()) stmt.setString(8, chosenHaircut); else stmt.setNull(8, Types.VARCHAR);
                     stmt.setString(9, chosenLocation);
 
-                    // ⭐️ SET PRICE VALUES (Indices 10-13) ⭐️
-                    stmt.setDouble(10, finalTotal);
-                    stmt.setDouble(11, finalDiscount);
-                    stmt.setDouble(12, finalFinalAmo);
-                    stmt.setDouble(13, finalDownPayment); // This is the amount the user paid
+                    // ⭐️ Index 10: Home Address ⭐️
+                    if (addressToSave != null) {
+                        stmt.setString(10, addressToSave);
+                    } else {
+                        stmt.setNull(10, Types.VARCHAR);
+                    }
+
+                    // ⭐️ Indices 11-14: Financials (Shifted by 1 due to address) ⭐️
+                    stmt.setDouble(11, finalTotal);
+                    stmt.setDouble(12, finalDiscount);
+                    stmt.setDouble(13, finalFinalAmo);
+                    stmt.setDouble(14, finalDownPayment);
 
                     int affectedRows = stmt.executeUpdate();
-
-                    // ... (Get generatedKeys and newReservationId) ...
 
                     if (affectedRows == 0) {
                         throw new SQLException("Creating reservation failed, no rows affected.");
@@ -589,18 +612,11 @@ public class SharedReservationViewModel extends ViewModel {
                         }
                         int[] serviceRowsAffected = serviceStmt.executeBatch(); // Execute batch insert for services
                         Log.d("ViewModel", "Inserted " + serviceRowsAffected.length + " rows into reservation_services for reservation ID: " + newReservationId);
-                        // Optional: Check if serviceRowsAffected.length matches services.size()
-                        if (serviceRowsAffected.length != services.size()) {
-                            Log.w("ViewModel", "Warning: Service link insert count mismatch. Expected=" + services.size() + ", Actual=" + serviceRowsAffected.length);
-                            // Consider if this requires a rollback depending on your business logic
-                        }
                     }
                 } else {
-                    // Handle case where services list might be empty or newReservationId is invalid
                     if (newReservationId == -1) {
                         throw new SQLException("Cannot link services, main reservation ID is invalid.");
                     }
-                    // If services is empty, maybe log a warning but don't necessarily fail
                     Log.w("ViewModel", "No services selected to link for reservation ID: " + newReservationId);
                 }
 
@@ -610,7 +626,6 @@ public class SharedReservationViewModel extends ViewModel {
                 Log.d("ViewModel", "Reservation transaction committed successfully.");
 
             } catch (Exception e) {
-                // ... (Error handling and rollback remain the same) ...
                 Log.e("ViewModel", "Error during saveReservation transaction: " + e.getMessage(), e);
                 if (conn != null) {
                     try {
@@ -623,7 +638,6 @@ public class SharedReservationViewModel extends ViewModel {
                 reservationSuccess = false;
 
             } finally {
-                // ... (Close connection remains the same) ...
                 if (conn != null) {
                     try {
                         conn.setAutoCommit(true);
@@ -649,28 +663,36 @@ public class SharedReservationViewModel extends ViewModel {
         lastName.setValue(null);
         phone.setValue(null);
         email.setValue(null);
-        serviceLocation.setValue("Barbershop"); // Reset default
+        serviceLocation.setValue("Barbershop"); // Reset default value
+        homeServiceAddress.setValue(null);
+
         selectedServices.setValue(new ArrayList<>());
         selectedBarber.setValue(null);
         selectedPromo.setValue(null);
         selectedDate.setValue(null);
         selectedTime.setValue(null);
+
+        // Reset Prices
         totalPrice.setValue(0.0);
         promoDiscount.setValue(0.0);
         finalPrice.setValue(0.0);
-        downPaymentAmount.setValue(null);
+        downPaymentAmount.setValue(0.0); // Better to reset to 0.0 than null
+
         paymentReceiptImage.setValue(null);
         haircutChoice.setValue(null);
+
         // Reset Status/Dynamic Data
-        availableTimeSlots.setValue(null); // Clear slots
+        availableTimeSlots.setValue(null);
         reservationStatus.setValue(null);
         isGuestCodeValid.setValue(null);
         newClaimCode.setValue(null);
+
         // Reset password flow signals
         promptSetPassword.setValue(null);
         passwordUpdateStatus.setValue(null);
         customerCheckError.setValue(null);
         navigateToServicesSignal.setValue(null);
+
         Log.d("ViewModel", "Reservation details cleared.");
     }
 

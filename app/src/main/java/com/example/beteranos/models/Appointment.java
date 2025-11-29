@@ -13,38 +13,43 @@ public class Appointment implements Parcelable {
     private final String barberName;
     private final Timestamp reservationTime;
     private final String status;
-
-    // --- 🔑 CORE CHANGE: Using byte[] for BLOB data instead of String URL ---
     private final byte[] paymentReceiptBytes;
 
-    // --- 1. Full Constructor (Used when fetching from the database) ---
+    // --- ⭐️ NEW FIELDS FOR LOCATION ⭐️ ---
+    private final String serviceLocation;
+    private final String homeAddress;
+
+    // --- 1. Full Constructor (Updated) ---
     public Appointment(int reservationId, String customerName, String serviceName,
                        String barberName, Timestamp reservationTime, String status,
-                       byte[] paymentReceiptBytes) { // <-- Updated argument type
+                       byte[] paymentReceiptBytes,
+                       String serviceLocation, String homeAddress) { // <-- Added arguments
         this.reservationId = reservationId;
         this.customerName = customerName;
         this.serviceName = serviceName;
         this.barberName = barberName;
         this.reservationTime = reservationTime;
         this.status = status;
-        this.paymentReceiptBytes = paymentReceiptBytes; // Store the byte array
+        this.paymentReceiptBytes = paymentReceiptBytes;
+
+        // --- ⭐️ Initialize New Fields ⭐️ ---
+        this.serviceLocation = serviceLocation;
+        this.homeAddress = homeAddress;
     }
 
-    // --- 2. Parcel Constructor (Used by Android to read the object) ---
+    // --- 2. Parcel Constructor (Updated) ---
     protected Appointment(Parcel in) {
         reservationId = in.readInt();
         customerName = in.readString();
         serviceName = in.readString();
         barberName = in.readString();
 
-        // Read the timestamp (long). Check for 0L if it was written as null/0.
         long timeMillis = in.readLong();
         reservationTime = timeMillis == 0L ? null : new Timestamp(timeMillis);
 
         status = in.readString();
 
-        // --- 🔑 Parcelable Update for byte[] ---
-        // Reads the size of the byte array, then the array itself.
+        // Read byte array
         int bytesSize = in.readInt();
         if (bytesSize > 0) {
             paymentReceiptBytes = new byte[bytesSize];
@@ -52,9 +57,13 @@ public class Appointment implements Parcelable {
         } else {
             paymentReceiptBytes = null;
         }
+
+        // --- ⭐️ Read New Fields (Order matters!) ⭐️ ---
+        serviceLocation = in.readString();
+        homeAddress = in.readString();
     }
 
-    // --- 3. writeToParcel (Used by Android to write the object) ---
+    // --- 3. writeToParcel (Updated) ---
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(reservationId);
@@ -62,22 +71,24 @@ public class Appointment implements Parcelable {
         dest.writeString(serviceName);
         dest.writeString(barberName);
 
-        // Write Timestamp as long. Use 0L if it's null.
         dest.writeLong(reservationTime != null ? reservationTime.getTime() : 0L);
 
         dest.writeString(status);
 
-        // --- 🔑 Parcelable Update for byte[] ---
-        // Write the size first, then the array. 0 size indicates null.
+        // Write byte array
         if (paymentReceiptBytes != null) {
             dest.writeInt(paymentReceiptBytes.length);
             dest.writeByteArray(paymentReceiptBytes);
         } else {
             dest.writeInt(0);
         }
+
+        // --- ⭐️ Write New Fields ⭐️ ---
+        dest.writeString(serviceLocation);
+        dest.writeString(homeAddress);
     }
 
-    // --- 4. CREATOR (Required static field for Parcelable) ---
+    // --- 4. CREATOR (Unchanged) ---
     public static final Parcelable.Creator<Appointment> CREATOR = new Parcelable.Creator<Appointment>() {
         @Override
         public Appointment createFromParcel(Parcel in) {
@@ -102,11 +113,13 @@ public class Appointment implements Parcelable {
     public String getBarberName() { return barberName; }
     public Timestamp getReservationTime() { return reservationTime; }
     public String getStatus() { return status; }
-
-    // --- 🔑 New Getter for byte[] ---
     public byte[] getPaymentReceiptBytes() { return paymentReceiptBytes; }
 
-    // --- Utility Methods (for completeness) ---
+    // --- ⭐️ NEW GETTERS ⭐️ ---
+    public String getServiceLocation() { return serviceLocation; }
+    public String getHomeAddress() { return homeAddress; }
+
+    // --- Utility Methods ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="?android:attr/textColorPrimary"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         tools:text="Erich G." />
 
@@ -24,12 +24,20 @@
         android:textSize="16sp"
         tools:text="Status: Pending" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="#E0E0E0"/>
+
     <TextView
         android:id="@+id/tv_detail_datetime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:drawablePadding="8dp"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp"
         app:drawableStartCompat="@drawable/ic_calendar"
         tools:text="Nov 7, 2025 at 12:00 PM" />
 
@@ -37,8 +45,10 @@
         android:id="@+id/tv_detail_barber"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:drawablePadding="8dp"
+        android:layout_marginTop="12dp"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp"
         android:textColor="?android:attr/textColorPrimary"
         app:drawableStartCompat="@drawable/ic_barber"
         tools:text="Barber: Jonel" />
@@ -47,17 +57,66 @@
         android:id="@+id/tv_detail_services"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:drawablePadding="8dp"
+        android:layout_marginTop="12dp"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp"
         android:textColor="?android:attr/textColorPrimary"
         app:drawableStartCompat="@drawable/ic_services"
         tools:text="Services: Shaving" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_location_on"
+            app:tint="?android:attr/textColorSecondary"
+            android:contentDescription="Location" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/tv_detail_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="?android:attr/textColorPrimary"
+                tools:text="Home Service" />
+
+            <TextView
+                android:id="@+id/tv_detail_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:lineSpacingExtra="2dp"
+                android:visibility="gone"
+                tools:visibility="visible"
+                tools:text="123 Street Name, City, Batangas" />
+        </LinearLayout>
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="#E0E0E0"/>
 
     <TextView
         android:id="@+id/tv_receipt_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Payment Receipt:"
+        android:text="Payment Receipt"
         android:textStyle="bold"
         android:layout_marginTop="16dp" />
 
@@ -72,7 +131,7 @@
     <ImageView
         android:id="@+id/iv_payment_receipt"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
+        android:layout_height="200dp"
         android:layout_marginTop="8dp"
         android:background="#EEEEEE"
         android:contentDescription="Payment Receipt"

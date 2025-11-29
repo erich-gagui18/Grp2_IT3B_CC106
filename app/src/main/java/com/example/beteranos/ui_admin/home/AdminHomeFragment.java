@@ -37,34 +37,29 @@ import java.util.Locale;
 
 public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapter.OnAppointmentActionListener {
 
+    // ... (Variables and onCreateView/onViewCreated remain exactly the same) ...
     private FragmentAdminHomeBinding binding;
     private AdminHomeViewModel adminViewModel;
     private AdminAppointmentAdapter pendingAdapter;
-
     private final SimpleDateFormat dialogDateFormat = new SimpleDateFormat("MMM d, yyyy 'at' hh:mm a", Locale.US);
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentAdminHomeBinding.inflate(inflater, container, false);
         adminViewModel = new ViewModelProvider(this).get(AdminHomeViewModel.class);
-
         setupRecyclerView();
         observeViewModel();
-
         return binding.getRoot();
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         SharedPreferences prefs = requireActivity().getSharedPreferences("admin_prefs", Context.MODE_PRIVATE);
         String username = prefs.getString("ADMIN_NAME", "Admin");
         binding.textWelcome.setText(getString(R.string.welcome_message, username));
         loadDataIfNeeded();
-        setupClickListeners(view); // <-- This method is updated
+        setupClickListeners(view);
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -83,32 +78,18 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
         binding.rvPendingAppointments.setAdapter(pendingAdapter);
     }
 
-    // --- THIS METHOD IS UPDATED ---
-    // --- ⭐ THIS METHOD IS UPDATED ---
     private void setupClickListeners(View view) {
         NavController navController = Navigation.findNavController(view);
-
-        binding.btnActionSchedule.setOnClickListener(v ->
-                navController.navigate(R.id.admin_nav_calendar));
-
-        binding.btnActionAnalytics.setOnClickListener(v ->
-                navController.navigate(R.id.admin_nav_dashboard));
-
-        // --- ⭐️ THIS IS THE FIX ⭐️ ---
-        // The listener is now attached to the CARD ID from your new XML.
+        binding.btnActionSchedule.setOnClickListener(v -> navController.navigate(R.id.admin_nav_calendar));
+        binding.btnActionAnalytics.setOnClickListener(v -> navController.navigate(R.id.admin_nav_dashboard));
         binding.cardStatRevenue.setOnClickListener(v -> {
             try {
-                // --- ⭐️ IMPORTANT ⭐️ ---
-                // This is the correct ACTION ID. You must create this
-                // in your admin_navigation.xml file.
                 navController.navigate(R.id.transactionReportFragment);
             } catch (Exception e) {
-                // This catch block prevents a crash if the action ID is wrong
-                Log.e("AdminHomeFragment", "Navigation failed. Check nav graph for action 'action_admin_nav_home_to_transactionReportFragment'", e);
+                Log.e("AdminHomeFragment", "Navigation failed.", e);
                 Toast.makeText(getContext(), "Error: Could not open report.", Toast.LENGTH_SHORT).show();
             }
         });
-        // --- END OF FIX ---
     }
 
     private void observeViewModel() {
@@ -119,7 +100,6 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 binding.tvStatRevenue.setText(stats.getFormattedRevenue());
             }
         });
-
         adminViewModel.pendingAppointments.observe(getViewLifecycleOwner(), appointments -> {
             if (appointments != null && !appointments.isEmpty()) {
                 binding.rvPendingAppointments.setVisibility(View.VISIBLE);
@@ -130,16 +110,13 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                 binding.tvNoPending.setVisibility(View.VISIBLE);
             }
         });
-
         adminViewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             binding.statsLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             binding.statsContainer.setVisibility(isLoading ? View.INVISIBLE : View.VISIBLE);
         });
     }
 
-
-    // --- (All your interface methods for onConfirmClicked, onCancelClicked, etc. are correct and unchanged) ---
-
+    // ... (onConfirm, onCancel, onMarkAsCompleted remain the same) ...
     @Override
     public void onConfirmClicked(Appointment appointment) {
         new AlertDialog.Builder(requireContext())
@@ -149,8 +126,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                     adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Confirmed");
                     Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("No", null)
-                .show();
+                .setNegativeButton("No", null).show();
     }
 
     @Override
@@ -162,8 +138,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                     adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Cancelled");
                     Toast.makeText(getContext(), "Appointment cancelled.", Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("No", null)
-                .show();
+                .setNegativeButton("No", null).show();
     }
 
     @Override
@@ -175,30 +150,62 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                     adminViewModel.updateAppointmentStatus(appointment.getReservationId(), "Completed");
                     Toast.makeText(getContext(), "Appointment marked as completed.", Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("No", null)
-                .show();
+                .setNegativeButton("No", null).show();
     }
 
+    // --- ⭐️ UPDATED: onItemClicked ⭐️ ---
     @Override
     public void onItemClicked(Appointment appointment) {
-        // ... (this method is unchanged and correct) ...
+        // 1. Inflate the custom dialog layout
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_appointment_details, null);
 
+        // 2. Find all views (Standard info)
         TextView tvCustomer = dialogView.findViewById(R.id.tv_detail_customer);
         TextView tvStatus = dialogView.findViewById(R.id.tv_detail_status);
         TextView tvDateTime = dialogView.findViewById(R.id.tv_detail_datetime);
         TextView tvBarber = dialogView.findViewById(R.id.tv_detail_barber);
         TextView tvServices = dialogView.findViewById(R.id.tv_detail_services);
+
+        // 3. Find views for Receipt
         ImageView ivReceipt = dialogView.findViewById(R.id.iv_payment_receipt);
         ProgressBar pbImageLoading = dialogView.findViewById(R.id.pb_image_loading);
         TextView tvNoReceipt = dialogView.findViewById(R.id.tv_no_receipt);
 
+        // 4. Find views for Location & Address (New)
+        TextView tvLocation = dialogView.findViewById(R.id.tv_detail_location);
+        TextView tvAddress = dialogView.findViewById(R.id.tv_detail_address);
+
+        // 5. Set Standard Data
         tvCustomer.setText(appointment.getCustomerName());
         tvStatus.setText("Status: " + appointment.getStatus());
-        tvDateTime.setText(appointment.getReservationTime() != null ? dialogDateFormat.format(appointment.getReservationTime()) : "N/A");
+        tvDateTime.setText(appointment.getReservationTime() != null ?
+                dialogDateFormat.format(appointment.getReservationTime()) : "N/A");
         tvBarber.setText("Barber: " + appointment.getBarberName());
         tvServices.setText("Services: " + appointment.getServiceName());
 
+        // --- ⭐️ LOCATION LOGIC START ⭐️ ---
+        String location = appointment.getServiceLocation();
+        if (location == null || location.isEmpty()) location = "Barbershop"; // Default
+
+        // Set the bold location title (e.g., "Home Service")
+        tvLocation.setText(location);
+
+        // Show/Hide address based on location type
+        if ("Home Service".equalsIgnoreCase(location)) {
+            String addr = appointment.getHomeAddress();
+            if (addr != null && !addr.isEmpty()) {
+                tvAddress.setText(addr);
+            } else {
+                tvAddress.setText("No address provided");
+            }
+            tvAddress.setVisibility(View.VISIBLE);
+        } else {
+            // Hide address for Barbershop appointments
+            tvAddress.setVisibility(View.GONE);
+        }
+        // --- ⭐️ LOCATION LOGIC END ⭐️ ---
+
+        // 6. Handle Receipt Image (BLOB)
         final byte[] receiptBytes = appointment.getPaymentReceiptBytes();
 
         if (receiptBytes != null && receiptBytes.length > 0) {
@@ -212,15 +219,14 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
                     ivReceipt.setImageBitmap(bitmap);
                 } else {
                     ivReceipt.setVisibility(View.GONE);
-                    tvNoReceipt.setText("Failed to decode receipt image from data.");
+                    tvNoReceipt.setText("Failed to decode receipt image.");
                     tvNoReceipt.setVisibility(View.VISIBLE);
                 }
             } catch (Exception e) {
                 ivReceipt.setVisibility(View.GONE);
-                tvNoReceipt.setText("Error loading receipt data.");
+                tvNoReceipt.setText("Error loading receipt.");
                 tvNoReceipt.setVisibility(View.VISIBLE);
             }
-
         } else {
             pbImageLoading.setVisibility(View.GONE);
             ivReceipt.setVisibility(View.GONE);
@@ -228,10 +234,10 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
             tvNoReceipt.setText("No payment receipt uploaded.");
         }
 
+        // 7. Click Listener for Full Image
         ivReceipt.setOnClickListener(v -> {
             if (receiptBytes != null && receiptBytes.length > 0) {
                 SharedImageCache.putReceiptBytes(appointment.getReservationId(), receiptBytes);
-
                 Intent intent = new Intent(getContext(), FullImageActivity.class);
                 intent.putExtra(FullImageActivity.EXTRA_RECEIPT_KEY, appointment.getReservationId());
                 startActivity(intent);
@@ -240,6 +246,7 @@ public class AdminHomeFragment extends Fragment implements AdminAppointmentAdapt
             }
         });
 
+        // 8. Show Dialog
         new AlertDialog.Builder(requireContext())
                 .setTitle("Booking Details")
                 .setView(dialogView)

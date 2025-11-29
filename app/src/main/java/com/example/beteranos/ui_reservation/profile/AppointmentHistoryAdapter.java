@@ -49,6 +49,7 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
         private final TextView statusText;
         private final TextView barberText;
         private final TextView serviceText;
+        private final TextView locationText; // ⭐️ NEW Field
 
         public AppointmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -57,56 +58,78 @@ public class AppointmentHistoryAdapter extends RecyclerView.Adapter<AppointmentH
             statusText = itemView.findViewById(R.id.tv_appointment_status);
             barberText = itemView.findViewById(R.id.tv_barber_name);
             serviceText = itemView.findViewById(R.id.tv_service_name);
+            locationText = itemView.findViewById(R.id.tv_appointment_location); // ⭐️ Find ID
         }
 
         public void bind(Appointment appointment) {
-            // 1. Set Date and Time (Split for vertical display)
+            // 1. Set Date and Time
             SimpleDateFormat sdfDate = new SimpleDateFormat("MMMM dd, yyyy", Locale.US);
-            dateText.setText(sdfDate.format(appointment.getReservationTime()));
-            SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.US);
-            timeText.setText(sdfTime.format(appointment.getReservationTime()));
+            // Check for null time to prevent crashes
+            if (appointment.getReservationTime() != null) {
+                dateText.setText(sdfDate.format(appointment.getReservationTime()));
+                SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.US);
+                timeText.setText(sdfTime.format(appointment.getReservationTime()));
+            } else {
+                dateText.setText("N/A");
+                timeText.setText("");
+            }
 
             // 2. Set Details
             barberText.setText("Barber: " + appointment.getBarberName());
             serviceText.setText("Service: " + appointment.getServiceName());
 
-            // ⭐️ IMPORTANT: Use the status string exactly as it comes from the model.
-            statusText.setText(appointment.getStatus());
+            // --- ⭐️ NEW: Location Logic ⭐️ ---
+            String location = appointment.getServiceLocation();
+            if (location == null || location.isEmpty()) location = "Barbershop"; // Default
 
-            // 3. Dynamic Status Styling (Background Badge and Text Color)
+            if ("Home Service".equalsIgnoreCase(location)) {
+                String address = appointment.getHomeAddress();
+                if (address != null && !address.trim().isEmpty()) {
+                    // Display the specific address
+                    locationText.setText("Home: " + address);
+                } else {
+                    // Fallback if address is missing
+                    locationText.setText("Location: Home Service");
+                }
+            } else {
+                // Display simple "Barbershop"
+                locationText.setText("Location: Barbershop");
+            }
+            // --- ⭐️ END Location Logic ⭐️ ---
+
+
+            // 3. Dynamic Status Styling
+            statusText.setText(appointment.getStatus());
             int backgroundDrawableResId;
             int textColorResId;
 
-            // Default to Scheduled style (Light Green background / Black text)
+            // Default to Scheduled style
             backgroundDrawableResId = R.drawable.rounded_status_scheduled;
             textColorResId = R.color.black;
 
-            // Use lowercase status for reliable comparison in the switch statement
-            switch (appointment.getStatus().toLowerCase()) {
-                case "pending":
-                    // ⭐️ PENDING: Yellow Background / Black Text ⭐️
-                    backgroundDrawableResId = R.drawable.rounded_status_pending;
-                    textColorResId = R.color.black;
-                    break;
-                case "cancelled":
-                    backgroundDrawableResId = R.drawable.rounded_status_cancelled;
-                    textColorResId = R.color.white; // White text on Red background
-                    break;
-                case "completed":
-                    backgroundDrawableResId = R.drawable.rounded_status_completed;
-                    textColorResId = R.color.white; // White text on Blue/Gray background
-                    break;
-                case "scheduled":
-                case "confirmed":
-                    // Uses the defaults (Green background / Black text)
-                    break;
-                default:
-                    backgroundDrawableResId = R.drawable.rounded_status_scheduled; // Fallback
-                    textColorResId = R.color.black;
-                    break;
+            String status = appointment.getStatus();
+            if (status != null) {
+                switch (status.toLowerCase()) {
+                    case "pending":
+                        backgroundDrawableResId = R.drawable.rounded_status_pending;
+                        textColorResId = R.color.black;
+                        break;
+                    case "cancelled":
+                        backgroundDrawableResId = R.drawable.rounded_status_cancelled;
+                        textColorResId = R.color.white;
+                        break;
+                    case "completed":
+                        backgroundDrawableResId = R.drawable.rounded_status_completed;
+                        textColorResId = R.color.white;
+                        break;
+                    case "scheduled":
+                    case "confirmed":
+                        backgroundDrawableResId = R.drawable.rounded_status_scheduled;
+                        textColorResId = R.color.black;
+                        break;
+                }
             }
 
-            // Apply the chosen background and text color
             statusText.setBackgroundResource(backgroundDrawableResId);
             statusText.setTextColor(ContextCompat.getColor(itemView.getContext(), textColorResId));
         }

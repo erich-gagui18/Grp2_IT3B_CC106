@@ -1,6 +1,8 @@
 package com.example.beteranos.ui_reservation.reservation.child_fragments;
 
 import android.os.Bundle;
+import android.text.Editable; // Import
+import android.text.TextWatcher; // Import
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +21,7 @@ import com.example.beteranos.models.Service;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment;
 
-import java.util.Arrays; // Import Arrays
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,15 +34,12 @@ public class ServicesFragment extends Fragment {
     private ArrayAdapter<String> haircutAdapter;
     private static final String HAIRCUT_SERVICE_NAME = "Haircut";
 
-    // Define location options
     private static final String LOCATION_BARBERSHOP = "Barbershop";
     private static final String LOCATION_HOME_SERVICE = "Home Service";
     private final List<String> LOCATION_OPTIONS = Arrays.asList(LOCATION_BARBERSHOP, LOCATION_HOME_SERVICE);
 
-    // Keep track of the location item views to manage checkmarks
     private View barbershopLocationView = null;
     private View homeServiceLocationView = null;
-
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,12 +52,11 @@ public class ServicesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        populateLocationSelector(); // Populate location choices first
+        populateLocationSelector();
         setupHaircutDropdown();
+        setupAddressInputListener(); // ⭐️ NEW: Setup listener for address text
 
-        // --- FIX: Use a single, combined observer for UI refreshes ---
-        // This observer will re-draw the list if EITHER the list of services OR
-        // the list of *selected* services changes.
+        // UI Refresh Observer
         sharedViewModel.allServices.observe(getViewLifecycleOwner(), services -> {
             if (services != null && !services.isEmpty()) {
                 redrawServicesList();
@@ -68,30 +66,56 @@ public class ServicesFragment extends Fragment {
         sharedViewModel.selectedServices.observe(getViewLifecycleOwner(), selected -> {
             redrawServicesList();
         });
-        // --- END FIX ---
 
-        // Observe location changes if needed for dynamic pricing, etc.
+        // Location Observer
         sharedViewModel.serviceLocation.observe(getViewLifecycleOwner(), location -> {
             Log.d("ServicesFragment", "Observed location change: " + location);
-            // Re-populate services if prices depend on location
-            redrawServicesList(); // Re-render services to potentially show different prices
-            // Update the checkmarks for location selector
+            redrawServicesList();
             updateLocationCheckmarks(location);
+
+            // ⭐️ NEW: Show/Hide Address Field based on location ⭐️
+            if (LOCATION_HOME_SERVICE.equals(location)) {
+                binding.addressInputLayout.setVisibility(View.VISIBLE);
+                // Pre-fill if value exists in ViewModel
+                if (sharedViewModel.homeServiceAddress.getValue() != null) {
+                    binding.addressEditText.setText(sharedViewModel.homeServiceAddress.getValue());
+                }
+            } else {
+                binding.addressInputLayout.setVisibility(View.GONE);
+                // Optional: Clear address in ViewModel if switching back to Barbershop?
+                // sharedViewModel.homeServiceAddress.setValue(null);
+            }
         });
 
-
         binding.btnNext.setOnClickListener(v -> {
-            // Check if a location is selected (it defaults, but good practice)
-            if (sharedViewModel.serviceLocation.getValue() == null || sharedViewModel.serviceLocation.getValue().isEmpty()) {
+            String location = sharedViewModel.serviceLocation.getValue();
+
+            // 1. Validate Location Selection
+            if (location == null || location.isEmpty()) {
                 Toast.makeText(getContext(), "Please select a service location", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // ⭐️ NEW: Validate Address if Home Service is selected ⭐️
+            if (LOCATION_HOME_SERVICE.equals(location)) {
+                String address = binding.addressEditText.getText().toString().trim();
+                if (address.isEmpty()) {
+                    binding.addressInputLayout.setError("Address is required for Home Service");
+                    return; // Stop navigation
+                } else {
+                    binding.addressInputLayout.setError(null); // Clear error
+                    sharedViewModel.homeServiceAddress.setValue(address); // Save to ViewModel
+                }
+            }
+
+            // 2. Validate Services Selection
             List<Service> selected = sharedViewModel.selectedServices.getValue();
             if (selected == null || selected.isEmpty()) {
                 Toast.makeText(getContext(), "Please select at least one service", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            // 3. Validate Haircut Selection
             if (isHaircutSelected(selected) && (sharedViewModel.haircutChoice.getValue() == null || sharedViewModel.haircutChoice.getValue().isEmpty())) {
                 Toast.makeText(getContext(), "Please select a haircut style", Toast.LENGTH_SHORT).show();
                 return;
@@ -101,42 +125,53 @@ public class ServicesFragment extends Fragment {
         });
     }
 
-    // --- NEW: Populate Location Selector Items ---
+    // ⭐️ NEW: Listen for text changes to save address in real-time (optional but good)
+    private void setupAddressInputListener() {
+        binding.addressEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Clear error when user types
+                binding.addressInputLayout.setError(null);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                sharedViewModel.homeServiceAddress.setValue(s.toString());
+            }
+        });
+    }
+
     private void populateLocationSelector() {
-        if (binding == null) return; // Ensure binding is valid
-        binding.locationSelectorContainer.removeAllViews(); // Clear previous
-        barbershopLocationView = null; // Reset view references
+        if (binding == null) return;
+        binding.locationSelectorContainer.removeAllViews();
+        barbershopLocationView = null;
         homeServiceLocationView = null;
         LayoutInflater inflater = LayoutInflater.from(getContext());
         String currentSelection = sharedViewModel.serviceLocation.getValue();
 
         for (String locationName : LOCATION_OPTIONS) {
-            // Inflate using the same item layout as services
             View locationView = inflater.inflate(R.layout.item_selectable_service, binding.locationSelectorContainer, false);
             TextView nameText = locationView.findViewById(R.id.service_name_text);
             ImageView checkMark = locationView.findViewById(R.id.check_mark_icon);
 
             nameText.setText(locationName);
-            // Optional: Adjust style slightly
             nameText.setPadding(30, 30, 30, 30);
             nameText.setTextSize(16f);
 
-            // Show checkmark based on ViewModel state
             checkMark.setVisibility(locationName.equals(currentSelection) ? View.VISIBLE : View.GONE);
 
-            // Store references
             if (LOCATION_BARBERSHOP.equals(locationName)) {
                 barbershopLocationView = locationView;
             } else {
                 homeServiceLocationView = locationView;
             }
 
-            // Set click listener to update ViewModel and UI
             locationView.setOnClickListener(v -> {
-                // Update ViewModel only if selection changes
                 if (!locationName.equals(sharedViewModel.serviceLocation.getValue())) {
                     sharedViewModel.serviceLocation.setValue(locationName);
-                    // The observer will handle updating checkmarks now
                 }
             });
 
@@ -144,7 +179,6 @@ public class ServicesFragment extends Fragment {
         }
     }
 
-    // --- UPDATED: Helper to update checkmarks (called by observer) ---
     private void updateLocationCheckmarks(String selectedLocation) {
         if (barbershopLocationView != null) {
             ImageView check = barbershopLocationView.findViewById(R.id.check_mark_icon);
@@ -180,76 +214,59 @@ public class ServicesFragment extends Fragment {
         }
     }
 
-    // --- RENAMED from populateServicesList to redrawServicesList ---
     private void redrawServicesList() {
-        // Get the most up-to-date data from the ViewModel
         List<Service> services = sharedViewModel.allServices.getValue();
         List<Service> currentlySelectedList = sharedViewModel.selectedServices.getValue();
         String currentServiceLocation = sharedViewModel.serviceLocation.getValue();
 
-        if (binding == null || services == null || getContext() == null) return; // Check binding and services list
+        if (binding == null || services == null || getContext() == null) return;
 
         binding.servicesContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
         removeHaircutDropdownFromParent();
-        binding.haircutChoiceLayout.setVisibility(View.GONE); // Hide by default
+        binding.haircutChoiceLayout.setVisibility(View.GONE);
 
         for (Service service : services) {
             View serviceView = inflater.inflate(R.layout.item_selectable_service, binding.servicesContainer, false);
             TextView nameText = serviceView.findViewById(R.id.service_name_text);
             ImageView checkMark = serviceView.findViewById(R.id.check_mark_icon);
 
-            // --- Example: Adjust price display based on location ---
             double displayPrice = service.getPrice();
-            // Define your home service fee logic (e.g., a fixed amount or fetch from DB)
-            double homeServiceFee = 50.0; // Example fee
+            double homeServiceFee = 50.0;
             if (LOCATION_HOME_SERVICE.equals(currentServiceLocation)) {
                 displayPrice += homeServiceFee;
             }
 
-            // --- FIX: Use getServiceName() ---
             nameText.setText(String.format(Locale.getDefault(), "%s - ₱%.2f", service.getServiceName(), displayPrice));
-            // --- End of price adjustment ---
 
-            // --- FIX: Use getServiceId() ---
             boolean isSelected = currentlySelectedList != null &&
                     currentlySelectedList.stream().anyMatch(s -> s.getServiceId() == service.getServiceId());
             checkMark.setVisibility(isSelected ? View.VISIBLE : View.GONE);
 
             binding.servicesContainer.addView(serviceView);
 
-            // --- FIX: Use getServiceName() ---
             if (isHaircutService(service)) {
-                // This service is a haircut, add the dropdown layout *after* it
-                removeHaircutDropdownFromParent(); // Ensure it's not elsewhere
+                removeHaircutDropdownFromParent();
                 binding.servicesContainer.addView(binding.haircutChoiceLayout);
-                // Only show dropdown if the haircut is selected
                 binding.haircutChoiceLayout.setVisibility(isSelected ? View.VISIBLE : View.GONE);
             }
 
             serviceView.setOnClickListener(v -> {
-                // We don't need to check visibility. Just check the ViewModel state.
                 boolean wasSelected = currentlySelectedList != null &&
                         currentlySelectedList.stream().anyMatch(s -> s.getServiceId() == service.getServiceId());
 
                 if (wasSelected) {
                     sharedViewModel.removeService(service);
                     if (isHaircutService(service)) {
-                        // Clear haircut choice when haircut is deselected
                         sharedViewModel.haircutChoice.setValue(null);
-                        if (binding != null) { // Check binding
+                        if (binding != null) {
                             binding.haircutChoiceDropdown.setText("", false);
                         }
-                        Log.d("ServicesFragment", "Haircut deselected, choice cleared.");
                     }
                 } else {
                     sharedViewModel.addService(service);
-                    if (isHaircutService(service)) {
-                        Log.d("ServicesFragment", "Haircut selected, dropdown shown.");
-                    }
                 }
-                // The observers in onViewCreated will catch this change and call redrawServicesList()
             });
         }
     }
@@ -268,7 +285,6 @@ public class ServicesFragment extends Fragment {
     }
 
     private boolean isHaircutService(@Nullable Service service) {
-        // --- FIX: Use getServiceName() ---
         return service != null && HAIRCUT_SERVICE_NAME.equalsIgnoreCase(service.getServiceName());
     }
 
@@ -281,8 +297,8 @@ public class ServicesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Nullify binding
-        barbershopLocationView = null; // Clear view references
+        binding = null;
+        barbershopLocationView = null;
         homeServiceLocationView = null;
     }
 }

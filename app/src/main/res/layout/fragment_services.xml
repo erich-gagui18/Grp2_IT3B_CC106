@@ -33,6 +33,7 @@
         android:layout_below="@id/location_label"
         android:orientation="vertical"
         android:layout_marginBottom="16dp"/>
+
     <ScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
@@ -46,6 +47,22 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/address_input_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Enter your Home Address"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/address_edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPostalAddress|textMultiLine"
+                    android:maxLines="3" />
+            </com.google.android.material.textfield.TextInputLayout>
             <LinearLayout
                 android:id="@+id/services_container"
                 android:layout_width="match_parent"
@@ -66,7 +83,7 @@
         android:layout_marginHorizontal="4dp"
         android:hint="Select Haircut Style"
         android:visibility="gone"
-        tools:visibility="visible">
+        tools:visibility="gone">
         <AutoCompleteTextView
             android:id="@+id/haircut_choice_dropdown"
             android:layout_width="match_parent"

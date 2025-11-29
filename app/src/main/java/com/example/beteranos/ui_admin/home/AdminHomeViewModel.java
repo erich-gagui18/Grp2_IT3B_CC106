@@ -87,7 +87,9 @@ public class AdminHomeViewModel extends ViewModel {
     }
 
     /**
-     * Fetches appointments with 'Pending' status, now including the payment receipt BLOB data.
+     * Fetches appointments with 'Pending' status.
+     * UPDATED: Sorts by reservation_id ASC to ensure strict FIFO (First-In, First-Out)
+     * based on when the booking was actually made.
      */
     private void fetchPendingAppointments() {
         executor.execute(() -> {
@@ -98,15 +100,21 @@ public class AdminHomeViewModel extends ViewModel {
                     "GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names, " +
                     "b.name AS barber_name, " +
                     "r.reservation_time, r.status, " +
-                    "r.payment_receipt " + // Select the BLOB column
+                    "r.payment_receipt, " +
+                    "r.service_location, " +
+                    "r.home_address " +
                     "FROM reservations r " +
                     "JOIN customers c ON r.customer_id = c.customer_id " +
                     "JOIN barbers b ON r.barber_id = b.barber_id " +
                     "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                     "JOIN services s ON rs.service_id = s.service_id " +
                     "WHERE r.status = 'Pending' " +
-                    "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status " +
-                    "ORDER BY r.reservation_time ASC";
+                    "GROUP BY r.reservation_id, customer_name, barber_name, r.reservation_time, r.status, r.service_location, r.home_address " +
+
+                    // ⭐️ THIS IS THE CHANGE FOR FIFO ⭐️
+                    // Order by reservation_id ASC ensures the requests that came in first (lower IDs)
+                    // appear at the top of the list.
+                    "ORDER BY r.reservation_id ASC";
 
             try (Connection conn = new ConnectionClass().CONN();
                  PreparedStatement stmt = conn.prepareStatement(query);
@@ -120,14 +128,15 @@ public class AdminHomeViewModel extends ViewModel {
                             rs.getString("barber_name"),
                             rs.getTimestamp("reservation_time"),
                             rs.getString("status"),
-                            rs.getBytes("payment_receipt")
+                            rs.getBytes("payment_receipt"),
+                            rs.getString("service_location"),
+                            rs.getString("home_address")
                     ));
                 }
                 _pendingAppointments.postValue(pending);
             } catch (Exception e) {
                 Log.e(TAG, "Error fetching pending appointments: " + e.getMessage(), e);
             } finally {
-                // Ensure loading state is turned off after all data is fetched or attempted.
                 _isLoading.postValue(false);
             }
         });

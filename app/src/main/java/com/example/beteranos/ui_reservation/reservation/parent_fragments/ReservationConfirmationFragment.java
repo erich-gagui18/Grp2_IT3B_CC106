@@ -52,11 +52,10 @@ public class ReservationConfirmationFragment extends Fragment {
     }
 
     private void populateDetails() {
-        // --- CUSTOMER DETAILS (Ensuring we use the correct `phoneNumber` LiveData if available) ---
+        // --- CUSTOMER DETAILS ---
         String firstName = sharedViewModel.firstName.getValue();
         String middleName = sharedViewModel.middleName.getValue();
         String lastName = sharedViewModel.lastName.getValue();
-        // Assuming your ViewModel uses 'phoneNumber' now based on previous discussions.
         String phone = sharedViewModel.phone.getValue();
 
         String fullName = (firstName != null ? firstName : "") +
@@ -65,7 +64,33 @@ public class ReservationConfirmationFragment extends Fragment {
         binding.tvCustomerName.setText(fullName.trim());
         binding.tvCustomerPhone.setText(phone != null ? phone : "");
 
-        // --- SCHEDULE & BARBER (Omitted for brevity, assumed correct) ---
+        // --- ⭐️ NEW: LOCATION & ADDRESS LOGIC ⭐️ ---
+        String location = sharedViewModel.serviceLocation.getValue();
+        String homeAddress = sharedViewModel.homeServiceAddress.getValue();
+
+        // Update the Location Text (Default to Barbershop if null)
+        if (binding.tvServiceLocation != null) {
+            binding.tvServiceLocation.setText(location != null ? location : "Barbershop");
+        }
+
+        // Logic to Show/Hide Address
+        // Only show if location is "Home Service" AND address is not empty
+        if ("Home Service".equals(location) && homeAddress != null && !homeAddress.isEmpty()) {
+            if (binding.tvAddress != null) {
+                binding.tvAddress.setText(homeAddress);
+                binding.tvAddress.setVisibility(View.VISIBLE);
+            }
+            if (binding.labelAddress != null) {
+                binding.labelAddress.setVisibility(View.VISIBLE);
+            }
+        } else {
+            // Hide if Barbershop or address is empty
+            if (binding.tvAddress != null) binding.tvAddress.setVisibility(View.GONE);
+            if (binding.labelAddress != null) binding.labelAddress.setVisibility(View.GONE);
+        }
+        // --- END LOCATION LOGIC ---
+
+        // --- SCHEDULE & BARBER ---
         String date = sharedViewModel.selectedDate.getValue();
         String time = sharedViewModel.selectedTime.getValue();
         if (date != null && time != null) {
@@ -76,7 +101,7 @@ public class ReservationConfirmationFragment extends Fragment {
             binding.tvBarberName.setText(sharedViewModel.selectedBarber.getValue().getName());
         }
 
-        // --- SERVICES LIST (Omitted for brevity, assumed correct) ---
+        // --- SERVICES LIST ---
         List<Service> services = sharedViewModel.selectedServices.getValue();
         if (services != null && !services.isEmpty()) {
             StringBuilder servicesText = new StringBuilder();
@@ -89,7 +114,7 @@ public class ReservationConfirmationFragment extends Fragment {
             binding.tvServicesList.setText(servicesText.toString().trim());
         }
 
-        // --- PROMO (Omitted for brevity, assumed correct) ---
+        // --- PROMO ---
         Promo selectedPromo = sharedViewModel.selectedPromo.getValue();
         if (selectedPromo != null) {
             binding.tvPromoName.setText(String.format(Locale.US, "%s (%d%% Off)", selectedPromo.getPromoName(), selectedPromo.getDiscountPercentage()));
@@ -105,7 +130,6 @@ public class ReservationConfirmationFragment extends Fragment {
         Double total = sharedViewModel.totalPrice.getValue();
         Double discount = sharedViewModel.promoDiscount.getValue();
         Double finalAmo = sharedViewModel.finalPrice.getValue();
-        // ⭐️ GET DOWN PAYMENT ⭐️
         Double downPayment = sharedViewModel.downPaymentAmount.getValue();
 
         double totalAmount = total != null ? total : 0.0;
@@ -122,10 +146,8 @@ public class ReservationConfirmationFragment extends Fragment {
             binding.tvDiscount.setText(String.format(Locale.US, "-₱%.2f", discountAmount));
             binding.tvFinalPrice.setText(String.format(Locale.US, "₱%.2f", finalAmount));
 
-            // ⭐️ NEW Payment Details ⭐️
-            // Display down payment as a negative value (money subtracted/paid)
+            // Payment Details
             binding.tvDownPaymentPaid.setText(String.format(Locale.US, "-₱%.2f", downPaymentAmount));
-            // Display remaining balance
             binding.tvRemainingBalance.setText(String.format(Locale.US, "₱%.2f", remainingBalance));
 
             // Check for discountLayout and set visibility

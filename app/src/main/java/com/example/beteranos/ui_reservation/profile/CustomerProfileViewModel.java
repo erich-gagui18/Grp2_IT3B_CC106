@@ -61,17 +61,21 @@ public class CustomerProfileViewModel extends ViewModel {
             List<Appointment> history = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
 
-                // --- 🔑 CRITICAL FIX: Use MAX() on the BLOB column ---
+                // --- ⭐️ FIX: Use MAX() on the BLOB column and REMOVE it from GROUP BY ⭐️ ---
                 String query =
-                        "SELECT r.reservation_time, r.status, b.name AS barber_name, " +
-                                "       MAX(r.payment_receipt) AS payment_receipt, " + // This must match the actual BLOB column name
+                        "SELECT r.reservation_id, r.reservation_time, r.status, " +
+                                "       MAX(r.payment_receipt) as payment_receipt, " + // <-- Aggregate the BLOB
+                                "       r.service_location, r.home_address, " +
+                                "       b.name AS barber_name, " +
                                 "       GROUP_CONCAT(s.service_name SEPARATOR ', ') AS service_names " +
                                 "FROM reservations r " +
                                 "JOIN barbers b ON r.barber_id = b.barber_id " +
                                 "JOIN reservation_services rs ON r.reservation_id = rs.reservation_id " +
                                 "JOIN services s ON rs.service_id = s.service_id " +
                                 "WHERE r.customer_id = ? " +
-                                "GROUP BY r.reservation_time, r.status, b.name " +
+                                // ⭐️ CRITICAL: Do NOT include r.payment_receipt here
+                                "GROUP BY r.reservation_id, r.reservation_time, r.status, " +
+                                "         r.service_location, r.home_address, b.name " +
                                 "ORDER BY r.reservation_time DESC";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -79,14 +83,15 @@ public class CustomerProfileViewModel extends ViewModel {
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             history.add(new Appointment(
-                                    0, // reservation_id not needed for display
-                                    null, // no customer name needed
-                                    rs.getString("service_names"), // now concatenated list
+                                    rs.getInt("reservation_id"),
+                                    null,
+                                    rs.getString("service_names"),
                                     rs.getString("barber_name"),
                                     rs.getTimestamp("reservation_time"),
                                     rs.getString("status"),
-                                    // Retrieve using the alias defined in the SELECT:
-                                    rs.getBytes("payment_receipt")
+                                    rs.getBytes("payment_receipt"), // This gets the aggregated BLOB
+                                    rs.getString("service_location"),
+                                    rs.getString("home_address")
                             ));
                         }
                         appointmentHistory.postValue(history);
