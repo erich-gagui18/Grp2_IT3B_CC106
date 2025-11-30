@@ -13,24 +13,23 @@
     <string name="title_reviews">Reviews</string>
     <string name="title_profile">Profile</string>
     <string name="title_customer_login">Customer Login</string>
-
     <string name="title_gallery">Gallery</string>
-    <!-- TODO: Remove or change this placeholder text -->
+
+    <string name="title_products">Products</string>
+    <string name="title_barber_profiles">Our Barbers</string>
+
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="welcome_message">Welcome Back %1$s!</string>
     <string name="reservations_for_date">Reservations for %1$s</string>
     <string name="no_date_selected">No date selected</string>
 
+    <string name="title_admin_home">Home</string>
+    <string name="title_admin_reservation">Reservation</string>
+    <string name="title_admin_management">Management</string>
+    <string name="title_admin_dashboard">Dashboard</string>
+    <string name="title_admin_profile">Profile</string>
 
-        <!-- 🏠 Admin Navigation Titles -->
-        <string name="title_admin_home">Home</string>
-        <string name="title_admin_reservation">Reservation</string>
-        <string name="title_admin_management">Management</string>
-        <string name="title_admin_dashboard">Dashboard</string>
-        <string name="title_admin_profile">Profile</string>
-
-    <!-- AdminReservationFragment labels -->
     <string name="reservations_for">Reservations for %1$s</string>
     <string name="service_label">Service: %1$s</string>
     <string name="barber_label">Barber: %1$s</string>

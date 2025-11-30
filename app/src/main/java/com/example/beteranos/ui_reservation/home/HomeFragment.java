@@ -7,10 +7,11 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,10 +21,9 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.beteranos.R;
 import com.example.beteranos.databinding.FragmentHomeBinding;
-
-// --- Correct import paths ---
 import com.example.beteranos.ui_reservation.home.notifications.NotificationAdapter;
 import com.example.beteranos.ui_reservation.home.notifications.NotificationsViewModel;
 
@@ -36,29 +36,23 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-
         binding = FragmentHomeBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
-
         // Initialize NotificationsViewModel
         notificationsViewModel = new ViewModelProvider(this).get(NotificationsViewModel.class);
-
-        return root;
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- User data and welcome message setup ---
+        // --- 1. User data and welcome message setup ---
         SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
         String firstName = userPrefs.getString("first_name", "Guest");
 
         String welcomeText;
         if (isLoggedIn) {
-            // Check if R.string.welcome_message exists and takes a String argument
-            // If it doesn't, use the fallback: "Welcome, " + firstName + "!";
             try {
                 welcomeText = getString(R.string.welcome_message, firstName);
             } catch (Exception e) {
@@ -68,10 +62,8 @@ public class HomeFragment extends Fragment {
             welcomeText = "Welcome, Guest!";
         }
         binding.textHome.setText(welcomeText);
-        // --- End welcome message setup ---
 
-
-        // Handle back button press (Exits the app)
+        // --- 2. Handle back button press (Exits the app from Home) ---
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -80,41 +72,50 @@ public class HomeFragment extends Fragment {
         };
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
 
-        // Gallery navigation
-        binding.galleryContainer.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.navigation_gallery);
+        // ⭐️ NEW: Search Bar Toast ⭐️
+        // Ensure binding.etSearch matches the ID you added in XML
+        binding.etSearch.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Coming Soon!", Toast.LENGTH_SHORT).show();
         });
 
-        // Barber Profile navigation
-        LinearLayout barberContainer = view.findViewById(R.id.barber_container);
-        if (barberContainer != null) {
-            barberContainer.setOnClickListener(v -> {
-                NavController navController = Navigation.findNavController(v);
-                // Ensure R.id.action_home_to_barber_profile is in your nav graph
-                navController.navigate(R.id.action_home_to_barber_profile);
+        // --- 3. Navigation Logic (Using ViewBinding) ---
+
+        // A. Gallery Navigation
+        if (binding.galleryContainer != null) {
+            binding.galleryContainer.setOnClickListener(v -> {
+                try {
+                    Navigation.findNavController(v).navigate(R.id.action_home_to_gallery);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Navigation Error: Gallery", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 
-        // ⭐ NEW: Product Navigation Functionality ⭐
-        // In HomeFragment.java
-
-        LinearLayout productContainer = view.findViewById(R.id.product_container);
-        if (productContainer != null) {
-            productContainer.setOnClickListener(v -> {
-                NavController navController = Navigation.findNavController(v);
-
-                // This line will now work correctly
-                navController.navigate(R.id.action_navigation_home_to_navigation_products);
+        // B. Barber Profile Navigation
+        if (binding.barberContainer != null) {
+            binding.barberContainer.setOnClickListener(v -> {
+                try {
+                    Navigation.findNavController(v).navigate(R.id.action_home_to_barber_profile);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Navigation Error: Barbers", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 
-        // ⭐ END NEW ⭐
+        // C. Product Navigation
+        if (binding.productContainer != null) {
+            binding.productContainer.setOnClickListener(v -> {
+                try {
+                    Navigation.findNavController(v).navigate(R.id.action_navigation_home_to_navigation_products);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Navigation Error: Products", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
-        // Setup notification icon click listener
-        View notificationIcon = view.findViewById(R.id.iv_notifications);
-        if (notificationIcon != null) {
-            notificationIcon.setOnClickListener(v -> showNotificationDropdown(v));
+        // --- 4. Notification Setup ---
+        if (binding.ivNotifications != null) {
+            binding.ivNotifications.setOnClickListener(v -> showNotificationDropdown(v));
         }
     }
 
@@ -124,8 +125,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        View popupView = LayoutInflater.from(getContext())
-                .inflate(R.layout.notification_dropdown, null);
+        View popupView = LayoutInflater.from(getContext()).inflate(R.layout.notification_dropdown, null);
 
         notificationPopup = new PopupWindow(
                 popupView,
@@ -143,13 +143,11 @@ public class HomeFragment extends Fragment {
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         rvNotifications.setAdapter(notificationAdapter);
 
-        // Get customerId from SharedPreferences
         SharedPreferences userPrefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         boolean isLoggedIn = userPrefs.getBoolean("isLoggedIn", false);
         int customerId = userPrefs.getInt("customer_id", -1);
 
         if (isLoggedIn && customerId != -1) {
-            // Observe notifications
             notificationsViewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
                 if (notificationPopup != null && notificationPopup.isShowing()) {
                     progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -170,10 +168,8 @@ public class HomeFragment extends Fragment {
                 }
             });
 
-            // Fetch notifications
             notificationsViewModel.fetchNotifications(customerId);
         } else {
-            // Guest user
             tvEmpty.setText("Please login to view notifications");
             tvEmpty.setVisibility(View.VISIBLE);
             rvNotifications.setVisibility(View.GONE);
@@ -189,12 +185,7 @@ public class HomeFragment extends Fragment {
         notificationPopup.setOutsideTouchable(true);
         notificationPopup.setFocusable(true);
 
-        notificationPopup.showAsDropDown(
-                anchorView,
-                -250, // X-offset for placement
-                10,   // Y-offset
-                Gravity.END
-        );
+        notificationPopup.showAsDropDown(anchorView, -250, 10, Gravity.END);
     }
 
     @Override

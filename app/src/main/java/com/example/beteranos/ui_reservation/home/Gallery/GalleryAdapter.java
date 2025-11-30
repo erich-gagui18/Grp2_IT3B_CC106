@@ -15,10 +15,15 @@ import java.util.List;
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
 
     private List<Gallery> imageList;
+    private final OnItemClickListener listener;
 
-    // Constructor accepts list of Gallery (Database Model)
-    public GalleryAdapter(List<Gallery> imageList) {
+    public interface OnItemClickListener {
+        void onItemClick(Gallery item);
+    }
+
+    public GalleryAdapter(List<Gallery> imageList, OnItemClickListener listener) {
         this.imageList = imageList;
+        this.listener = listener;
     }
 
     public void updateData(List<Gallery> newImages) {
@@ -29,7 +34,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // ⭐️ FIX: Inflate the specific customer layout we just created
+        // ⭐️ Use the polished square layout
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_gallery_image_customer, parent, false);
         return new ViewHolder(view);
@@ -43,11 +48,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if (data != null && data.length > 0) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             holder.imageView.setImageBitmap(bmp);
+            holder.imageView.setOnClickListener(v -> listener.onItemClick(image));
         } else {
             holder.imageView.setImageResource(R.drawable.ic_image_placeholder);
+            holder.imageView.setOnClickListener(null);
         }
-
-        // No need to hide delete button anymore, because it doesn't exist in the XML!
     }
 
     @Override
@@ -57,12 +62,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        // View deleteBtn; // Optional if you are reusing the admin layout
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.iv_gallery_image);
-            // deleteBtn = itemView.findViewById(R.id.btn_delete_image);
         }
     }
 }

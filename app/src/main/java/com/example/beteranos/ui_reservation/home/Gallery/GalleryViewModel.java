@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.example.beteranos.ConnectionClass;
-import com.example.beteranos.models.Gallery; // Reuse the model we created for Admin
+import com.example.beteranos.models.Gallery;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,9 +19,14 @@ public class GalleryViewModel extends ViewModel {
     private final MutableLiveData<List<Gallery>> _images = new MutableLiveData<>();
     public LiveData<List<Gallery>> images = _images;
 
+    // ⭐️ Added missing isLoading variable
+    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
+    public LiveData<Boolean> isLoading = _isLoading;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public void fetchGallerys() {
+        _isLoading.postValue(true); // Start loading
         executor.execute(() -> {
             List<Gallery> list = new ArrayList<>();
             String query = "SELECT image_id, image_data FROM gallery ORDER BY created_at DESC";
@@ -40,6 +45,8 @@ public class GalleryViewModel extends ViewModel {
 
             } catch (Exception e) {
                 Log.e("GalleryViewModel", "Error fetching images: " + e.getMessage());
+            } finally {
+                _isLoading.postValue(false); // Stop loading
             }
         });
     }

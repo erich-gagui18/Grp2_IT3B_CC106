@@ -141,7 +141,7 @@
                         android:background="@drawable/rounded_circle_bg"
                         android:contentDescription="Gallery"
                         android:padding="12dp"
-                        android:src="@drawable/ic_photo" />
+                        android:src="@drawable/ic_menu_gallery" />
 
                         <TextView
                             android:layout_width="wrap_content"

@@ -10,7 +10,6 @@
         android:name="com.example.beteranos.ui_reservation.home.HomeFragment"
         android:label="@string/title_home"
         tools:layout="@layout/fragment_home" >
-
         <action
             android:id="@+id/action_home_to_barber_profile"
             app:destination="@id/navigation_barber_profile" />
@@ -20,26 +19,27 @@
         <action
             android:id="@+id/action_navigation_home_to_navigation_products"
             app:destination="@id/navigation_products" />
-
     </fragment>
 
     <fragment
         android:id="@+id/navigation_products"
         android:name="com.example.beteranos.ui_reservation.home.products.ProductFragment"
-        android:label="Products"
+        android:label="@string/title_products"
         tools:layout="@layout/fragment_product" />
-
     <fragment
         android:id="@+id/navigation_barber_profile"
         android:name="com.example.beteranos.ui_reservation.home.data_barber.BarberProfileFragment"
-        android:label="Barber Profiles"
-        tools:layout="@layout/fragment_barber_profile" />
+        android:label="@string/title_barber_profiles"
+        tools:layout="@layout/fragment_barber_profile">
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_reservation"
         android:name="com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment"
         android:label="@string/title_reservation"
-        tools:layout="@layout/fragment_reservation" />
+        tools:layout="@layout/fragment_reservation" >
+
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_dashboard"

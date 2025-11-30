@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import androidx.activity.OnBackPressedCallback; // ⭐️ Import This
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -18,7 +19,7 @@ public class ReservationActivity extends AppCompatActivity {
 
     private ActivityReservationBinding binding;
     private static final String TAG = "ReservationActivity";
-    private NavController navController; // ⭐️ Keep reference to NavController
+    private NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,16 +42,24 @@ public class ReservationActivity extends AppCompatActivity {
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
             NavigationUI.setupWithNavController(binding.navView, navController);
         }
+
+        // ⭐️ NEW: Register the OnBackPressedDispatcher Callback ⭐️
+        // This replaces the old onBackPressed() override
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleCustomBackNavigation();
+            }
+        });
     }
 
-    // 🔙 Override the Back Button behavior
-    @Override
-    public void onBackPressed() {
-        // 1. Retrieve SharedPreferences to check user state
+    // ⭐️ Helper method to handle the logic ⭐️
+    private void handleCustomBackNavigation() {
+        // 1. Check if user is a Guest
         SharedPreferences userPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         boolean isGuest = userPrefs.getBoolean("isGuest", false);
 
-        Log.d(TAG, "onBackPressed called. Is Guest: " + isGuest);
+        Log.d(TAG, "Back pressed. Is Guest: " + isGuest);
 
         if (isGuest) {
             // **PRIORITY: ALWAYS EXIT TO LOGIN IF GUEST**
@@ -58,32 +67,33 @@ public class ReservationActivity extends AppCompatActivity {
             editor.clear();
             editor.apply();
 
-            Intent intent = new Intent(this, CustomerLoginActivity.class);
+            Intent intent = new Intent(ReservationActivity.this, CustomerLoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
         } else {
             // **HANDLE LOGGED-IN USER NAVIGATION**
-
-            // ⭐️ LOGIC UPDATE: Ensure Back Button goes to Home Fragment ⭐️
             if (navController != null) {
                 int currentDestId = navController.getCurrentDestination().getId();
 
                 // Check if we are ALREADY at the Home Fragment
                 if (currentDestId == R.id.navigation_home) {
-                    // If at Home, exit the app (normal behavior)
-                    super.onBackPressed();
+                    // If at Home, exit the app (close activity)
+                    finish();
                 } else {
-                    // If on any other screen (Profile, Reviews, etc.), go back to Home
+                    // If on any other screen (Profile, Reviews, etc.), GO BACK TO HOME
+
+                    // Attempt to pop the stack until we reach Home
                     boolean popped = navController.popBackStack(R.id.navigation_home, false);
 
                     if (!popped) {
-                        // Fallback: If Home wasn't in the stack, navigate explicitly
+                        // Fallback: If Home wasn't in the stack for some reason, navigate explicitly
                         navController.navigate(R.id.navigation_home);
                     }
                 }
             } else {
-                super.onBackPressed();
+                // Fallback if navController is null
+                finish();
             }
         }
     }

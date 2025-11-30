@@ -19,6 +19,10 @@ public class ProductViewModel extends ViewModel {
     private final MutableLiveData<List<Product>> _products = new MutableLiveData<>();
     public LiveData<List<Product>> products = _products;
 
+    // ⭐️ NEW: Loading State ⭐️
+    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
+    public LiveData<Boolean> isLoading = _isLoading;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public LiveData<List<Product>> getProducts() {
@@ -26,6 +30,7 @@ public class ProductViewModel extends ViewModel {
     }
 
     public void fetchProducts() {
+        _isLoading.postValue(true); // Start loading
         executor.execute(() -> {
             List<Product> list = new ArrayList<>();
             String query = "SELECT * FROM products";
@@ -36,10 +41,10 @@ public class ProductViewModel extends ViewModel {
                 while (rs.next()) {
                     list.add(new Product(
                             rs.getInt("product_id"),
-                            rs.getString("name"), // Fixed: matches schema 'name'
+                            rs.getString("name"),
                             rs.getString("description"),
                             rs.getDouble("price"),
-                            rs.getInt("stock_quantity"), // ⭐️ FIX: matches schema 'stock_quantity'
+                            rs.getInt("stock_quantity"),
                             rs.getBytes("image")
                     ));
                 }
@@ -47,6 +52,8 @@ public class ProductViewModel extends ViewModel {
 
             } catch (Exception e) {
                 Log.e("ProductViewModel", "Error: " + e.getMessage());
+            } finally {
+                _isLoading.postValue(false); // Stop loading
             }
         });
     }

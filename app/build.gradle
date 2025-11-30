@@ -75,6 +75,6 @@ dependencies {
     implementation 'org.mindrot:jbcrypt:0.4'
 
     // --- ADD THESE LINES FOR GLIDE ---
-    implementation 'com.github.bumptech.glide:glide:4.16.0' // Use the latest version
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0' // Use the latest version
+    implementation 'com.github.bumptech.glide:glide:4.15.1'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
 }
