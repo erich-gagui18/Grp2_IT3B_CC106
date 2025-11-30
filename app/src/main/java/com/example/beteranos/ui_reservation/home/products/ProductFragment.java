@@ -84,7 +84,7 @@ public class ProductFragment extends Fragment {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(false);
-                actionBar.setTitle(""); // Clear system title
+                actionBar.setTitle("Products"); // Clear system title
             }
         }
     }
@@ -96,8 +96,8 @@ public class ProductFragment extends Fragment {
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setTitle("Beteranos");
+                actionBar.setDisplayHomeAsUpEnabled(false);
+                actionBar.setTitle("Home");
             }
         }
     }

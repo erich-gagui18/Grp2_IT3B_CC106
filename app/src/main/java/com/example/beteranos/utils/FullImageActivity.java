@@ -28,7 +28,7 @@ public class FullImageActivity extends AppCompatActivity {
         // Use the default action bar to show a back button
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Payment Receipt");
+            getSupportActionBar().setTitle("");
         }
 
         // 1. Retrieve the unique key for the data

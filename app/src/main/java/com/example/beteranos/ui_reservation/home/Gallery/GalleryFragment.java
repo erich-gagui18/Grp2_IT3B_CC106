@@ -65,7 +65,7 @@ public class GalleryFragment extends Fragment {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(false); // Hide system back arrow
-                actionBar.setTitle(""); // Hide system title (so your XML title shows alone)
+                actionBar.setTitle("Gallery"); // Hide system title (so your XML title shows alone)
             }
         }
     }
@@ -77,8 +77,8 @@ public class GalleryFragment extends Fragment {
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(true); // Restore arrow for other screens
-                actionBar.setTitle("Beteranos"); // Optional: Reset to app name
+                actionBar.setDisplayHomeAsUpEnabled(false); // Restore arrow for other screens
+                actionBar.setTitle("Home"); // Optional: Reset to app name
             }
         }
     }

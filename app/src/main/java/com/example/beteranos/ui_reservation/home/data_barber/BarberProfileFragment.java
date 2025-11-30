@@ -67,7 +67,8 @@ public class BarberProfileFragment extends Fragment {
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(true); // Restore the arrow
+                actionBar.setDisplayHomeAsUpEnabled(false); // Hide the arrow
+                actionBar.setTitle("Home"); // Restore the arrow
             }
         }
     }

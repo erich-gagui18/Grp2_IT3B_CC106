@@ -1,6 +1,8 @@
 package com.example.beteranos.ui_reservation.home.data_barber; // ⭐️ Correct Package
 
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -39,16 +41,38 @@ public class BarberProfileAdapter extends ListAdapter<Barber, BarberProfileAdapt
         }
 
         public void bind(Barber barber) {
+
+            binding.ivBarberImage.setImageResource(R.drawable.barber_sample);
+
             binding.tvBarberName.setText(barber.getName());
-            binding.tvSpecialization.setText(barber.getSpecialization());
+
+            // ⭐️ UPDATED: Set text to Italic and add prefix ⭐️
+
+            String specialization = barber.getSpecialization();
+
+            if (specialization != null && !specialization.isEmpty() && !specialization.equalsIgnoreCase("No day off")) {
+                binding.tvSpecialization.setTypeface(null, Typeface.ITALIC);
+                binding.tvSpecialization.setText("Specializes: " + barber.getSpecialization());
+            } else {
+                binding.tvSpecialization.setTypeface(null, Typeface.ITALIC);
+                binding.tvSpecialization.setText("Specializes: N/A");
+            }
 
             String dayOff = barber.getDayOff();
+
+            // Check if dayOff is NOT null, NOT empty, and NOT "No day off"
             if (dayOff != null && !dayOff.isEmpty() && !dayOff.equalsIgnoreCase("No day off")) {
+                // Case: Has a specific Day Off -> Make it Red (Cancelled style)
                 binding.tvDayOff.setText("Day Off: " + dayOff);
-                binding.tvDayOff.setVisibility(android.view.View.VISIBLE);
+                binding.tvDayOff.setBackgroundResource(R.drawable.rounded_status_cancelled);
             } else {
-                binding.tvDayOff.setVisibility(android.view.View.GONE);
+                // Case: Null or "No Day Off" -> Make it Green
+                binding.tvDayOff.setText("No Day Off");
+                binding.tvDayOff.setBackgroundResource(R.drawable.rounded_status_green);
             }
+
+            // Ensure it is visible
+            binding.tvDayOff.setVisibility(View.VISIBLE);
 
             Glide.with(itemView.getContext())
                     .load(barber.getImageUrl())
