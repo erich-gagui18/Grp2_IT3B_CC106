@@ -17,7 +17,7 @@ import java.util.Locale;
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
 
     private List<Product> productList;
-    private final OnProductClickListener listener; // Click listener
+    private final OnProductClickListener listener;
 
     public interface OnProductClickListener {
         void onProductClick(Product product);
@@ -36,7 +36,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // ⭐️ CRITICAL: Inflate the correct, polished layout
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_product_customer, parent, false);
         return new ProductViewHolder(view);
@@ -51,17 +50,24 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         holder.price.setText(String.format(Locale.US, "₱%.2f", product.getPrice()));
         holder.stock.setText("Stock: " + product.getStock());
 
+        // ⭐️ NEW: Set Description ⭐️
+        String desc = product.getDescription();
+        if (desc != null && !desc.isEmpty()) {
+            holder.description.setText(desc);
+            holder.description.setVisibility(View.VISIBLE);
+        } else {
+            holder.description.setVisibility(View.GONE);
+        }
+
         // Handle Image
         byte[] imageBytes = product.getImageBytes();
         if (imageBytes != null && imageBytes.length > 0) {
             Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
             holder.image.setImageBitmap(bitmap);
-
-            // Enable click only if image exists
             holder.image.setOnClickListener(v -> listener.onProductClick(product));
         } else {
             holder.image.setImageResource(R.drawable.ic_image_placeholder);
-            holder.image.setOnClickListener(null); // Disable click on placeholder
+            holder.image.setOnClickListener(null);
         }
     }
 
@@ -72,7 +78,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         ImageView image;
-        TextView name, price, stock;
+        TextView name, price, stock, description; // ⭐️ Added description
 
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -80,6 +86,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             name = itemView.findViewById(R.id.tv_product_name);
             price = itemView.findViewById(R.id.tv_product_price);
             stock = itemView.findViewById(R.id.tv_product_stock);
+
+            // ⭐️ Find the new TextView ⭐️
+            description = itemView.findViewById(R.id.tv_product_description);
         }
     }
 }

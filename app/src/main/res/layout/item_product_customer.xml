@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
@@ -36,12 +37,24 @@
                 android:id="@+id/tv_product_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Product Name"
+                tools:text="Product Name"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#212121"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tv_product_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                tools:text="This is a short description of the product item displayed here."
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:visibility="visible"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -55,16 +68,18 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="₱0.00"
+                    tools:text="₱150.00"
                     android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="#2E7D32"/> <TextView
-                android:id="@+id/tv_product_stock"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stock: 0"
-                android:textSize="12sp"
-                android:textColor="#757575"/>
+                    android:textColor="#2E7D32"/>
+
+                <TextView
+                    android:id="@+id/tv_product_stock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:text="Stock: 12"
+                    android:textSize="12sp"
+                    android:textColor="#757575"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

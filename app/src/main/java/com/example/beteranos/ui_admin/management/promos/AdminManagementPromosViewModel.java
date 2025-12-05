@@ -32,9 +32,10 @@ public class AdminManagementPromosViewModel extends ViewModel {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public AdminManagementPromosViewModel() {
-        fetchPromos();
+        fetchPromos(); // ⭐️ RENAMED to match your Fragment usage
     }
 
+    // ⭐️ UPDATED: Fetch 'is_active' status ⭐️
     public void fetchPromos() {
         _isLoading.postValue(true);
         executor.execute(() -> {
@@ -42,16 +43,20 @@ public class AdminManagementPromosViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
 
-                String query = "SELECT promo_id, promo_name, description, discount_percentage, image_name FROM promos ORDER BY promo_name ASC";
+                // ⭐️ Added is_active to SELECT
+                String query = "SELECT promo_id, promo_name, description, discount_percentage, image_name, is_active FROM promos ORDER BY promo_name ASC";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
+                        // ⭐️ Updated Constructor (6 params)
                         promoList.add(new Promo(
                                 rs.getInt("promo_id"),
                                 rs.getString("promo_name"),
                                 rs.getString("description"),
                                 rs.getInt("discount_percentage"),
-                                rs.getBytes("image_name")
+                                rs.getBytes("image_name"),
+                                rs.getBoolean("is_active") // ⭐️ Read visibility status
                         ));
                     }
                     _allPromos.postValue(promoList);
@@ -65,13 +70,20 @@ public class AdminManagementPromosViewModel extends ViewModel {
         });
     }
 
-    // This method correctly accepts byte[]
+    public void fetchPromosFromDB() {
+        fetchPromos(); // Alias for compatibility if needed
+    }
+
+    // ⭐️ UPDATED: Set default visibility to TRUE (1) on Add ⭐️
     public void addPromo(String name, String description, int discount, byte[] imageBytes) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "INSERT INTO promos (promo_name, description, discount_percentage, image_name) VALUES (?, ?, ?, ?)";
+
+                // ⭐️ Added is_active column
+                String query = "INSERT INTO promos (promo_name, description, discount_percentage, image_name, is_active) VALUES (?, ?, ?, ?, ?)";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, description);
@@ -81,10 +93,12 @@ public class AdminManagementPromosViewModel extends ViewModel {
                     } else {
                         stmt.setNull(4, Types.BLOB);
                     }
+                    stmt.setInt(5, 1); // ⭐️ Default to Active (Visible)
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Promo added successfully");
-                        fetchPromos(); // Refresh the list
+                        fetchPromos();
                     }
                 }
             } catch (Exception e) {
@@ -96,13 +110,16 @@ public class AdminManagementPromosViewModel extends ViewModel {
         });
     }
 
-    // This method correctly accepts byte[]
-    public void updatePromo(int promoId, String name, String description, int discount, byte[] imageBytes) {
+    // ⭐️ UPDATED: Accept 'isActive' parameter for Updates ⭐️
+    public void updatePromo(int promoId, String name, String description, int discount, byte[] imageBytes, boolean isActive) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "UPDATE promos SET promo_name = ?, description = ?, discount_percentage = ?, image_name = ? WHERE promo_id = ?";
+
+                // ⭐️ Update is_active
+                String query = "UPDATE promos SET promo_name = ?, description = ?, discount_percentage = ?, image_name = ?, is_active = ? WHERE promo_id = ?";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, description);
@@ -112,11 +129,13 @@ public class AdminManagementPromosViewModel extends ViewModel {
                     } else {
                         stmt.setNull(4, Types.BLOB);
                     }
-                    stmt.setInt(5, promoId);
+                    stmt.setBoolean(5, isActive); // ⭐️ Update status
+                    stmt.setInt(6, promoId);
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Promo updated successfully");
-                        fetchPromos(); // Refresh the list
+                        fetchPromos();
                     }
                 }
             } catch (Exception e) {
@@ -128,8 +147,40 @@ public class AdminManagementPromosViewModel extends ViewModel {
         });
     }
 
+    // Compatibility overload for older calls (defaults to keeping existing status logic if query was simpler, but safe to force active here if needed)
+    public void updatePromo(int promoId, String name, String description, int discount, byte[] imageBytes) {
+        updatePromo(promoId, name, description, discount, imageBytes, true);
+    }
+
+    // ⭐️ NEW METHOD: Toggle Visibility ⭐️
+    public void togglePromoVisibility(Promo promo) {
+        _isLoading.postValue(true);
+        executor.execute(() -> {
+            boolean newStatus = !promo.isActive(); // Flip status
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("Database connection failed");
+
+                String query = "UPDATE promos SET is_active = ? WHERE promo_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setBoolean(1, newStatus);
+                    stmt.setInt(2, promo.getPromoId());
+
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        _toastMessage.postValue("Promo is now " + (newStatus ? "Visible" : "Hidden"));
+                        fetchPromos(); // Refresh UI
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling visibility: " + e.getMessage(), e);
+                _toastMessage.postValue("Error updating visibility");
+            } finally {
+                _isLoading.postValue(false);
+            }
+        });
+    }
+
     public void deletePromo(Promo promo) {
-        // ... (This logic is correct) ...
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
@@ -140,7 +191,7 @@ public class AdminManagementPromosViewModel extends ViewModel {
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Promo deleted successfully");
-                        fetchPromos(); // Refresh the list
+                        fetchPromos();
                     }
                 }
             } catch (Exception e) {

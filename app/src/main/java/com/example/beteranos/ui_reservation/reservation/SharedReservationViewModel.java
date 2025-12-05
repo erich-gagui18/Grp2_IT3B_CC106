@@ -202,23 +202,26 @@ public class SharedReservationViewModel extends ViewModel {
     }
 
     private void fetchPromosFromDB() {
-        // --- OPTIMIZATION: Removed local executor, uses class executor ---
         executor.execute(() -> {
             List<Promo> fetchedPromos = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                String query = "SELECT promo_id, promo_name, description, discount_percentage, image_name FROM promos";
+                // ⭐️ UPDATE 1: Filter to show ONLY active promos to customers
+                String query = "SELECT promo_id, promo_name, description, discount_percentage, image_name, is_active FROM promos WHERE is_active = 1";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
+                        // ⭐️ UPDATE 2: Pass the 6th argument (isActive) to match the new Model
                         fetchedPromos.add(new Promo(
                                 rs.getInt("promo_id"),
                                 rs.getString("promo_name"),
                                 rs.getString("description"),
                                 rs.getInt("discount_percentage"),
-                                rs.getBytes("image_name")
+                                rs.getBytes("image_name"),
+                                rs.getBoolean("is_active") // ⭐️ Fixed: Added missing parameter
                         ));
                     }
                 }

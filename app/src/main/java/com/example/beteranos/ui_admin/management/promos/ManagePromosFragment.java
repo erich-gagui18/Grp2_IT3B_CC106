@@ -42,13 +42,8 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
     private AdminManagementPromosViewModel viewModel;
     private PromosManagementAdapter adapter;
 
-    // This launcher gets the image from the gallery
     private ActivityResultLauncher<Intent> imagePickerLauncher;
-
-    // This holds the reference to the dialog's ImageView for preview
     private ImageView dialogPromoImageView;
-
-    // This holds the final, converted image data to be saved
     private byte[] tempImageBytes = null;
 
     @Override
@@ -71,9 +66,12 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
         observeViewModel();
 
         binding.fabAddPromo.setOnClickListener(v -> {
-            tempImageBytes = null; // Clear bytes for a new promo
+            tempImageBytes = null;
             showAddOrEditDialog(null);
         });
+
+        // Initial Fetch
+        viewModel.fetchPromosFromDB();
     }
 
     private void setupRecyclerView() {
@@ -111,13 +109,9 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null) {
                             try {
-                                // 1. Convert Uri to Bitmap
                                 Bitmap bitmap = uriToBitmap(imageUri);
                                 if (bitmap != null) {
-                                    // 2. Convert Bitmap to compressed byte[] for saving
-                                    tempImageBytes = getBytesFromBitmap(bitmap, 80); // 80% quality
-
-                                    // 3. Update the dialog preview
+                                    tempImageBytes = getBytesFromBitmap(bitmap, 80);
                                     if (dialogPromoImageView != null) {
                                         dialogPromoImageView.setImageBitmap(bitmap);
                                     }
@@ -133,38 +127,31 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
 
     private void showAddOrEditDialog(@Nullable Promo existingPromo) {
         DialogAddPromoBinding dialogBinding = DialogAddPromoBinding.inflate(LayoutInflater.from(getContext()));
-
-        // Store the reference to the dialog's ImageView
         dialogPromoImageView = dialogBinding.promoImageView;
 
         if (existingPromo != null) {
-            // Edit existing promo
             dialogBinding.nameEditText.setText(existingPromo.getPromoName());
             dialogBinding.descEditText.setText(existingPromo.getDescription());
             dialogBinding.discountEditText.setText(String.valueOf(existingPromo.getDiscountPercentage()));
 
-            // Store existing bytes and load preview
             tempImageBytes = existingPromo.getImage();
             if (tempImageBytes != null) {
                 Glide.with(this)
-                        .load(tempImageBytes) // Load from byte[]
+                        .load(tempImageBytes)
                         .placeholder(R.drawable.ic_image_placeholder)
                         .error(R.drawable.ic_image_broken)
                         .into(dialogPromoImageView);
             }
         } else {
-            // Add new promo
-            tempImageBytes = null; // Ensure bytes are null for a new promo
+            tempImageBytes = null;
         }
 
-        // Set up the image picker button
         dialogBinding.btnSelectImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT); // Use GET_CONTENT
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.setType("image/*");
             imagePickerLauncher.launch(intent);
         });
 
-        // Build the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         String title = (existingPromo == null) ? "Add New Promo" : "Edit Promo";
         String positiveButton = (existingPromo == null) ? "Add" : "Save";
@@ -172,13 +159,12 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
         builder.setTitle(title);
         builder.setView(dialogBinding.getRoot());
         builder.setNegativeButton("Cancel", null);
-        builder.setPositiveButton(positiveButton, null); // We override this for validation
+        builder.setPositiveButton(positiveButton, null);
 
         AlertDialog dialog = builder.create();
 
         dialog.setOnShowListener(d -> {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                // --- Validation ---
                 String name = dialogBinding.nameEditText.getText().toString().trim();
                 String desc = dialogBinding.descEditText.getText().toString().trim();
                 String discountStr = dialogBinding.discountEditText.getText().toString().trim();
@@ -204,7 +190,7 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
                     isValid = false;
                 }
 
-                if (!isValid) return; // Stop if validation failed
+                if (!isValid) return;
 
                 int discount = 0;
                 try {
@@ -214,9 +200,9 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
                     return;
                 }
 
-                // --- Save Logic ---
+                // ⭐️ Update Logic: Pass is_active as true for new, existing state for update ⭐️
                 if (existingPromo != null) {
-                    viewModel.updatePromo(existingPromo.getPromoId(), name, desc, discount, tempImageBytes);
+                    viewModel.updatePromo(existingPromo.getPromoId(), name, desc, discount, tempImageBytes, existingPromo.isActive());
                 } else {
                     viewModel.addPromo(name, desc, discount, tempImageBytes);
                 }
@@ -246,8 +232,21 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
                 .show();
     }
 
-    // --- Helper Methods for Image Conversion ---
+    // ⭐️ NEW: Toggle Visibility Action ⭐️
+    @Override
+    public void onToggleVisibilityClick(Promo promo) {
+        String status = promo.isActive() ? "Hide" : "Show";
+        new AlertDialog.Builder(requireContext())
+                .setTitle(status + " Promo")
+                .setMessage("Do you want to " + status.toLowerCase() + " this promo from customers?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    viewModel.togglePromoVisibility(promo);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
+    // --- Helper Methods ---
     private Bitmap uriToBitmap(Uri imageUri) {
         if (imageUri == null || getContext() == null) return null;
         ContentResolver resolver = getContext().getContentResolver();
@@ -275,7 +274,7 @@ public class ManagePromosFragment extends Fragment implements PromosManagementAd
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        dialogPromoImageView = null; // Clear dialog reference
-        tempImageBytes = null; // Clear byte data
+        dialogPromoImageView = null;
+        tempImageBytes = null;
     }
 }
