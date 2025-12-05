@@ -1,24 +1,28 @@
 package com.example.beteranos.models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Service {
+public class Service implements Serializable {
 
-    // --- UPDATED: These fields now match your DB schema ---
     private final int serviceId;
     private final String serviceName;
     private final double price;
-    // private final String imageName;  // --- REMOVED ---
-    // private final int duration; // --- REMOVED ---
+    private boolean isActive; // ⭐️ NEW FIELD: Not final so we can toggle it
 
-    // --- UPDATED: This is now the main constructor ---
-    public Service(int serviceId, String serviceName, double price) {
+    // ⭐️ UPDATED: Primary Constructor (Includes isActive)
+    public Service(int serviceId, String serviceName, double price, boolean isActive) {
         this.serviceId = serviceId;
         this.serviceName = serviceName;
         this.price = price;
+        this.isActive = isActive;
     }
 
-    // --- REMOVED the old constructors ---
+    // ⭐️ COMPATIBILITY Constructor: Defaults isActive to true
+    // This prevents errors in existing code that uses the old 3-parameter constructor
+    public Service(int serviceId, String serviceName, double price) {
+        this(serviceId, serviceName, price, true);
+    }
 
     public int getServiceId() {
         return serviceId;
@@ -32,18 +36,28 @@ public class Service {
         return price;
     }
 
-    // --- REMOVED getters for imageName and duration ---
+    // ⭐️ NEW Getter and Setter
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        this.isActive = active;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Service service = (Service) o;
-        return serviceId == service.serviceId;
+        return serviceId == service.serviceId &&
+                Double.compare(service.price, price) == 0 &&
+                isActive == service.isActive && // ⭐️ Added check
+                Objects.equals(serviceName, service.serviceName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceId);
+        return Objects.hash(serviceId, serviceName, price, isActive); // ⭐️ Added hash
     }
 }

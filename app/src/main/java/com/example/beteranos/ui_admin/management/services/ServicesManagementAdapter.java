@@ -19,12 +19,15 @@ public class ServicesManagementAdapter extends ListAdapter<Service, ServicesMana
 
     private final OnServiceActionListener listener;
 
+    // ⭐️ FIX 1: Consolidate Interface (Only define it once)
     public interface OnServiceActionListener {
         void onEditClick(Service service);
         void onDeleteClick(Service service);
+        void onToggleVisibilityClick(Service service); // ⭐️ New Action
     }
 
-    public ServicesManagementAdapter(@NonNull OnServiceActionListener listener) {
+    // ⭐️ FIX 2: Add Constructor to initialize the listener
+    public ServicesManagementAdapter(OnServiceActionListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
     }
@@ -45,20 +48,34 @@ public class ServicesManagementAdapter extends ListAdapter<Service, ServicesMana
 
     static class ServiceViewHolder extends RecyclerView.ViewHolder {
         private final TextView nameText, priceText;
-        private final ImageButton editButton, deleteButton;
+        private final ImageButton editButton, deleteButton, toggleButton; // ⭐️ Added toggleButton
 
         public ServiceViewHolder(@NonNull View itemView) {
             super(itemView);
+            // ⭐️ FIX 3: Match IDs to your item_manage_service.xml
             nameText = itemView.findViewById(R.id.service_name_text);
             priceText = itemView.findViewById(R.id.service_price_text);
-            editButton = itemView.findViewById(R.id.btn_edit);
-            deleteButton = itemView.findViewById(R.id.btn_delete);
+
+            toggleButton = itemView.findViewById(R.id.toggle_visibility_button); // ⭐️ New
+            editButton = itemView.findViewById(R.id.edit_button);     // Was btn_edit in old code
+            deleteButton = itemView.findViewById(R.id.delete_button); // Was btn_delete in old code
         }
 
         public void bind(Service service, OnServiceActionListener listener) {
             nameText.setText(service.getServiceName());
             priceText.setText(String.format(Locale.US, "₱%.2f", service.getPrice()));
 
+            // ⭐️ FIX 4: Handle Visibility Logic (Eye Icon)
+            if (service.isActive()) {
+                toggleButton.setImageResource(R.drawable.ic_visibility);
+                toggleButton.setAlpha(1.0f);
+            } else {
+                toggleButton.setImageResource(R.drawable.ic_visibility_off);
+                toggleButton.setAlpha(0.5f);
+            }
+
+            // Click Listeners
+            toggleButton.setOnClickListener(v -> listener.onToggleVisibilityClick(service));
             editButton.setOnClickListener(v -> listener.onEditClick(service));
             deleteButton.setOnClickListener(v -> listener.onDeleteClick(service));
         }
@@ -73,8 +90,7 @@ public class ServicesManagementAdapter extends ListAdapter<Service, ServicesMana
 
                 @Override
                 public boolean areContentsTheSame(@NonNull Service oldItem, @NonNull Service newItem) {
-                    return oldItem.getServiceName().equals(newItem.getServiceName()) &&
-                            oldItem.getPrice() == newItem.getPrice();
+                    return oldItem.equals(newItem);
                 }
             };
 }

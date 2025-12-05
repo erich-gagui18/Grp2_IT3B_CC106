@@ -149,16 +149,20 @@ public class SharedReservationViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                String query = "SELECT service_id, service_name, price FROM services";
+                // ⭐️ UPDATE 1: Filter to show ONLY active services (is_active = 1)
+                // We also select the 'is_active' column to satisfy the model constructor
+                String query = "SELECT service_id, service_name, price, is_active FROM services WHERE is_active = 1";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
+                        // ⭐️ UPDATE 2: Use the 4-parameter constructor (includes isActive)
                         fetchedServices.add(new Service(
                                 rs.getInt("service_id"),
                                 rs.getString("service_name"),
-                                rs.getDouble("price")
+                                rs.getDouble("price"),
+                                rs.getBoolean("is_active") // ⭐️ Pass the status
                         ));
                     }
                 }

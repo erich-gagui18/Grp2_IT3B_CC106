@@ -40,15 +40,20 @@ public class AdminManagementServicesViewModel extends ViewModel {
             List<Service> serviceList = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "SELECT service_id, service_name, price FROM services ORDER BY service_name ASC";
+
+                // ⭐️ UPDATED: Fetch 'is_active' column
+                String query = "SELECT service_id, service_name, price, is_active FROM services ORDER BY service_name ASC";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
+                        // ⭐️ UPDATED: Use 4-parameter constructor (ID, Name, Price, IsActive)
                         serviceList.add(new Service(
                                 rs.getInt("service_id"),
                                 rs.getString("service_name"),
-                                rs.getDouble("price")
+                                rs.getDouble("price"),
+                                rs.getBoolean("is_active")
                         ));
                     }
                     _allServices.postValue(serviceList);
@@ -67,10 +72,15 @@ public class AdminManagementServicesViewModel extends ViewModel {
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "INSERT INTO services (service_name, price) VALUES (?, ?)";
+
+                // ⭐️ UPDATED: Insert 'is_active' with default value 1 (Visible)
+                String query = "INSERT INTO services (service_name, price, is_active) VALUES (?, ?, ?)";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setDouble(2, price);
+                    stmt.setInt(3, 1); // Default to Active
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Service added successfully");
@@ -80,21 +90,28 @@ public class AdminManagementServicesViewModel extends ViewModel {
             } catch (Exception e) {
                 Log.e(TAG, "Error adding service: " + e.getMessage(), e);
                 _toastMessage.postValue("Error adding service");
+            } finally {
                 _isLoading.postValue(false);
             }
         });
     }
 
-    public void updateService(int serviceId, String name, double price) {
+    // ⭐️ UPDATED: Accepts isActive status to preserve it during updates
+    public void updateService(int serviceId, String name, double price, boolean isActive) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
-                String query = "UPDATE services SET service_name = ?, price = ? WHERE service_id = ?";
+
+                // ⭐️ UPDATED: Update 'is_active' as well
+                String query = "UPDATE services SET service_name = ?, price = ?, is_active = ? WHERE service_id = ?";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setDouble(2, price);
-                    stmt.setInt(3, serviceId);
+                    stmt.setBoolean(3, isActive);
+                    stmt.setInt(4, serviceId);
+
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         _toastMessage.postValue("Service updated successfully");
@@ -104,6 +121,40 @@ public class AdminManagementServicesViewModel extends ViewModel {
             } catch (Exception e) {
                 Log.e(TAG, "Error updating service: " + e.getMessage(), e);
                 _toastMessage.postValue("Error updating service");
+            } finally {
+                _isLoading.postValue(false);
+            }
+        });
+    }
+
+    // Overload for backward compatibility (defaults to true if needed, or preserves old logic)
+    public void updateService(int serviceId, String name, double price) {
+        updateService(serviceId, name, price, true);
+    }
+
+    // ⭐️ NEW METHOD: Toggle Visibility (Hide/Show) ⭐️
+    public void toggleServiceVisibility(Service service) {
+        _isLoading.postValue(true);
+        executor.execute(() -> {
+            boolean newStatus = !service.isActive(); // Flip status
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("Database connection failed");
+
+                String query = "UPDATE services SET is_active = ? WHERE service_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setBoolean(1, newStatus);
+                    stmt.setInt(2, service.getServiceId());
+
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        _toastMessage.postValue("Service is now " + (newStatus ? "Visible" : "Hidden"));
+                        fetchServices(); // Refresh list to update UI icon
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling visibility: " + e.getMessage(), e);
+                _toastMessage.postValue("Error updating visibility");
+            } finally {
                 _isLoading.postValue(false);
             }
         });
@@ -126,6 +177,7 @@ public class AdminManagementServicesViewModel extends ViewModel {
             } catch (Exception e) {
                 Log.e(TAG, "Error deleting service: " + e.getMessage(), e);
                 _toastMessage.postValue("Error deleting service. It may be in use.");
+            } finally {
                 _isLoading.postValue(false);
             }
         });
@@ -133,5 +185,11 @@ public class AdminManagementServicesViewModel extends ViewModel {
 
     public void clearToastMessage() {
         _toastMessage.setValue(null);
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        executor.shutdown();
     }
 }

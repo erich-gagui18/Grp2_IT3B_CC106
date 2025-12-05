@@ -35,19 +35,14 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // TODO #3: Create ViewModel
         viewModel = new ViewModelProvider(this).get(AdminManagementServicesViewModel.class);
 
-        // TODO #1 & #2: Set up RecyclerView and Adapter
         setupRecyclerView();
 
-        // TODO #5: Add "Add New Service" button listener
         binding.fabAddService.setOnClickListener(v -> {
-            // TODO #6: Show dialog
             showAddOrEditDialog(null);
         });
 
-        // TODO #4: Fetch and observe services
         observeViewModel();
     }
 
@@ -77,12 +72,14 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
         viewModel.toastMessage.observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-                viewModel.clearToastMessage(); // Reset after showing
+                viewModel.clearToastMessage();
             }
         });
+
+        // Initial Fetch
+        viewModel.fetchServices();
     }
 
-    // TODO #6, #7, #8: Handle Add/Edit dialog
     private void showAddOrEditDialog(@Nullable Service existingService) {
         DialogAddServiceBinding dialogBinding = DialogAddServiceBinding.inflate(LayoutInflater.from(getContext()));
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
@@ -122,7 +119,7 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
                     dialogBinding.priceLayout.setError(null);
                 }
 
-                if (!isValid) return; // Stop if validation failed
+                if (!isValid) return;
 
                 double price = 0.0;
                 try {
@@ -138,7 +135,8 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
 
                 if (isValid) {
                     if (existingService != null) {
-                        viewModel.updateService(existingService.getServiceId(), name, price);
+                        // Pass existing visibility status when updating details
+                        viewModel.updateService(existingService.getServiceId(), name, price, existingService.isActive());
                     } else {
                         viewModel.addService(name, price);
                     }
@@ -150,13 +148,11 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
         dialog.show();
     }
 
-    // TODO #8: Handle Edit click
     @Override
     public void onEditClick(Service service) {
         showAddOrEditDialog(service);
     }
 
-    // TODO #8: Handle Delete click
     @Override
     public void onDeleteClick(Service service) {
         new AlertDialog.Builder(requireContext())
@@ -164,6 +160,20 @@ public class ManageServicesFragment extends Fragment implements ServicesManageme
                 .setMessage("Are you sure you want to delete '" + service.getServiceName() + "'?")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     viewModel.deleteService(service);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ⭐️ NEW: Toggle Visibility Action ⭐️
+    @Override
+    public void onToggleVisibilityClick(Service service) {
+        String status = service.isActive() ? "Hide" : "Show";
+        new AlertDialog.Builder(requireContext())
+                .setTitle(status + " Service")
+                .setMessage("Do you want to " + status.toLowerCase() + " this service from customers?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    viewModel.toggleServiceVisibility(service);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
