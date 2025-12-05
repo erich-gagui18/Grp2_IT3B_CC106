@@ -1,9 +1,6 @@
 package com.example.beteranos.ui_reservation.home.data_barber;
 
 import android.graphics.Typeface;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -34,7 +30,6 @@ public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdap
     @NonNull
     @Override
     public BarberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Ensure you are using the correct layout file name here
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_barber_profile, parent, false);
         return new BarberViewHolder(view);
     }
@@ -55,7 +50,7 @@ public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdap
 
         public BarberViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivBarberImage = itemView.findViewById(R.id.iv_barber_image); // Ensure ID matches XML
+            ivBarberImage = itemView.findViewById(R.id.iv_barber_image);
             tvName = itemView.findViewById(R.id.tv_barber_name);
             tvSpecialization = itemView.findViewById(R.id.tv_specialization);
             tvDayOff = itemView.findViewById(R.id.tv_day_off);
@@ -64,9 +59,14 @@ public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdap
         public void bind(Barber barber) {
             tvName.setText(barber.getName());
 
-            // Specialization styling
+            // ⭐️ FIX: Check for null specialization and display "N/A"
             tvSpecialization.setTypeface(null, Typeface.ITALIC);
-            tvSpecialization.setText("Specializes: " + barber.getSpecialization());
+
+            String specialization = barber.getSpecialization();
+            if (specialization == null || specialization.trim().isEmpty()) {
+                specialization = "N/A";
+            }
+            tvSpecialization.setText("Specializes: " + specialization);
 
             // ⭐️ ROBUST IMAGE LOADING with barber_sample DEFAULT ⭐️
             String imageUrl = barber.getImageUrl();
@@ -77,9 +77,9 @@ public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdap
                     Glide.with(itemView.getContext())
                             .load(imageUrl)
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .placeholder(R.drawable.barber_sample) // ⭐️ Default
-                            .error(R.drawable.barber_sample)       // ⭐️ Fallback
-                            .fallback(R.drawable.barber_sample)    // ⭐️ Fallback
+                            .placeholder(R.drawable.barber_sample)
+                            .error(R.drawable.barber_sample)
+                            .fallback(R.drawable.barber_sample)
                             .centerCrop()
                             .into(ivBarberImage);
                 } catch (Exception e) {
@@ -100,11 +100,11 @@ public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdap
                 // RED Style
                 String fullText = "Day Off: " + dayOff;
                 tvDayOff.setText(fullText);
-                tvDayOff.setBackgroundResource(R.drawable.rounded_status_cancelled); // Red background
+                tvDayOff.setBackgroundResource(R.drawable.rounded_status_cancelled);
             } else {
                 // GREEN Style
                 tvDayOff.setText("No Day Off");
-                tvDayOff.setBackgroundResource(R.drawable.rounded_status_green); // Green background
+                tvDayOff.setBackgroundResource(R.drawable.rounded_status_green);
             }
             tvDayOff.setVisibility(View.VISIBLE);
         }

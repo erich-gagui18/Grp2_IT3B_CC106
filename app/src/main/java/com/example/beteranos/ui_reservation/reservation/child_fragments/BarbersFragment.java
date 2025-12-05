@@ -1,5 +1,6 @@
 package com.example.beteranos.ui_reservation.reservation.child_fragments;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -70,6 +71,7 @@ public class BarbersFragment extends Fragment {
 
             TextView nameText = barberView.findViewById(R.id.barber_name_text);
             TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
+            specializationText.setTypeface(null, Typeface.ITALIC);
             TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
             ImageView profileImage = barberView.findViewById(R.id.barber_profile_image);
