@@ -12,6 +12,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+// ⭐️ ADDED IMPORTS FOR ACTION BAR CONTROL ⭐️
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.ActionBar;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -72,13 +76,14 @@ public class HomeFragment extends Fragment {
         };
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), callback);
 
-        // ⭐️ NEW: Search Bar Toast ⭐️
-        // Ensure binding.etSearch matches the ID you added in XML
-        binding.etSearch.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Coming Soon!", Toast.LENGTH_SHORT).show();
-        });
+        // --- 3. Search Bar Toast ---
+        if (binding.etSearch != null) {
+            binding.etSearch.setOnClickListener(v -> {
+                Toast.makeText(requireContext(), "Coming Soon!", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        // --- 3. Navigation Logic (Using ViewBinding) ---
+        // --- 4. Navigation Logic (Using ViewBinding) ---
 
         // A. Gallery Navigation
         if (binding.galleryContainer != null) {
@@ -113,9 +118,24 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        // --- 4. Notification Setup ---
+        // --- 5. Notification Setup ---
         if (binding.ivNotifications != null) {
             binding.ivNotifications.setOnClickListener(v -> showNotificationDropdown(v));
+        }
+    }
+
+    // ⭐️ ADDED: FIX FOR ACTION BAR BACK BUTTON PERSISTENCE ⭐️
+    // This ensures the back arrow is hidden every time you return to HomeFragment
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getActivity() instanceof AppCompatActivity) {
+            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(false); // Hide the arrow
+                actionBar.setTitle("Beteranos"); // Reset title to App Name
+            }
         }
     }
 

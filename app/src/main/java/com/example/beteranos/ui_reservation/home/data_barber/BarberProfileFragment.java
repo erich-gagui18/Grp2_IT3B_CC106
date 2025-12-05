@@ -11,13 +11,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-// ⭐️ ADD THESE IMPORTS ⭐️
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.ActionBar;
 
 import com.example.beteranos.databinding.FragmentBarberProfileBinding;
-import com.example.beteranos.ui_reservation.home.data_barber.BarberProfileAdapter;
-import com.example.beteranos.ui_reservation.home.data_barber.BarberProfileViewModel;
 
 public class BarberProfileFragment extends Fragment {
 
@@ -47,28 +44,29 @@ public class BarberProfileFragment extends Fragment {
         viewModel.fetchBarbers();
     }
 
-    // --- ⭐️ NEW: Hide Action Bar Back Button when screen appears ⭐️ ---
+    // --- Hide Action Bar Back Button when screen appears ---
     @Override
     public void onResume() {
         super.onResume();
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(false); // Hide the arrow
-                actionBar.setTitle("Barber Profiles"); // Optional: Set title
+                actionBar.setDisplayHomeAsUpEnabled(false); // Hide system arrow
+                actionBar.setTitle("Barber Profiles");
             }
         }
     }
 
-    // --- ⭐️ NEW: Show Action Bar Back Button when leaving screen ⭐️ ---
+    // --- Restore Action Bar Back Button when leaving screen ---
     @Override
     public void onStop() {
         super.onStop();
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(false); // Hide the arrow
-                actionBar.setTitle("Home"); // Restore the arrow
+                // ⭐️ FIX: Set this to TRUE so other screens have a back button
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setTitle("Beteranos");
             }
         }
     }

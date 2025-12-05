@@ -41,8 +41,10 @@ public class BarberProfileViewModel extends ViewModel {
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
                                 rs.getString("specialization"),
-                                rs.getString("day_off"),
-                                rs.getString("image_url")
+                                0, // Dummy experience_years
+                                "N/A", // Dummy contact_number
+                                rs.getString("image_url"),
+                                rs.getString("day_off")
                         ));
                     }
                 }

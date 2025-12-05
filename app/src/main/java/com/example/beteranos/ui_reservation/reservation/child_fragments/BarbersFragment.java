@@ -56,14 +56,14 @@ public class BarbersFragment extends Fragment {
         binding.barbersContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
-        // 🔑 Get colors once for efficiency and clarity
-        // Assuming R.color.black is available, or use android.R.color.black
-        // NOTE: Changed prefixColor to R.color.black for visibility against a standard white background,
-        // but if your layout background is dark, you can keep android.R.color.white.
-        int prefixColor = getResources().getColor(android.R.color.white, null);
-        int dayOffColor = getResources().getColor(android.R.color.holo_red_light, null);
-        int availableColor = getResources().getColor(R.color.status_scheduled, null);
-        // NOTE: We rely on your existing R.color.status_scheduled for green/available status.
+        if (barbers == null || barbers.isEmpty()) {
+            return;
+        }
+
+        // ⭐️ Safe Color Retrieval (Fixed deprecation & visibility)
+        int prefixColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
+        int dayOffColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.holo_red_light);
+        int availableColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_scheduled);
 
         for (Barber barber : barbers) {
             View barberView = inflater.inflate(R.layout.item_selectable_barber, binding.barbersContainer, false);
@@ -72,73 +72,86 @@ public class BarbersFragment extends Fragment {
             TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
             TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
-            ImageView profileImage = barberView.findViewById(R.id.barber_profile_image); // 🔑 NEW: Reference to the image view
+            ImageView profileImage = barberView.findViewById(R.id.barber_profile_image);
 
-            // 🔑 NEW: Load Barber Profile Image using Glide
-            if (barber.getImageUrl() != null && !barber.getImageUrl().isEmpty()) {
-                Glide.with(requireContext())
-                        .load(barber.getImageUrl())
-                        .diskCacheStrategy(DiskCacheStrategy.NONE) // ADD THIS
-                        .skipMemoryCache(true)                     // ADD THIS
-                        .placeholder(R.drawable.barber_sample)
-                        .error(R.drawable.barber_sample)
-                        .into(profileImage);
+            // ---------------------------------------------------------
+            // ⭐️ FIX 1: Robust Image Loading (Prevents Crashes & Logs)
+            // ---------------------------------------------------------
+            String imageUrl = barber.getImageUrl();
+
+            // Check if URL is valid (not null, not empty, and not a garbage path like "/Monday")
+            boolean isValidUrl = imageUrl != null && !imageUrl.isEmpty() && !imageUrl.startsWith("/");
+            if (isValidUrl) {
+                try {
+                    Glide.with(requireContext())
+                            .load(imageUrl)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            // ⭐️ SET DEFAULT TO BARBER SAMPLE ⭐️
+                            .placeholder(R.drawable.barber_sample)
+                            .error(R.drawable.barber_sample)
+                            .fallback(R.drawable.barber_sample)
+                            .centerCrop()
+                            .into(profileImage);
+                } catch (Exception e) {
+                    // Safety catch -> Show Barber Sample
+                    profileImage.setImageResource(R.drawable.barber_sample);
+                }
             } else {
-                profileImage.setImageResource(R.drawable.barber_sample); // Set default if URL is missing
+                // Invalid/Missing URL -> Show Barber Sample
+                profileImage.setImageResource(R.drawable.barber_sample);
             }
 
-            // 🔑 POPULATE DATA
+            // ---------------------------------------------------------
+            // ⭐️ Data Population
+            // ---------------------------------------------------------
             nameText.setText(barber.getName());
             specializationText.setText(barber.getSpecialization());
 
-            // 🔑 OPTIMIZED LOGIC USING SPANNABLE STRING
+            // ---------------------------------------------------------
+            // ⭐️ FIX 2: Day Off Logic + Garbage Data Filter
+            // ---------------------------------------------------------
             String barberDayOff = barber.getDayOff();
 
-            if (barberDayOff != null && !barberDayOff.isEmpty() && !barberDayOff.equalsIgnoreCase("none")) {
-                // Scenario 1: Barber has a specific day off (show prefix in black, day in red)
+            // Detect if data is corrupted (e.g. contains file path/url instead of day name)
+            boolean isInvalidData = barberDayOff != null && (barberDayOff.startsWith("content:") || barberDayOff.startsWith("/"));
 
-                final String prefix = "Day Off: ";
+            boolean hasSpecificDayOff = barberDayOff != null
+                    && !barberDayOff.isEmpty()
+                    && !barberDayOff.equalsIgnoreCase("none")
+                    && !barberDayOff.equalsIgnoreCase("No day off")
+                    && !isInvalidData;
+
+            if (hasSpecificDayOff) {
+                // Scenario 1: Valid Specific Day Off -> Red
+                String prefix = "Day Off: ";
                 String fullText = prefix + barberDayOff;
-
                 SpannableString spannableString = new SpannableString(fullText);
 
-                // 1. Set the color for the prefix "Day Off: " (from index 0 up to prefix length)
-                spannableString.setSpan(
-                        new ForegroundColorSpan(prefixColor),
-                        0,
-                        prefix.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
-
-                // 2. Set the color for the day off itself (from prefix length to end)
-                spannableString.setSpan(
-                        new ForegroundColorSpan(dayOffColor),
-                        prefix.length(),
-                        fullText.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
+                spannableString.setSpan(new ForegroundColorSpan(prefixColor), 0, prefix.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                spannableString.setSpan(new ForegroundColorSpan(dayOffColor), prefix.length(), fullText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
                 dayOffText.setText(spannableString);
-
             } else {
-                // Scenario 2: Barber is generally available (show text in green/scheduled color)
+                // Scenario 2: Available (or cleaning up garbage data) -> Green
                 dayOffText.setText("No day off");
                 dayOffText.setTextColor(availableColor);
             }
-            // ------------------
 
-            // Observe the single selected barber to update the checkmark
-            // NOTE: The List is populated once, but the checkmark observer runs for every item.
-            // This is generally safe but can be optimized if performance is critical.
+            // ---------------------------------------------------------
+            // ⭐️ Selection Logic
+            // ---------------------------------------------------------
             sharedViewModel.selectedBarber.observe(getViewLifecycleOwner(), selected -> {
                 boolean isThisOneSelected = selected != null && selected.getBarberId() == barber.getBarberId();
                 checkMark.setVisibility(isThisOneSelected ? View.VISIBLE : View.GONE);
+
+                // Optional: Visual feedback on the card itself
+                barberView.setAlpha(isThisOneSelected ? 1.0f : 0.9f);
             });
 
             barberView.setOnClickListener(v -> {
-                // Set this barber as the single selected one in the ViewModel
                 sharedViewModel.selectedBarber.setValue(barber);
             });
+
             binding.barbersContainer.addView(barberView);
         }
     }

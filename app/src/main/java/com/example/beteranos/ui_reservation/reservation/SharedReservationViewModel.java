@@ -48,6 +48,8 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<List<Service>> selectedServices = new MutableLiveData<>(new ArrayList<>());
     public final MutableLiveData<Barber> selectedBarber = new MutableLiveData<>();
     public final MutableLiveData<List<Barber>> allBarbers = new MutableLiveData<>();
+
+    public final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false); // Loading state
     // ⭐️ ADDED: Observe selectedPromo for price calculation ⭐️
     public final MutableLiveData<Promo> selectedPromo = new MutableLiveData<>();
     public final MutableLiveData<List<Promo>> allPromos = new MutableLiveData<>();
@@ -79,11 +81,11 @@ public class SharedReservationViewModel extends ViewModel {
     public final MutableLiveData<String> toastMessage = new MutableLiveData<>();
 
     // --- Use one shared thread pool ---
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public SharedReservationViewModel() {
         fetchServicesFromDB();
-        fetchBarbersFromDB();
+        fetchBarbers();
         fetchPromosFromDB();
 
         // ⭐️ NEW: Set up price calculation observers ⭐️
@@ -167,29 +169,34 @@ public class SharedReservationViewModel extends ViewModel {
         });
     }
 
-    private void fetchBarbersFromDB() {
+    public void fetchBarbers() {
+        isLoading.postValue(true);
         executor.execute(() -> {
-            List<Barber> fetchedBarbers = new ArrayList<>();
+            List<Barber> list = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
-                if (conn == null) throw new Exception("DB Connection Failed");
-
-                String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers";
-                try (PreparedStatement stmt = conn.prepareStatement(query);
-                     ResultSet rs = stmt.executeQuery()) {
+                if (conn != null) {
+                    String query = "SELECT * FROM barbers"; // Fetch all columns
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(query);
 
                     while (rs.next()) {
-                        fetchedBarbers.add(new Barber(
+                        // Ensure your Barber model constructor matches these columns!
+                        list.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
                                 rs.getString("specialization"),
-                                rs.getString("day_off"),
-                                rs.getString("image_url")
+                                rs.getInt("experience_years"),
+                                rs.getString("contact_number"),
+                                rs.getString("image_url"),
+                                rs.getString("day_off")
                         ));
                     }
+                    allBarbers.postValue(list);
                 }
-                allBarbers.postValue(fetchedBarbers);
             } catch (Exception e) {
-                Log.e("ViewModel", "Error fetching barbers: " + e.getMessage(), e);
+                Log.e("SharedViewModel", "Error fetching barbers", e);
+            } finally {
+                isLoading.postValue(false);
             }
         });
     }

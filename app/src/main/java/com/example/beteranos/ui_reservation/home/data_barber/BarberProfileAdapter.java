@@ -1,97 +1,112 @@
-package com.example.beteranos.ui_reservation.home.data_barber; // ⭐️ Correct Package
+package com.example.beteranos.ui_reservation.home.data_barber;
 
 import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ListAdapter;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.beteranos.R;
-import com.example.beteranos.databinding.ItemBarberProfileBinding;
 import com.example.beteranos.models.Barber;
 
-public class BarberProfileAdapter extends ListAdapter<Barber, BarberProfileAdapter.BarberViewHolder> {
+import java.util.ArrayList;
+import java.util.List;
 
-    public BarberProfileAdapter() {
-        super(DIFF_CALLBACK);
+public class BarberProfileAdapter extends RecyclerView.Adapter<BarberProfileAdapter.BarberViewHolder> {
+
+    private List<Barber> barberList = new ArrayList<>();
+
+    public void submitList(List<Barber> barbers) {
+        this.barberList = barbers;
+        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
     public BarberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        ItemBarberProfileBinding binding = ItemBarberProfileBinding.inflate(
-                LayoutInflater.from(parent.getContext()), parent, false);
-        return new BarberViewHolder(binding);
+        // Ensure you are using the correct layout file name here
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_barber_profile, parent, false);
+        return new BarberViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull BarberViewHolder holder, int position) {
-        holder.bind(getItem(position));
+        holder.bind(barberList.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return barberList != null ? barberList.size() : 0;
     }
 
     static class BarberViewHolder extends RecyclerView.ViewHolder {
-        private final ItemBarberProfileBinding binding;
+        ImageView ivBarberImage;
+        TextView tvName, tvSpecialization, tvDayOff;
 
-        public BarberViewHolder(@NonNull ItemBarberProfileBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
+        public BarberViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivBarberImage = itemView.findViewById(R.id.iv_barber_image); // Ensure ID matches XML
+            tvName = itemView.findViewById(R.id.tv_barber_name);
+            tvSpecialization = itemView.findViewById(R.id.tv_specialization);
+            tvDayOff = itemView.findViewById(R.id.tv_day_off);
         }
 
         public void bind(Barber barber) {
+            tvName.setText(barber.getName());
 
-            binding.ivBarberImage.setImageResource(R.drawable.barber_sample);
+            // Specialization styling
+            tvSpecialization.setTypeface(null, Typeface.ITALIC);
+            tvSpecialization.setText("Specializes: " + barber.getSpecialization());
 
-            binding.tvBarberName.setText(barber.getName());
+            // ⭐️ ROBUST IMAGE LOADING with barber_sample DEFAULT ⭐️
+            String imageUrl = barber.getImageUrl();
+            boolean isValidUrl = imageUrl != null && !imageUrl.isEmpty() && !imageUrl.startsWith("/");
 
-            // ⭐️ UPDATED: Set text to Italic and add prefix ⭐️
-
-            String specialization = barber.getSpecialization();
-
-            if (specialization != null && !specialization.isEmpty() && !specialization.equalsIgnoreCase("No day off")) {
-                binding.tvSpecialization.setTypeface(null, Typeface.ITALIC);
-                binding.tvSpecialization.setText("Specializes: " + barber.getSpecialization());
+            if (isValidUrl) {
+                try {
+                    Glide.with(itemView.getContext())
+                            .load(imageUrl)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .placeholder(R.drawable.barber_sample) // ⭐️ Default
+                            .error(R.drawable.barber_sample)       // ⭐️ Fallback
+                            .fallback(R.drawable.barber_sample)    // ⭐️ Fallback
+                            .centerCrop()
+                            .into(ivBarberImage);
+                } catch (Exception e) {
+                    ivBarberImage.setImageResource(R.drawable.barber_sample);
+                }
             } else {
-                binding.tvSpecialization.setTypeface(null, Typeface.ITALIC);
-                binding.tvSpecialization.setText("Specializes: N/A");
+                ivBarberImage.setImageResource(R.drawable.barber_sample);
             }
 
+            // Day Off Logic (Green for Available, Red for Day Off)
             String dayOff = barber.getDayOff();
+            boolean isInvalidData = dayOff != null && (dayOff.startsWith("content:") || dayOff.startsWith("/"));
+            boolean hasSpecificDayOff = dayOff != null && !dayOff.isEmpty()
+                    && !dayOff.equalsIgnoreCase("No day off")
+                    && !isInvalidData;
 
-            // Check if dayOff is NOT null, NOT empty, and NOT "No day off"
-            if (dayOff != null && !dayOff.isEmpty() && !dayOff.equalsIgnoreCase("No day off")) {
-                // Case: Has a specific Day Off -> Make it Red (Cancelled style)
-                binding.tvDayOff.setText("Day Off: " + dayOff);
-                binding.tvDayOff.setBackgroundResource(R.drawable.rounded_status_cancelled);
+            if (hasSpecificDayOff) {
+                // RED Style
+                String fullText = "Day Off: " + dayOff;
+                tvDayOff.setText(fullText);
+                tvDayOff.setBackgroundResource(R.drawable.rounded_status_cancelled); // Red background
             } else {
-                // Case: Null or "No Day Off" -> Make it Green
-                binding.tvDayOff.setText("No Day Off");
-                binding.tvDayOff.setBackgroundResource(R.drawable.rounded_status_green);
+                // GREEN Style
+                tvDayOff.setText("No Day Off");
+                tvDayOff.setBackgroundResource(R.drawable.rounded_status_green); // Green background
             }
-
-            // Ensure it is visible
-            binding.tvDayOff.setVisibility(View.VISIBLE);
-
-            Glide.with(itemView.getContext())
-                    .load(barber.getImageUrl())
-                    .placeholder(R.drawable.ic_image_placeholder)
-                    .error(R.drawable.ic_image_placeholder)
-                    .centerCrop()
-                    .into(binding.ivBarberImage);
+            tvDayOff.setVisibility(View.VISIBLE);
         }
     }
-
-    private static final DiffUtil.ItemCallback<Barber> DIFF_CALLBACK = new DiffUtil.ItemCallback<Barber>() {
-        @Override
-        public boolean areItemsTheSame(@NonNull Barber oldItem, @NonNull Barber newItem) {
-            return oldItem.getBarberId() == newItem.getBarberId();
-        }
-
-        @Override
-        public boolean areContentsTheSame(@NonNull Barber oldItem, @NonNull Barber newItem) {
-            return oldItem.equals(newItem);
-        }
-    };
 }
