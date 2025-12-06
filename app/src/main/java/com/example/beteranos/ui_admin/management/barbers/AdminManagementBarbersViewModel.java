@@ -34,8 +34,6 @@ public class AdminManagementBarbersViewModel extends ViewModel {
         fetchBarbers();
     }
 
-    // fetchBarbers method remains correct
-
     public void fetchBarbers() {
         _isLoading.postValue(true);
         executor.execute(() -> {
@@ -44,11 +42,13 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 if (conn == null) {
                     throw new Exception("Database connection failed");
                 }
-                String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers ORDER BY name ASC";
+                // ⭐️ UPDATED: Fetch 'is_active' column
+                String query = "SELECT barber_id, name, specialization, day_off, image_url, is_active FROM barbers ORDER BY name ASC";
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
+                        // ⭐️ UPDATED: Use 8-parameter constructor to include visibility status
                         barberList.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
@@ -56,7 +56,8 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                                 0, // Dummy experience_years
                                 "N/A", // Dummy contact_number
                                 rs.getString("image_url"),
-                                rs.getString("day_off")
+                                rs.getString("day_off"),
+                                rs.getBoolean("is_active") // ⭐️ Pass the status
                         ));
                     }
                     _allBarbers.postValue(barberList);
@@ -70,25 +71,21 @@ public class AdminManagementBarbersViewModel extends ViewModel {
         });
     }
 
-    /**
-     * 🔑 FIX: Updated signature to match the 3 arguments (name, specialization, imageUrl) passed by the Fragment.
-     */
     public void addBarber(String name, String specialization, String imageUrl, String dayOff) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
 
-                // 🔑 FIX 1: The query must include the 'day_off' column.
-                String query = "INSERT INTO barbers (name, specialization, image_url, day_off) VALUES (?, ?, ?, ?)";
+                // ⭐️ UPDATED: Insert 'is_active' with default value 1 (Visible)
+                String query = "INSERT INTO barbers (name, specialization, image_url, day_off, is_active) VALUES (?, ?, ?, ?, ?)";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, specialization);
                     stmt.setString(3, imageUrl);
-
-                    // 🔑 FIX 2: Use the 'dayOff' parameter passed from the Fragment.
                     stmt.setString(4, dayOff);
+                    stmt.setInt(5, 1); // ⭐️ Default to Active
 
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
@@ -100,29 +97,24 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 Log.e(TAG, "Error adding barber: " + e.getMessage(), e);
                 _toastMessage.postValue("Error adding barber: " + e.getMessage());
             } finally {
-                // Ensure loading state is turned off regardless of success or failure
                 _isLoading.postValue(false);
             }
         });
     }
 
-    /**
-     * 🔑 FIX: Updated signature to match the 5 arguments (ID, name, specialization, imageUrl, dayOff) passed by the Fragment.
-     */
     public void updateBarber(int barberId, String name, String specialization, String imageUrl, String dayOff) {
         _isLoading.postValue(true);
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("Database connection failed");
 
-                // Corrected query to update image_url AND day_off
                 String query = "UPDATE barbers SET name = ?, specialization = ?, image_url = ?, day_off = ? WHERE barber_id = ?";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setString(1, name);
                     stmt.setString(2, specialization);
                     stmt.setString(3, imageUrl);
-                    stmt.setString(4, dayOff);   // Set the Day Off
+                    stmt.setString(4, dayOff);
                     stmt.setInt(5, barberId);
 
                     int rowsAffected = stmt.executeUpdate();
@@ -135,7 +127,34 @@ public class AdminManagementBarbersViewModel extends ViewModel {
                 Log.e(TAG, "Error updating barber: " + e.getMessage(), e);
                 _toastMessage.postValue("Error updating barber: " + e.getMessage());
             } finally {
-                // Ensure loading state is turned off regardless of success or failure
+                _isLoading.postValue(false);
+            }
+        });
+    }
+
+    // ⭐️ NEW METHOD: Toggle Visibility (Hide/Show) ⭐️
+    public void toggleBarberVisibility(Barber barber) {
+        _isLoading.postValue(true);
+        executor.execute(() -> {
+            boolean newStatus = !barber.isActive(); // Flip status
+            try (Connection conn = new ConnectionClass().CONN()) {
+                if (conn == null) throw new Exception("Database connection failed");
+
+                String query = "UPDATE barbers SET is_active = ? WHERE barber_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setBoolean(1, newStatus);
+                    stmt.setInt(2, barber.getBarberId());
+
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        _toastMessage.postValue("Barber is now " + (newStatus ? "Visible" : "Hidden"));
+                        fetchBarbers(); // Refresh list to update UI icon
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling visibility: " + e.getMessage(), e);
+                _toastMessage.postValue("Error updating visibility");
+            } finally {
                 _isLoading.postValue(false);
             }
         });
@@ -163,7 +182,6 @@ public class AdminManagementBarbersViewModel extends ViewModel {
         });
     }
 
-    // Call this to clear the toast message after it's shown
     public void clearToastMessage() {
         _toastMessage.setValue(null);
     }

@@ -23,6 +23,7 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
     public interface OnBarberActionListener {
         void onEditClick(Barber barber);
         void onDeleteClick(Barber barber);
+        void onToggleVisibilityClick(Barber barber); // ⭐️ NEW ACTION
     }
 
     public BarbersManagementAdapter(@NonNull OnBarberActionListener listener) {
@@ -33,7 +34,6 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
     @NonNull
     @Override
     public BarberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Ensure R.layout.item_manage_barber is the correct XML file name
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_manage_barber, parent, false);
         return new BarberViewHolder(view);
@@ -42,58 +42,67 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
     @Override
     public void onBindViewHolder(@NonNull BarberViewHolder holder, int position) {
         Barber barber = getItem(position);
-        // Pass the listener reference
         holder.bind(barber, listener);
     }
 
     static class BarberViewHolder extends RecyclerView.ViewHolder {
         private final ImageView barberImage;
         private final TextView nameText, specText;
-        private final TextView dayOffText; // TextView for Day Off
-        private final ImageButton editButton, deleteButton;
+        private final TextView dayOffText;
+        // ⭐️ Added toggleButton
+        private final ImageButton editButton, deleteButton, toggleButton;
 
         public BarberViewHolder(@NonNull View itemView) {
             super(itemView);
             barberImage = itemView.findViewById(R.id.barber_image);
             nameText = itemView.findViewById(R.id.barber_name_text);
             specText = itemView.findViewById(R.id.barber_spec_text);
-            dayOffText = itemView.findViewById(R.id.barber_day_off_text); // Initialized TextView for Day Off
+            dayOffText = itemView.findViewById(R.id.barber_day_off_text);
+
+            // Buttons
             editButton = itemView.findViewById(R.id.btn_edit);
             deleteButton = itemView.findViewById(R.id.btn_delete);
+            toggleButton = itemView.findViewById(R.id.toggle_visibility_button); // ⭐️ NEW ID
         }
 
         public void bind(Barber barber, OnBarberActionListener listener) {
             nameText.setText(barber.getName());
             specText.setText(barber.getSpecialization());
 
-            // Bind the Day Off data
+            // Bind Day Off
             String dayOff = barber.getDayOff();
             String dayOffDisplay = "Day Off: " + (dayOff != null && !dayOff.isEmpty() ? dayOff : "N/A");
             dayOffText.setText(dayOffDisplay);
 
-            // 🔑 RECOMMENDED OPTIMIZATION: Robust Image Loading
+            // ⭐️ VISIBILITY TOGGLE LOGIC ⭐️
+            if (barber.isActive()) {
+                toggleButton.setImageResource(R.drawable.ic_visibility);
+                toggleButton.setAlpha(1.0f);
+            } else {
+                toggleButton.setImageResource(R.drawable.ic_visibility_off);
+                toggleButton.setAlpha(0.5f); // Dim to show it's hidden
+            }
+
+            // Robust Image Loading
             String imageUrl = barber.getImageUrl();
-
-            // Determine the model to load: either the URL string or the resource ID.
-            // Explicitly checking for null/empty/invalid URL before calling .load() with the URL
-            // helps prevent the "Received null model" warning.
-
             Object modelToLoad;
 
             if (imageUrl != null && !imageUrl.isEmpty() && !imageUrl.equalsIgnoreCase("null")) {
-                modelToLoad = imageUrl; // Use the actual URL
+                modelToLoad = imageUrl;
             } else {
-                modelToLoad = R.drawable.barber_sample; // Use the local resource ID
+                modelToLoad = R.drawable.barber_sample;
             }
 
             Glide.with(itemView.getContext())
                     .load(modelToLoad)
-                    .placeholder(R.drawable.barber_sample) // Show default while loading
-                    .error(R.drawable.barber_sample)       // Show default if loading fails (only relevant if modelToLoad was a URL)
+                    .placeholder(R.drawable.barber_sample)
+                    .error(R.drawable.barber_sample)
                     .into(barberImage);
 
+            // Click Listeners
             editButton.setOnClickListener(v -> listener.onEditClick(barber));
             deleteButton.setOnClickListener(v -> listener.onDeleteClick(barber));
+            toggleButton.setOnClickListener(v -> listener.onToggleVisibilityClick(barber)); // ⭐️ NEW Listener
         }
     }
 
@@ -106,11 +115,11 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
 
                 @Override
                 public boolean areContentsTheSame(@NonNull Barber oldItem, @NonNull Barber newItem) {
-                    // Safe comparison for all fields, including the new 'dayOff'
                     return Objects.equals(oldItem.getName(), newItem.getName()) &&
                             Objects.equals(oldItem.getSpecialization(), newItem.getSpecialization()) &&
                             Objects.equals(oldItem.getDayOff(), newItem.getDayOff()) &&
-                            Objects.equals(oldItem.getImageUrl(), newItem.getImageUrl());
+                            Objects.equals(oldItem.getImageUrl(), newItem.getImageUrl()) &&
+                            oldItem.isActive() == newItem.isActive(); // ⭐️ Check visibility change
                 }
             };
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -33,7 +34,7 @@
             android:textColor="@android:color/black"
             android:textSize="18sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/btn_edit"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_visibility_button"
             app:layout_constraintStart_toEndOf="@+id/barber_image"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Barber Name" />
@@ -46,7 +47,7 @@
             android:layout_marginTop="4dp"
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp"
-            app:layout_constraintEnd_toStartOf="@+id/btn_edit"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_visibility_button"
             app:layout_constraintStart_toEndOf="@+id/barber_image"
             app:layout_constraintTop_toBottomOf="@id/barber_name_text"
             tools:text="Fades, Classic Cuts" />
@@ -60,10 +61,23 @@
             android:textSize="12sp"
             android:textStyle="italic"
             android:textColor="@color/black"
-            app:layout_constraintEnd_toStartOf="@+id/btn_edit"
+            app:layout_constraintEnd_toStartOf="@+id/toggle_visibility_button"
             app:layout_constraintStart_toEndOf="@+id/barber_image"
             app:layout_constraintTop_toBottomOf="@id/barber_spec_text"
             tools:text="Day Off: Monday" />
+
+        <ImageButton
+            android:id="@+id/toggle_visibility_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_visibility"
+            android:contentDescription="Toggle Visibility"
+            app:tint="#757575"
+            app:layout_constraintEnd_toStartOf="@+id/btn_edit"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
         <ImageButton
             android:id="@+id/btn_edit"
             android:layout_width="40dp"

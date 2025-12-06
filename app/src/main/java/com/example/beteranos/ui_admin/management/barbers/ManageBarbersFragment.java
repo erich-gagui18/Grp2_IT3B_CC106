@@ -118,30 +118,27 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                         return;
                     }
 
-                    // --- URI PERSISTENCE & UI UPDATE BLOCK ---
+                    // ⭐️ FIX: Persist Permissions Here ⭐️
                     try {
-                        // Request persistent read access
-                        requireContext().getContentResolver().takePersistableUriPermission(
-                                uri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        );
+                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION; // Optional write
 
-                        tempImageUri = uri;
-
-                        // ✅ IMMEDIATE UI UPDATE using the stored profileImageView reference
-                        if (profileImageView != null) {
-                            Glide.with(this)
-                                    .load(tempImageUri)
-                                    .centerCrop()
-                                    .into(profileImageView);
-
-                            Toast.makeText(getContext(), "Image selected. Press 'Save' to confirm.", Toast.LENGTH_SHORT).show();
-                        }
-
+                        // Check if the URI allows taking permissions (some do not)
+                        requireContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
                     } catch (SecurityException e) {
-                        Log.e(TAG, "Error securing persistent URI permission for " + uri, e);
-                        Toast.makeText(getContext(), "Error: Failed to secure permanent image access.", Toast.LENGTH_LONG).show();
-                        tempImageUri = null;
+                        Log.e(TAG, "Failed to take persistable URI permission: " + e.getMessage());
+                        // Even if this fails, we can try to use the URI temporarily
+                    }
+
+                    tempImageUri = uri;
+
+                    if (profileImageView != null) {
+                        Glide.with(this)
+                                .load(tempImageUri)
+                                .centerCrop()
+                                .into(profileImageView);
+
+                        Toast.makeText(getContext(), "Image selected", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -298,6 +295,20 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                 .setMessage("Are you sure you want to delete " + barber.getName() + "? This cannot be undone.")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     viewModel.deleteBarber(barber);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ⭐️ NEW: Implement the missing method from the Interface
+    @Override
+    public void onToggleVisibilityClick(Barber barber) {
+        String status = barber.isActive() ? "Hide" : "Show";
+        new AlertDialog.Builder(requireContext())
+                .setTitle(status + " Barber")
+                .setMessage("Do you want to " + status.toLowerCase() + " this barber from customers?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    viewModel.toggleBarberVisibility(barber);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

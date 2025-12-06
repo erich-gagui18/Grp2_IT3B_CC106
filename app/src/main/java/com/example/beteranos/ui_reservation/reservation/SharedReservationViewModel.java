@@ -179,12 +179,13 @@ public class SharedReservationViewModel extends ViewModel {
             List<Barber> list = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn != null) {
-                    String query = "SELECT * FROM barbers"; // Fetch all columns
+                    // ⭐️ UPDATE: Added 'ORDER BY name ASC' to sort alphabetically
+                    String query = "SELECT * FROM barbers WHERE is_active = 1 ORDER BY name ASC";
+
                     Statement stmt = conn.createStatement();
                     ResultSet rs = stmt.executeQuery(query);
 
                     while (rs.next()) {
-                        // Ensure your Barber model constructor matches these columns!
                         list.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
@@ -192,7 +193,8 @@ public class SharedReservationViewModel extends ViewModel {
                                 rs.getInt("experience_years"),
                                 rs.getString("contact_number"),
                                 rs.getString("image_url"),
-                                rs.getString("day_off")
+                                rs.getString("day_off"),
+                                rs.getBoolean("is_active")
                         ));
                     }
                     allBarbers.postValue(list);
