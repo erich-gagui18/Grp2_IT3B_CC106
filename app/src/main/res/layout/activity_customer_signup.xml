@@ -36,11 +36,26 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/last_name_layout"
+            android:id="@+id/middle_name_layout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/first_name_layout"
+            android:layout_marginTop="16dp"
+            android:hint="Middle Name (Optional)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/middle_name_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName|textCapWords" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/last_name_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/middle_name_layout"
             android:layout_marginTop="16dp"
             android:hint="Last Name">
             <com.google.android.material.textfield.TextInputEditText
@@ -96,13 +111,31 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/guest_code_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/password_layout"
+            android:layout_marginTop="16dp"
+            android:hint="Guest Code">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/guestCodeEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapCharacters"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <Button
             android:id="@+id/signup_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/password_layout"
-            android:layout_marginTop="24dp"
+            android:layout_below="@id/guest_code_layout"
+            android:layout_marginTop="32dp"
             android:padding="16dp"
             android:text="Sign Up" />
+
     </RelativeLayout>
 </ScrollView>

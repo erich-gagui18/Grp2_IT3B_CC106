@@ -12,6 +12,7 @@ import com.example.beteranos.models.Review;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Types; // ⭐️ Added for Types.BLOB
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -47,24 +48,27 @@ public class ReviewsViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // --- LIFO (Last In, First Out) ---
+                // ⭐️ UPDATED QUERY: Added 'r.review_image' to the SELECT statement
                 String query = "SELECT r.review_id, CONCAT(c.first_name, ' ', SUBSTR(c.last_name, 1, 1), '.') AS customer_name, " +
-                        "b.name AS barber_name, r.rating, r.comment, r.created_at " +
+                        "b.name AS barber_name, r.rating, r.comment, r.created_at, r.review_image " + // <--- Added review_image
                         "FROM reviews r " +
                         "JOIN customers c ON r.customer_id = c.customer_id " +
                         "JOIN barbers b ON r.barber_id = b.barber_id " +
-                        "ORDER BY r.created_at DESC"; // <-- ORDER BY DESC handles LIFO
+                        "ORDER BY r.created_at DESC";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query);
                      ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
+                        // ⭐️ Pass image bytes to Review constructor
+                        // Note: Ensure your Review.java model constructor accepts this byte[]!
                         reviewList.add(new Review(
                                 rs.getInt("review_id"),
                                 rs.getString("customer_name"),
                                 rs.getString("barber_name"),
                                 rs.getInt("rating"),
                                 rs.getString("comment"),
-                                rs.getTimestamp("created_at")
+                                rs.getTimestamp("created_at"),
+                                rs.getBytes("review_image") // <--- Fetch image bytes
                         ));
                     }
                     _reviewsList.postValue(reviewList);
@@ -84,7 +88,6 @@ public class ReviewsViewModel extends ViewModel {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
 
-                // 🔑 UPDATED QUERY: Select the new 'image_url' column
                 String query = "SELECT barber_id, name, specialization, day_off, image_url FROM barbers";
 
                 try (PreparedStatement stmt = conn.prepareStatement(query);
@@ -108,7 +111,8 @@ public class ReviewsViewModel extends ViewModel {
         });
     }
 
-    public void submitReview(int customerId, int barberId, int rating, String comment) {
+    // ⭐️ UPDATED: Accepts byte[] imageBytes as the 5th parameter
+    public void submitReview(int customerId, int barberId, int rating, String comment, byte[] imageBytes) {
         if (customerId == -1) {
             _toastMessage.postValue("You must be logged in to post a review.");
             return;
@@ -118,12 +122,22 @@ public class ReviewsViewModel extends ViewModel {
         executor.execute(() -> {
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn == null) throw new Exception("DB Connection Failed");
-                String query = "INSERT INTO reviews (customer_id, barber_id, rating, comment) VALUES (?, ?, ?, ?)";
+
+                // ⭐️ UPDATED QUERY: Insert review_image
+                String query = "INSERT INTO reviews (customer_id, barber_id, rating, comment, review_image) VALUES (?, ?, ?, ?, ?)";
+
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setInt(1, customerId);
                     stmt.setInt(2, barberId);
                     stmt.setInt(3, rating);
                     stmt.setString(4, comment);
+
+                    // ⭐️ Handle Image BLOB
+                    if (imageBytes != null && imageBytes.length > 0) {
+                        stmt.setBytes(5, imageBytes);
+                    } else {
+                        stmt.setNull(5, Types.BLOB);
+                    }
 
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
@@ -137,7 +151,7 @@ public class ReviewsViewModel extends ViewModel {
                 Log.e(TAG, "Error submitting review: " + e.getMessage(), e);
                 _toastMessage.postValue("Error submitting review. Please try again.");
             } finally {
-                // isLoading will be set to false by fetchReviews()
+                // Loading state is turned off inside fetchReviews()
             }
         });
     }
