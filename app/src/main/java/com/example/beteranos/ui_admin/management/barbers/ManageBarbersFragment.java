@@ -1,6 +1,7 @@
 package com.example.beteranos.ui_admin.management.barbers;
 
 import android.app.Activity;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +11,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -25,31 +29,23 @@ import com.example.beteranos.R;
 import com.example.beteranos.databinding.DialogAddBarberBinding;
 import com.example.beteranos.databinding.FragmentManageBarbersBinding;
 import com.example.beteranos.models.Barber;
-import android.widget.ImageView;
-import android.widget.ArrayAdapter;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
-import static android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION;
+import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
 
 public class ManageBarbersFragment extends Fragment implements BarbersManagementAdapter.OnBarberActionListener {
 
     private static final String TAG = "ManageBarbersFragment";
-
     private FragmentManageBarbersBinding binding;
-    // NOTE: Assuming AdminManagementBarbersViewModel has been created/updated
     private AdminManagementBarbersViewModel viewModel;
     private BarbersManagementAdapter adapter;
-
-    // Stores the temporary URI of a newly selected image, or the existing image URL
     private Uri tempImageUri = null;
-
-    // Launcher for selecting an image from the gallery
     private ActivityResultLauncher<Intent> imagePickerLauncher;
-
-    // CRITICAL: Holds the reference to the ImageView inside the currently open dialog
     private ImageView profileImageView;
-
-    // Define the fixed list of Day Off choices
     private final String[] DAY_OFF_CHOICES = new String[]{"No day off", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
 
     @Override
@@ -67,7 +63,7 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
         setupRecyclerView();
 
         binding.fabAddBarber.setOnClickListener(v -> {
-            tempImageUri = null; // Clear image URI for a new addition
+            tempImageUri = null;
             showAddOrEditDialog(null);
         });
 
@@ -81,7 +77,6 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
     }
 
     private void observeViewModel() {
-        // ... (Observation logic remains efficient) ...
         viewModel.allBarbers.observe(getViewLifecycleOwner(), barbers -> {
             adapter.submitList(barbers);
             boolean isEmpty = (barbers == null || barbers.isEmpty());
@@ -106,69 +101,72 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 imageResult -> {
-                    if (imageResult.getResultCode() != Activity.RESULT_OK) {
-                        return;
-                    }
-
+                    if (imageResult.getResultCode() != Activity.RESULT_OK) return;
                     Intent data = imageResult.getData();
                     Uri uri = (data != null) ? data.getData() : null;
+                    if (uri == null) return;
 
-                    if (uri == null) {
-                        Log.w(TAG, "Image selection succeeded but URI was null.");
-                        return;
-                    }
-
-                    // ⭐️ FIX: Persist Permissions Here ⭐️
                     try {
-                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION; // Optional write
-
-                        // Check if the URI allows taking permissions (some do not)
+                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
                         requireContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
                     } catch (SecurityException e) {
-                        Log.e(TAG, "Failed to take persistable URI permission: " + e.getMessage());
-                        // Even if this fails, we can try to use the URI temporarily
+                        Log.e(TAG, "Failed to take permission: " + e.getMessage());
                     }
 
                     tempImageUri = uri;
-
                     if (profileImageView != null) {
-                        Glide.with(this)
-                                .load(tempImageUri)
-                                .centerCrop()
-                                .into(profileImageView);
-
-                        Toast.makeText(getContext(), "Image selected", Toast.LENGTH_SHORT).show();
+                        Glide.with(this).load(tempImageUri).centerCrop().into(profileImageView);
                     }
                 });
     }
 
+    // ⭐️ UPDATED: Logic to force 12-hour format (AM/PM) ⭐️
+    private void showTimePicker(EditText targetView) {
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int minute = cal.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(),
+                (view, hourOfDay, minuteOfHour) -> {
+                    // Create a calendar object with the selected time
+                    Calendar selectedTime = Calendar.getInstance();
+                    selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    selectedTime.set(Calendar.MINUTE, minuteOfHour);
+
+                    // ⭐️ Format to "8:00 am" or "7:00 pm"
+                    SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.US);
+                    String formattedTime = sdf.format(selectedTime.getTime()).toLowerCase();
+
+                    targetView.setText(formattedTime);
+                },
+                hour,
+                minute,
+                false); // ⭐️ FALSE = Show AM/PM toggle (Standard Time)
+
+        timePickerDialog.show();
+    }
+
     private void showAddOrEditDialog(@Nullable Barber existingBarber) {
         DialogAddBarberBinding dialogBinding = DialogAddBarberBinding.inflate(LayoutInflater.from(getContext()));
-
-        // --- DAY OFF CHOICES SETUP ---
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_dropdown_item_1line,
-                DAY_OFF_CHOICES
-        );
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, DAY_OFF_CHOICES);
         dialogBinding.dayOffEditText.setAdapter(arrayAdapter);
 
-        // --- PRE-POPULATE DATA ---
+        // ⭐️ Set up Time Pickers Click Listeners
+        dialogBinding.startTimeEditText.setOnClickListener(v -> showTimePicker(dialogBinding.startTimeEditText));
+        dialogBinding.endTimeEditText.setOnClickListener(v -> showTimePicker(dialogBinding.endTimeEditText));
+
         if (existingBarber != null) {
             dialogBinding.nameEditText.setText(existingBarber.getName());
             dialogBinding.specEditText.setText(existingBarber.getSpecialization());
+            dialogBinding.dayOffEditText.setText(existingBarber.getDayOff(), false);
 
-            // Pre-populate Day Off
-            String currentDayOff = existingBarber.getDayOff();
-            // Display the actual string from the model (will be "No day off" or the day)
-            dialogBinding.dayOffEditText.setText(currentDayOff, false);
+            // ⭐️ Pre-populate Times (Default to standard if null)
+            dialogBinding.startTimeEditText.setText(existingBarber.getStartTime() != null ? existingBarber.getStartTime() : "9:00 am");
+            dialogBinding.endTimeEditText.setText(existingBarber.getEndTime() != null ? existingBarber.getEndTime() : "5:00 pm");
 
-            // Pre-populate Image (Omitted for brevity, no changes here)
             String currentImageUrl = existingBarber.getImageUrl();
             if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-                Glide.with(this)
-                        .load(currentImageUrl)
+                Glide.with(this).load(currentImageUrl)
                         .placeholder(R.drawable.barber_sample)
                         .error(R.drawable.barber_sample)
                         .into(dialogBinding.barberImageView);
@@ -178,79 +176,54 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                 tempImageUri = null;
             }
         } else {
-            // Set default day off for a new barber
             dialogBinding.dayOffEditText.setText("No day off", false);
             dialogBinding.barberImageView.setImageResource(R.drawable.barber_sample);
+
+            // ⭐️ Default Times for new barber (AM/PM format)
+            dialogBinding.startTimeEditText.setText("9:00 am");
+            dialogBinding.endTimeEditText.setText("5:00 pm");
             tempImageUri = null;
         }
 
-        // --- IMAGE PICKER SETUP --- (Omitted for brevity, no changes here)
         dialogBinding.btnSelectImage.setOnClickListener(v -> {
             profileImageView = dialogBinding.barberImageView;
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
-            intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            intent.addFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
             imagePickerLauncher.launch(intent);
         });
 
-
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setView(dialogBinding.getRoot());
-
-        String positiveButtonText = existingBarber != null ? "Save" : "Add";
-        String dialogTitle = existingBarber != null ? "Edit Barber" : "Add New Barber";
-
-        builder.setTitle(dialogTitle);
-        builder.setPositiveButton(positiveButtonText, null);
-
+        builder.setTitle(existingBarber != null ? "Edit Barber" : "Add New Barber");
+        builder.setPositiveButton(existingBarber != null ? "Save" : "Add", null);
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             profileImageView = null;
             dialog.dismiss();
         });
 
         AlertDialog dialog = builder.create();
-
-        // Override the positive button's click listener for validation
         dialog.setOnShowListener(dialogInterface -> {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String name = dialogBinding.nameEditText.getText().toString().trim();
                 String specialization = dialogBinding.specEditText.getText().toString().trim();
                 String dayOffInput = dialogBinding.dayOffEditText.getText().toString().trim();
 
-                // --- ⭐️ CRITICAL CHANGE HERE ⭐️ ---
-                // Convert "No day off" string to null for database storage
+                // ⭐️ Get Time Inputs
+                String startTime = dialogBinding.startTimeEditText.getText().toString().trim();
+                String endTime = dialogBinding.endTimeEditText.getText().toString().trim();
+
                 String finalDayOff = dayOffInput.equals("No day off") ? null : dayOffInput;
-
-                // Determine the final image path to save
-                String finalImageUrl = tempImageUri != null ?
-                        tempImageUri.toString() :
-                        (existingBarber != null ? existingBarber.getImageUrl() : null); // Use null if no existing URL and no new URI
-
+                String finalImageUrl = tempImageUri != null ? tempImageUri.toString() : (existingBarber != null ? existingBarber.getImageUrl() : null);
 
                 boolean isValid = true;
-                if (TextUtils.isEmpty(name)) {
-                    dialogBinding.nameLayout.setError("Name is required");
-                    isValid = false;
-                } else {
-                    dialogBinding.nameLayout.setError(null);
-                }
+                if (TextUtils.isEmpty(name)) { dialogBinding.nameLayout.setError("Required"); isValid = false; }
+                if (TextUtils.isEmpty(specialization)) { dialogBinding.specLayout.setError("Required"); isValid = false; }
 
-                if (TextUtils.isEmpty(specialization)) {
-                    dialogBinding.specLayout.setError("Specialization is required");
-                    isValid = false;
-                } else {
-                    dialogBinding.specLayout.setError(null);
-                }
-
-                // Day Off Validation: Check against the raw input string
-                if (TextUtils.isEmpty(dayOffInput) || dayOffInput.equals("None")) {
-                    dialogBinding.dayOffLayout.setError("Day off selection is required");
-                    isValid = false;
-                } else {
-                    dialogBinding.dayOffLayout.setError(null);
-                }
-
+                // ⭐️ Validate Time Inputs
+                if (TextUtils.isEmpty(startTime)) { dialogBinding.startTimeLayout.setError("Required"); isValid = false; }
+                if (TextUtils.isEmpty(endTime)) { dialogBinding.endTimeLayout.setError("Required"); isValid = false; }
 
                 if (isValid) {
                     if (existingBarber != null) {
@@ -259,32 +232,25 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
                                 name,
                                 specialization,
                                 finalImageUrl,
-                                finalDayOff // Pass the potentially NULL value
+                                finalDayOff,
+                                startTime, // ⭐️ Pass Time
+                                endTime    // ⭐️ Pass Time
                         );
                     } else {
-                        viewModel.addBarber(name, specialization, finalImageUrl, finalDayOff); // Pass the potentially NULL value
+                        viewModel.addBarber(name, specialization, finalImageUrl, finalDayOff, startTime, endTime);
                     }
-
                     profileImageView = null;
                     dialog.dismiss();
                 }
             });
         });
-
         dialog.show();
     }
 
-    // --- Adapter Click Listeners ---
-
     @Override
     public void onEditClick(Barber barber) {
-        // Prepare tempImageUri from the existing barber's URL for editing
         String currentUrl = barber.getImageUrl();
-        if (currentUrl != null && !currentUrl.isEmpty()) {
-            tempImageUri = Uri.parse(currentUrl);
-        } else {
-            tempImageUri = null;
-        }
+        tempImageUri = (currentUrl != null && !currentUrl.isEmpty()) ? Uri.parse(currentUrl) : null;
         showAddOrEditDialog(barber);
     }
 
@@ -292,24 +258,19 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
     public void onDeleteClick(Barber barber) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Barber")
-                .setMessage("Are you sure you want to delete " + barber.getName() + "? This cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    viewModel.deleteBarber(barber);
-                })
+                .setMessage("Delete " + barber.getName() + "?")
+                .setPositiveButton("Delete", (dialog, which) -> viewModel.deleteBarber(barber))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    // ⭐️ NEW: Implement the missing method from the Interface
     @Override
     public void onToggleVisibilityClick(Barber barber) {
         String status = barber.isActive() ? "Hide" : "Show";
         new AlertDialog.Builder(requireContext())
                 .setTitle(status + " Barber")
-                .setMessage("Do you want to " + status.toLowerCase() + " this barber from customers?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    viewModel.toggleBarberVisibility(barber);
-                })
+                .setMessage("Do you want to " + status.toLowerCase() + " this barber?")
+                .setPositiveButton("Yes", (dialog, which) -> viewModel.toggleBarberVisibility(barber))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
@@ -317,7 +278,6 @@ public class ManageBarbersFragment extends Fragment implements BarbersManagement
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Crucial for memory management: clear all references tied to the view/dialog
         binding = null;
         tempImageUri = null;
         profileImageView = null;

@@ -179,13 +179,30 @@ public class SharedReservationViewModel extends ViewModel {
             List<Barber> list = new ArrayList<>();
             try (Connection conn = new ConnectionClass().CONN()) {
                 if (conn != null) {
-                    // ⭐️ UPDATE: Added 'ORDER BY name ASC' to sort alphabetically
-                    String query = "SELECT * FROM barbers WHERE is_active = 1 ORDER BY name ASC";
+                    // ⭐️ UPDATED QUERY:
+                    // 1. Changed 's.day_of_week = 2' to "s.day_of_week = 'Monday'" to match your DB Schema ENUM/String.
+                    // 2. We use Monday's schedule as the "General Hours" snapshot.
+                    String query = "SELECT b.barber_id, b.name, b.specialization, b.experience_years, " +
+                            "b.contact_number, b.image_url, b.day_off, b.is_active, " +
+                            "s.start_time, s.end_time " +
+                            "FROM barbers b " +
+                            "LEFT JOIN barber_schedules s ON b.barber_id = s.barber_id AND s.day_of_week = 'Monday' " +
+                            "WHERE b.is_active = 1 " +
+                            "ORDER BY b.name ASC";
 
                     Statement stmt = conn.createStatement();
                     ResultSet rs = stmt.executeQuery(query);
 
                     while (rs.next()) {
+                        // Handle nulls if schedule doesn't exist yet
+                        String start = rs.getString("start_time");
+                        String end = rs.getString("end_time");
+
+                        // Fallback default values
+                        if (start == null) start = "8:00 am";
+                        if (end == null) end = "7:00 pm";
+
+                        // ⭐️ Use the 10-parameter Constructor
                         list.add(new Barber(
                                 rs.getInt("barber_id"),
                                 rs.getString("name"),
@@ -194,7 +211,9 @@ public class SharedReservationViewModel extends ViewModel {
                                 rs.getString("contact_number"),
                                 rs.getString("image_url"),
                                 rs.getString("day_off"),
-                                rs.getBoolean("is_active")
+                                rs.getBoolean("is_active"),
+                                start, // ⭐️ Start Time
+                                end    // ⭐️ End Time
                         ));
                     }
                     allBarbers.postValue(list);
@@ -270,7 +289,7 @@ public class SharedReservationViewModel extends ViewModel {
         String selectedDayName = dayFormat.format(new Date(dateInMillis));
 
         // 2. Check if this day is in the barber's days_off string
-        // NOTE: Your fetchBarbersFromDB uses "day_off", so we call .getDaysOff()
+        // NOTE: Your fetchBarbers uses "day_off", so we call .getDaysOff()
         String daysOff = barber.getDayOff();
         if (daysOff != null && daysOff.contains(selectedDayName)) {
             // This is the barber's day off. Post an empty list immediately.

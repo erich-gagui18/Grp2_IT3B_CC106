@@ -18,8 +18,7 @@ import com.example.beteranos.databinding.FragmentBarbersBinding;
 import com.example.beteranos.models.Barber;
 import com.example.beteranos.ui_reservation.reservation.SharedReservationViewModel;
 import com.example.beteranos.ui_reservation.reservation.parent_fragments.ReservationFragment;
-import com.example.beteranos.ConnectionClass; // Added in case you need it, though not strictly required here
-import com.bumptech.glide.Glide; // 🔑 NEW: Import for image loading
+import com.bumptech.glide.Glide;
 
 import java.util.List;
 import android.text.SpannableString;
@@ -44,7 +43,6 @@ public class BarbersFragment extends Fragment {
                 Toast.makeText(getContext(), "Please select a barber", Toast.LENGTH_SHORT).show();
             } else {
                 if (getParentFragment() instanceof ReservationFragment) {
-                    // Navigate to the next step, e.g., Promo
                     ((ReservationFragment) getParentFragment()).navigateToPromo();
                 }
             }
@@ -61,7 +59,7 @@ public class BarbersFragment extends Fragment {
             return;
         }
 
-        // ⭐️ Safe Color Retrieval (Fixed deprecation & visibility)
+        // Safe Color Retrieval
         int prefixColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.white);
         int dayOffColor = androidx.core.content.ContextCompat.getColor(requireContext(), android.R.color.holo_red_light);
         int availableColor = androidx.core.content.ContextCompat.getColor(requireContext(), R.color.status_scheduled);
@@ -73,50 +71,58 @@ public class BarbersFragment extends Fragment {
             TextView specializationText = barberView.findViewById(R.id.barber_specialization_text);
             specializationText.setTypeface(null, Typeface.ITALIC);
             TextView dayOffText = barberView.findViewById(R.id.barber_day_off_text);
+            // ⭐️ NEW: Find the Schedule TextView
+            TextView scheduleText = barberView.findViewById(R.id.barber_schedule_text);
+
             ImageView checkMark = barberView.findViewById(R.id.check_mark_icon);
             ImageView profileImage = barberView.findViewById(R.id.barber_profile_image);
 
             // ---------------------------------------------------------
-            // ⭐️ FIX 1: Robust Image Loading (Prevents Crashes & Logs)
+            // 1. Image Loading
             // ---------------------------------------------------------
             String imageUrl = barber.getImageUrl();
-
-            // Check if URL is valid (not null, not empty, and not a garbage path like "/Monday")
             boolean isValidUrl = imageUrl != null && !imageUrl.isEmpty() && !imageUrl.startsWith("/");
-            if (isValidUrl) {
-                try {
-                    Glide.with(requireContext())
-                            .load(imageUrl)
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            // ⭐️ SET DEFAULT TO BARBER SAMPLE ⭐️
-                            .placeholder(R.drawable.barber_sample)
-                            .error(R.drawable.barber_sample)
-                            .fallback(R.drawable.barber_sample)
-                            .centerCrop()
-                            .into(profileImage);
-                } catch (Exception e) {
-                    // Safety catch -> Show Barber Sample
-                    profileImage.setImageResource(R.drawable.barber_sample);
-                }
-            } else {
-                // Invalid/Missing URL -> Show Barber Sample
+
+            try {
+                Glide.with(requireContext())
+                        .load(isValidUrl ? imageUrl : R.drawable.barber_sample)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.drawable.barber_sample)
+                        .error(R.drawable.barber_sample)
+                        .fallback(R.drawable.barber_sample)
+                        .centerCrop()
+                        .into(profileImage);
+            } catch (Exception e) {
                 profileImage.setImageResource(R.drawable.barber_sample);
             }
 
             // ---------------------------------------------------------
-            // ⭐️ Data Population
+            // 2. Basic Data
             // ---------------------------------------------------------
             nameText.setText(barber.getName());
             specializationText.setText(barber.getSpecialization());
 
             // ---------------------------------------------------------
-            // ⭐️ FIX 2: Day Off Logic + Garbage Data Filter
+            // ⭐️ 3. NEW: Display Schedule (Start/End Time)
+            // ---------------------------------------------------------
+            if (scheduleText != null) {
+                String start = barber.getStartTime();
+                String end = barber.getEndTime();
+
+                if (start != null && end != null) {
+                    // Display: "Hours: 8:00 am - 7:00 pm"
+                    scheduleText.setText(String.format("Time: %s - %s", start, end));
+                    scheduleText.setVisibility(View.VISIBLE);
+                } else {
+                    scheduleText.setVisibility(View.GONE);
+                }
+            }
+
+            // ---------------------------------------------------------
+            // 4. Day Off Logic
             // ---------------------------------------------------------
             String barberDayOff = barber.getDayOff();
-
-            // Detect if data is corrupted (e.g. contains file path/url instead of day name)
             boolean isInvalidData = barberDayOff != null && (barberDayOff.startsWith("content:") || barberDayOff.startsWith("/"));
-
             boolean hasSpecificDayOff = barberDayOff != null
                     && !barberDayOff.isEmpty()
                     && !barberDayOff.equalsIgnoreCase("none")
@@ -124,7 +130,6 @@ public class BarbersFragment extends Fragment {
                     && !isInvalidData;
 
             if (hasSpecificDayOff) {
-                // Scenario 1: Valid Specific Day Off -> Red
                 String prefix = "Day Off: ";
                 String fullText = prefix + barberDayOff;
                 SpannableString spannableString = new SpannableString(fullText);
@@ -134,19 +139,16 @@ public class BarbersFragment extends Fragment {
 
                 dayOffText.setText(spannableString);
             } else {
-                // Scenario 2: Available (or cleaning up garbage data) -> Green
                 dayOffText.setText("No day off");
                 dayOffText.setTextColor(availableColor);
             }
 
             // ---------------------------------------------------------
-            // ⭐️ Selection Logic
+            // 5. Selection Logic
             // ---------------------------------------------------------
             sharedViewModel.selectedBarber.observe(getViewLifecycleOwner(), selected -> {
                 boolean isThisOneSelected = selected != null && selected.getBarberId() == barber.getBarberId();
                 checkMark.setVisibility(isThisOneSelected ? View.VISIBLE : View.GONE);
-
-                // Optional: Visual feedback on the card itself
                 barberView.setAlpha(isThisOneSelected ? 1.0f : 0.9f);
             });
 

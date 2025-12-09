@@ -23,7 +23,7 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
     public interface OnBarberActionListener {
         void onEditClick(Barber barber);
         void onDeleteClick(Barber barber);
-        void onToggleVisibilityClick(Barber barber); // ⭐️ NEW ACTION
+        void onToggleVisibilityClick(Barber barber);
     }
 
     public BarbersManagementAdapter(@NonNull OnBarberActionListener listener) {
@@ -49,7 +49,6 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
         private final ImageView barberImage;
         private final TextView nameText, specText;
         private final TextView dayOffText;
-        // ⭐️ Added toggleButton
         private final ImageButton editButton, deleteButton, toggleButton;
 
         public BarberViewHolder(@NonNull View itemView) {
@@ -59,31 +58,34 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
             specText = itemView.findViewById(R.id.barber_spec_text);
             dayOffText = itemView.findViewById(R.id.barber_day_off_text);
 
-            // Buttons
             editButton = itemView.findViewById(R.id.btn_edit);
             deleteButton = itemView.findViewById(R.id.btn_delete);
-            toggleButton = itemView.findViewById(R.id.toggle_visibility_button); // ⭐️ NEW ID
+            toggleButton = itemView.findViewById(R.id.toggle_visibility_button);
         }
 
         public void bind(Barber barber, OnBarberActionListener listener) {
             nameText.setText(barber.getName());
             specText.setText(barber.getSpecialization());
 
-            // Bind Day Off
-            String dayOff = barber.getDayOff();
-            String dayOffDisplay = "Day Off: " + (dayOff != null && !dayOff.isEmpty() ? dayOff : "N/A");
-            dayOffText.setText(dayOffDisplay);
+            // ⭐️ UPDATED: Bind Day Off AND Schedule Time ⭐️
+            String dayOff = (barber.getDayOff() != null && !barber.getDayOff().isEmpty()) ? barber.getDayOff() : "None";
+            String start = (barber.getStartTime() != null) ? barber.getStartTime() : "N/A";
+            String end = (barber.getEndTime() != null) ? barber.getEndTime() : "N/A";
 
-            // ⭐️ VISIBILITY TOGGLE LOGIC ⭐️
+            // Format: "Day Off: Monday | 8:00 am - 7:00 pm"
+            String scheduleDisplay = String.format("Day Off: %s\n%s - %s", dayOff, start, end);
+            dayOffText.setText(scheduleDisplay);
+
+            // Visibility Logic
             if (barber.isActive()) {
                 toggleButton.setImageResource(R.drawable.ic_visibility);
                 toggleButton.setAlpha(1.0f);
             } else {
                 toggleButton.setImageResource(R.drawable.ic_visibility_off);
-                toggleButton.setAlpha(0.5f); // Dim to show it's hidden
+                toggleButton.setAlpha(0.5f);
             }
 
-            // Robust Image Loading
+            // Image Loading
             String imageUrl = barber.getImageUrl();
             Object modelToLoad;
 
@@ -102,7 +104,7 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
             // Click Listeners
             editButton.setOnClickListener(v -> listener.onEditClick(barber));
             deleteButton.setOnClickListener(v -> listener.onDeleteClick(barber));
-            toggleButton.setOnClickListener(v -> listener.onToggleVisibilityClick(barber)); // ⭐️ NEW Listener
+            toggleButton.setOnClickListener(v -> listener.onToggleVisibilityClick(barber));
         }
     }
 
@@ -119,7 +121,10 @@ public class BarbersManagementAdapter extends ListAdapter<Barber, BarbersManagem
                             Objects.equals(oldItem.getSpecialization(), newItem.getSpecialization()) &&
                             Objects.equals(oldItem.getDayOff(), newItem.getDayOff()) &&
                             Objects.equals(oldItem.getImageUrl(), newItem.getImageUrl()) &&
-                            oldItem.isActive() == newItem.isActive(); // ⭐️ Check visibility change
+                            oldItem.isActive() == newItem.isActive() &&
+                            // ⭐️ UPDATED: Check for Time Changes
+                            Objects.equals(oldItem.getStartTime(), newItem.getStartTime()) &&
+                            Objects.equals(oldItem.getEndTime(), newItem.getEndTime());
                 }
             };
 }
